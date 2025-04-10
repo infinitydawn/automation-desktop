@@ -1,0 +1,89 @@
+public class FX400 {
+
+    public static void main(String[] args) throws Exception {
+
+        DataEntryBot bot = new DataEntryBot();
+        ReadTempArray reader = new ReadTempArray();
+        String[][] zoneParts = reader.readFile();
+        ZoneList zoneList = new ZoneList();
+        int skipCount = 0;
+
+        String[] addresses = zoneParts[0];
+        String[] tags1 = zoneParts[1];
+        String[] tags2 = zoneParts[2];
+
+        for (int i = 0; i < addresses.length; i++) {
+            System.out.println(" - - - - -  + " + tags1[i]);
+            zoneList.addZone(Double.parseDouble(addresses[i]), tags1[i], tags2[i]);
+        }
+
+        zoneList.displayZoneList();
+
+        if (zoneList.zones.get(0).getAddress() != 0) {
+            skipCount = (int) (zoneList.zones.get(0).getAddress() - 1);
+            bot.updateSkipCount(skipCount);
+        }
+
+        System.out.println(skipCount);
+
+        for (Zone zone : zoneList.zones) {
+            System.out.println("Checking: " + zone.getZoneinfo());
+
+            switch (zone.getType()) {
+                case "Photo Detector":
+                    bot.addPhotoDetector();
+                    break;
+                case "Alarm Input":
+                    bot.addAlarmInputMod();
+                    break;
+                case "Non-latched Supervisory":
+                    bot.addNonLatchedSupv();
+                    break;
+                case "Latched Supervisory":
+                    bot.addLatchedSupv();
+                    break;
+                case "Heat Detector":
+                    bot.addHeatDetector();
+                    break;
+                case "Relay":
+                    bot.addRelay();
+                    break;
+                default:
+                    skipCount += 1;
+                    bot.updateSkipCount(skipCount);
+                    System.out.println("  Skipping zone: " + zone.getZoneinfo() + " (skip count: " + skipCount + ")");
+            }
+        }
+
+       bot.enterZoneList(zoneList);
+
+        // zoneList.addZone(1.1, "Waterflow ");
+        // zoneList.addZone(2.1, "valve ");
+        // zoneList.addZone(2.2, "discharge ");
+        // zoneList.addZone(3.1, "Damper ");
+        // zoneList.addZone(4.1, "jocky ");
+        // zoneList.addZone(5.1, "duct ");
+        // zoneList.addZone(5.2, "bypass ");
+        // zoneList.addZone(20, "waterflow");
+        // zoneList.addZone(21, "smoke");
+
+        // if (Zone.classify("smoke").equals("Photo Detector")) {
+        // bot.addPhotoDetector();
+        // }
+
+        // System.out.println(Zone.classify("Waterflow "));
+        // System.out.println(Zone.classify("valve "));
+        // System.out.println(Zone.classify("smoke "));
+        // System.out.println(Zone.classify("Damper "));
+        // System.out.println(Zone.classify("jocky "));
+        // System.out.println(Zone.classify("duct "));
+        // System.out.println(Zone.classify("bypass "));
+
+        // //Simulate typing "Hello, World!"
+        // robot.keyPress(KeyEvent.VK_H);
+        // robot.keyRelease(KeyEvent.VK_H);
+        // robot.keyPress(KeyEvent.VK_E);
+        // robot.keyRelease(KeyEvent.VK_E);
+        // // ... (and so on)
+    }
+}

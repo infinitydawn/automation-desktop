@@ -1,0 +1,81 @@
+20|CO Detector|2FL Elevator Lobby 
+|21|Blank|Smoke
+|22|Blank|Smoke
+|23|Blank|Smoke
+|24|Blank|Smoke
+|25|Blank|Smoke
+|26|Blank|Smoke
+|27|Blank|Smoke
+|28|Blank|Smoke
+|29|Blank|Smoke
+|30|Smoke Det|3FL Elevator Lobby
+|31|Waterflow|1FL
+|32|Blank|Smoke
+|33|Blank|Smoke
+|34|Blank|Smoke
+|35|Blank|Smoke
+|36|Blank|Smoke
+|37|Blank|Smoke
+|38|Blank|Smoke
+|39|Blank|Smoke
+|40|Smoke Det|4Fl Elevator Lobby 
+|41|Blank|Smoke
+|42|Blank|Smoke
+|43|Blank|Smoke
+|44|Blank|Smoke
+|45|Blank|Smoke
+|46|Blank|Smoke
+|47|Blank|Smoke
+|48|Blank|Smoke
+|49|Blank|Smoke
+|50|Smoke Det|5FL Elevator Lobby 
+|51|Blank|Smoke
+|52|Blank|Smoke
+|53|Blank|Smoke
+|54|Blank|Smoke
+|55|Blank|Smoke
+|56|Blank|Smoke
+|57|Blank|Smoke
+|58|Blank|Smoke
+|59|Blank|Smoke
+|60|Smoke Det|6FL Elevator Lobby 
+|61|Blank|Smoke
+|62|Blank|Smoke
+|63|Blank|Smoke
+|64|Blank|Smoke
+|65|Blank|Smoke
+|66|Blank|Smoke
+|67|Blank|Smoke
+|68|Blank|Smoke
+|69|Blank|Smoke
+|70|Smoke Det|7FL Elevator Lobby 
+|71|Blank|Smoke
+|72|Blank|Smoke
+|73|Blank|Smoke
+|74|Blank|Smoke
+|75|Blank|Smoke
+|76|Blank|Smoke
+|77|Blank|Smoke
+|78|Blank|Smoke
+|79|Blank|Smoke
+|80|Smoke Det|8FL Elevator Lobby 
+|81|Blank|Smoke
+|82|Blank|Smoke
+|83|Blank|Smoke
+|84|Blank|Smoke
+|85|Blank|Smoke
+|86|Blank|Smoke
+|87|Blank|Smoke
+|88|Blank|Smoke
+|89|Blank|Smoke
+|90|Smoke Det|Top Of Stairs A 
+|91|Smoke Det|Top Of Stairs B 
+|92|Smoke Det|Roof Elevator Lobby 
+|93|Smoke Det|Roof EMR 
+|94|Blank|Smoke
+|95|Blank|Smoke
+|95.1|Relay Damper|Top Of Shaft 
+|95.2|Spare |
+|96.1|Relay Damper|Top Of Stairs B 
+|96.2|Spare |
+|97.1| Elevator Recall|Roof EMR
