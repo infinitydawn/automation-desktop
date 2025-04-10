@@ -1,0 +1,167 @@
+1|Smoke Detector|Cellar Fire Pump Rm
+|2|Smoke Detector|Cellar Telecom Rm
+|3|Smoke Detector|Cellar Pump Rm
+|4|Smoke Detector|Cellar Gas Room
+|5|Smoke Detector|Cellar Elec Room
+|6|Smoke Detector|Cellar Elev Lobby
+|7|Smoke Detector|Cellar Compactor Rm
+|8|Smoke Detector|Cellar Elev Lobby
+|9|Smoke Detector|Cellar Compactor Rm
+|10|Smoke Detector|Cellar Elec Room
+|11|Smoke Detector|Cellar Plumbing Rm
+|12|Smoke Detector|1FL  Elev Lobby
+|13|Smoke Detector|1FL  By FACP
+|14|Smoke Detector|1FL  Elev Lobby A
+|15|Smoke Detector|2FL  Elev Lobby B
+|16|Smoke Detector|2FL  Elev Lobby A
+|17|Smoke Detector|3FL Elev Lobby B
+|18|Smoke Detector|3FL Elev Lobby A
+|19|Smoke Detector|4FL Elev Lobby B
+|20|Smoke Detector|4FL Elev Lobby A
+|21|Smoke Detector|5FL Elev Lobby B
+|22|Smoke Detector|5FL Elev Lobby A
+|23|Smoke Detector|Roof Elev Lobby B
+|24|Smoke Detector|Roof EMR
+|25|Heat Detector|Roof HWH Room
+|26|Smoke Detector|Roof Top Of Stairs A
+|27|Smoke Detector|Roof Top Of Stairs B
+|28|Smoke Detector|6FL Elev Lobby
+|29|Smoke Detector|Roof Elev Lobby
+|30|Smoke Detector|Roof EMR
+|31|Smoke Detector|Roof Top Of Stairs C
+|32|Smoke Detector|Roof Top Of Stairs D
+|33|Heat Detector|Roof HWH Room
+|34|Smoke Detector|Blkhd Elev Lobby A
+|35|Smoke Detector|Blkhd Top Of Shaft
+|36|Blank|Smoke
+|37|Heat Detector|2 FL Laundry Rm
+|38|Heat Detector|2 FL Laundry Rm
+|39|Heat Detector|3 FL Laundry Rm
+|40|Heat Detector|3 FL Laundry Rm
+|41|Heat Detector|4 FL Laundry Rm
+|42|Heat Detector|4 FL Laundry Rm
+|43|Heat Detector|5 FL Laundry Rm
+|44|Heat Detector|5 FL Laundry Rm
+|45|Blank|Smoke
+|46|Blank|Smoke
+|47|Blank|Smoke
+|48|Blank|Smoke
+|49|Blank|Smoke
+|50|Blank|Smoke
+|51|Blank|Smoke
+|52|Blank|Smoke
+|53|Blank|Smoke
+|54|Blank|Smoke
+|55|Blank|Smoke
+|56|Blank|Smoke
+|57|Blank|Smoke
+|58|Blank|Smoke
+|59|Blank|Smoke
+|60|Blank|Smoke
+|61|Blank|Smoke
+|62|Blank|Smoke
+|63|Blank|Smoke
+|64|Blank|Smoke
+|65|Blank|Smoke
+|66|Blank|Smoke
+|67|Blank|Smoke
+|68|Blank|Smoke
+|69|Blank|Smoke
+|70|Blank|Smoke
+|71|Blank|Smoke
+|72|Blank|Smoke
+|73|Blank|Smoke
+|74|Blank|Smoke
+|75|Blank|Smoke
+|76|Blank|Smoke
+|77|Blank|Smoke
+|78|Blank|Smoke
+|79|Blank|Smoke
+|80|Blank|Smoke
+|81|Blank|Smoke
+|82|Blank|Smoke
+|83|Blank|Smoke
+|84|Blank|Smoke
+|85|Blank|Smoke
+|86|Blank|Smoke
+|87|Blank|Smoke
+|88|Blank|Smoke
+|89|Blank|Smoke
+|90|Blank|Smoke
+|91|Blank|Smoke
+|92|Blank|Smoke
+|93|Blank|Smoke
+|94|Blank|Smoke
+|95|Blank|Smoke
+|96|Blank|Smoke
+|97|Blank|Smoke
+|98|Blank|Smoke
+|99|Blank|Smoke
+|101|Waterflow Main|Cellar Fire Pump Rm
+|102|Valve Before Meter|Cellar Fire Pump Rm
+|103|Valve After Meter|Cellar Fire Pump Rm
+|104|Jockey In|Cellar Fire Pump Rm
+|105|Jockey Out|Cellar Fire Pump Rm
+|106|Bypass In|Cellar Fire Pump Rm
+|107|Bypass Out|Cellar Fire Pump Rm
+|108|Valve Tamper Main|Cellar Fire Pump Rm
+|109|Pump Running|Cellar Fire Pump Rm
+|110|Pump AC Fail|Cellar Fire Pump Rm
+|111|Pump Phase Reversal|Cellar Fire Pump Rm
+|112|Dry Sys PS10|Cellar Fire Pump Rm
+|113|Dry Sys High Air|Cellar Fire Pump Rm
+|114|Dry Sys Low Air|Cellar Fire Pump Rm
+|115|Dry Sys Valve Tamper|Cellar Fire Pump Rm
+|116|Waterflow Riser|Cellar Fire Pump Rm
+|117|Valve Riser|Cellar Fire Pump Rm
+|118|Pull Station|Cellar Telecom Rm Exit
+|119|Valve ???|Cellar Pump Rm
+|120|Valve ???|Cellar Pump Rm
+|121|Valve ???|Cellar Pump Rm
+|122|Waterflow|Cell CompRmByStairA
+|123|Valve Tamper |Cell CompRmByStairA
+|124|Valve Tamper|Cellar By Gym
+|125|Valve Tamper|Cellar Elec Rm
+|126|Waterflow|Cellar CompRmByElevB
+|127|Valve Tamper|Cellar CompRmByElevB
+|128|Waterflow|Cellar By Elev B
+|129|Valve Tamper|Cellar By Elev B
+|130|Valve Tamper|Cellar HlwyByElevB
+|131|Valver Tamper|Cellar Stair B
+|132|Waterflow|1FL Stair A
+|133|Valver Tamper|1FL Stair A
+|134|Waterflow|1FL Offices
+|135|Valver Tamper|1FL Offices
+|136|Waterflow|1FL Stair C
+|137|Valver Tamper|1FL Stair C
+|138|Waterflow|1FL OfficesByStairC
+|139|Valver Tamper|1FL OfficesByStairC
+|140|Damper FSD|1FL OfficesByStairC
+|141|Waterflow|2FL Stair A
+|142|Valver Tamper|2FL Stair A
+|143|Waterflow|2FL Stair D
+|144|Valver Tamper|2FL Stair D
+|145|Fan PFSP-1|2FL Outdoor
+|146|Waterflow|3FL Stair A
+|147|Valver Tamper|3FL Stair A
+|148|Waterflow|3FL Stair C
+|149|Valver Tamper|3FL Stair C
+|150|Waterflow|4FL Stair A
+|151|Valver Tamper|4FL Stair A
+|152|Waterflow|4FL Stair C
+|153|Valver Tamper|4FL Stair C
+|154|Waterflow|5FL Stair A
+|155|Valver Tamper|5FL Stair A
+|156|Waterflow|5FL Stair C
+|157|Valver Tamper|5FL Stair C
+|158|Waterflow|Roof Stair A
+|159|Valver Tamper|Roof Stair A
+|160|Damper|Roof TopOfStairA 
+|161|Elevator Recall|Roof Elev A EMR
+|162|Waterflow|6FL Stair C
+|163|Valver Tamper|6FL Stair C
+|164|Waterflow|Roof Stair C
+|165|Valver Tamper|Roof Stair C
+|166|Damper|Roof TopOfStairC 
+|167|Elevator Recall|Roof Elev B EMR
+|

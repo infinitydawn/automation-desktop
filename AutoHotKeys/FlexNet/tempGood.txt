@@ -1,0 +1,91 @@
+1|Waterflow|11FL Stair A
+|2|Valve Tamper|11FL Stair A
+|3|Waterflow|12FL Stair A
+|4|Valve Tamper|12FL Stair A
+|5|Waterflow|13FL Stair A
+|6|Valve Tamper|13FL Stair A
+|7|Waterflow|14FL Stair A
+|8|Valve Tamper|14FL Stair A
+|9|Waterflow|15FL Stair A
+|10|Valve Tamper|15FL Stair A
+|11|Waterflow|16FL Stair A
+|12|Valve Tamper|16FL Stair A
+|13|Waterflow|17FL Stair A
+|14|Valve Tamper|17FL Stair A
+|15|Waterflow|18FL Stair A
+|16|Valve Tamper|18FL Stair A
+|17|Waterflow|19FL Stair A
+|18|Valve Tamper|19FL Stair A
+|19|Waterflow|20FL Stair A
+|20|Valve Tamper|20FL Stair A
+|21|Waterflow|21FL Stair A
+|22|Valve Tamper|21FL Stair A
+|23|Waterflow|Roof Stair A
+|24|Valve Tamper|Roof Stair A
+|25|Generator Running|Roof Generator
+|26|Generator Fail|Roof Generator
+|27|Generator ??|Roof Generator
+|50|Dual Heat|11FL Elev A&B Lobby
+|51|Smoke Detector|11FL Elev C Lobby
+|52|Smoke Detector|11FL Elec CL
+|53|Smoke Detector|11FL Refuse Rm
+|54|Dual Heat|12FL Elev A&B Lobby
+|55|Smoke Detector|12FL Elev C Lobby
+|56|Smoke Detector|12FL Elec CL
+|57|Smoke Detector|12FL Refuse Rm
+|58|Dual Heat|13FL Elev A&B Lobby
+|59|Smoke Detector|13FL Elev C Lobby
+|60|Smoke Detector|13FL Elec CL
+|61|Smoke Detector|13FL Refuse Rm
+|62|Dual Heat|14FL Elev A&B Lobby
+|63|Smoke Detector|14FL Elev C Lobby
+|64|Smoke Detector|14FL Elec CL
+|65|Smoke Detector|14FL Refuse Rm
+|66|Dual Heat|15FL Elev A&B Lobby
+|67|Smoke Detector|15FL Elev C Lobby
+|68|Smoke Detector|15FL Elec CL
+|69|Smoke Detector|15FL Refuse Rm
+|70|Dual Heat|16FL Elev A&B Lobby
+|71|Smoke Detector|16FL Elev C Lobby
+|72|Smoke Detector|16FL Elec CL
+|73|Smoke Detector|16FL Refuse Rm
+|74|Dual Heat|17FL Elev A&B Lobby
+|75|Smoke Detector|17FL Elev C Lobby
+|76|Smoke Detector|17FL Elec CL
+|77|Smoke Detector|17FL Refuse Rm
+|78|Dual Heat|18FL Elev A&B Lobby
+|79|Smoke Detector|18FL Elev C Lobby
+|80|Smoke Detector|18FL Elec CL
+|81|Smoke Detector|18FL Refuse Rm
+|82|Dual Heat|19FL Elev A&B Lobby
+|83|Smoke Detector|19FL Elev C Lobby
+|84|Smoke Detector|19FL Elec CL
+|85|Smoke Detector|19FL Refuse Rm
+|86|Dual Heat|20FL Elev A&B Lobby
+|87|Smoke Detector|20FL Elev C Lobby
+|88|Smoke Detector|20FL Elec CL
+|89|Smoke Detector|20FL Refuse Rm
+|90|Dual Heat|21FL Elev A&B Lobby
+|91|Smoke Detector|21FL Elev C Lobby
+|92|Smoke Detector|21FL Elec CL
+|93|Smoke Detector|21FL Refuse Rm
+|94|Dual Heat|Roof 
+|95|Smoke Detector|Roof EMR
+|96|Smoke Detector|Roof Top Of Stair A
+|97|Smoke Detector|Roof Electrical Rm
+|98|Smoke Detector|Roof Elev C Lobby
+|99|Smoke Detector|Roof Top Of Stair B
+|100|Duct Det Supply|Roof Unit 1
+|101|Duct Det Return|Roof Unit 1
+|102|Duct Det Supply|Roof Unit 2
+|103|Duct Det Return|Roof Unit 2
+|104|Duct Det Supply|BLKHD MA-1
+|105|Duct Det Return|BLKHD MA-1
+|106|Smoke Detector|BLKHD Area Smoke
+|107|Smoke Detector|BLKHD Top Of Shaft A
+|108|Smoke Detector|BLKHD Top Of Shaft B
+|109|Smoke Detector|BLKHD Top Of Shaft C
+|50|Damper FSD Control|On 11FL For 11-BLKHD
+|51|Damper BLKHD|Top Of Stair A
+|52|Damper For Purge|BLKHD Stair A
+|53|Status Purge Damper|BLKHD Damper Open

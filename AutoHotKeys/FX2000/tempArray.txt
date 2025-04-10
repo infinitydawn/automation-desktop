@@ -1,0 +1,195 @@
+1|Smoke Detector |1FL By Facp
+|2|Smoke Detector |1FL Elev Lobby
+|3|Smoke Detector |1FL Pump Rm
+|4|Smoke Detector |1FL Compactor Rm
+|5|Smoke Detector |1FL Gas Meter Room
+|6|Smoke Detector |1FL Water Room
+|7|Blank|Smoke
+|8|Blank|Smoke
+|9|Blank|Smoke
+|10|Smoke Detector |2FL Elevator Lobby
+|11|Smoke Detector |2FL Mech Closet Room
+|12|Heat Detector|2FL Laundry Room
+|13|Blank|Smoke
+|14|Blank|Smoke
+|15|Blank|Smoke
+|16|Blank|Smoke
+|17|Blank|Smoke
+|18|Blank|Smoke
+|19|Blank|Smoke
+|20|Blank|Smoke
+|21|Blank|Smoke
+|22|Blank|Smoke
+|23|Blank|Smoke
+|24|Blank|Smoke
+|25|Blank|Smoke
+|26|Blank|Smoke
+|27|Blank|Smoke
+|28|Blank|Smoke
+|29|Blank|Smoke
+|30|Smoke Detector |3FL Elevator Lobby
+|31|Smoke Detector |3FL Mech Closet Room
+|32|Smoke Detector |3FL Refuse Room
+|33|Blank|Smoke
+|34|Blank|Smoke
+|35|Blank|Smoke
+|36|Blank|Smoke
+|37|Blank|Smoke
+|38|Blank|Smoke
+|39|Blank|Smoke
+|40|Smoke Detector |4FL Elevator Lobby
+|41|Smoke Detector |4FL Mech Closet Room
+|42|Blank|Smoke
+|43|Blank|Smoke
+|44|Blank|Smoke
+|45|Blank|Smoke
+|46|Blank|Smoke
+|47|Blank|Smoke
+|48|Blank|Smoke
+|49|Blank|Smoke
+|50|Smoke Detector |5FL Eelvaotr Lobby
+|51|Smoke Detector |5FL Mech Closet Room
+|52|Blank|Smoke
+|53|Blank|Smoke
+|54|Blank|Smoke
+|55|Blank|Smoke
+|56|Blank|Smoke
+|57|Blank|Smoke
+|58|Blank|Smoke
+|59|Blank|Smoke
+|60|Smoke Detector |6FL Eelvaotr Lobby
+|61|Smoke Detector |6FL Mech Closet Room
+|62|Smoke Detector |6FL Refuse Room
+|63|Blank|Smoke
+|64|Blank|Smoke
+|65|Blank|Smoke
+|66|Blank|Smoke
+|67|Blank|Smoke
+|68|Blank|Smoke
+|69|Blank|Smoke
+|70|Smoke Detector |7FL Elevator Lobby
+|71|Smoke Detector |7FL Mech Closet Room
+|72|Blank|Smoke
+|73|Blank|Smoke
+|74|Blank|Smoke
+|75|Blank|Smoke
+|76|Blank|Smoke
+|77|Blank|Smoke
+|78|Blank|Smoke
+|79|Blank|Smoke
+|80|Smoke Detector |8FL Elevator Lobby
+|81|Smoke Detector |8FL Mech Closet Room
+|82|Blank|Smoke
+|83|Blank|Smoke
+|84|Blank|Smoke
+|85|Blank|Smoke
+|86|Blank|Smoke
+|87|Blank|Smoke
+|88|Blank|Smoke
+|89|Blank|Smoke
+|90|Smoke Detector |9FL Elevator Lobby
+|91|Smoke Detector |9FL Mech Closet Room
+|92|Smoke Detector |9FL Refuse Room
+|93|Smoke Det |Top Of Shaft A
+|94|Smoke Det |Top Of Shaft B
+|95|Heat Detector|Roof Hwh Room
+|96|Smoke Detector |Roof Emr
+|97|Smoke Detector | Top Of Stair A
+|98|Smoke Detector | Top Of Stair B
+|99|Blank|Smoke
+|101|Main Valve |1FL InsidePitWaterRm
+|102|Before Valve |1FL Water Room
+|103|After Valve |1FL Water Room
+|104|Pump Intake |1FL Water Room
+|105|Main Waterflow |1FL Pump Room
+|106|Pump Bypass 1 |1FL Pump Room
+|107|Pump Bypass 2 |1FL Pump Room
+|108|Jockey In |1FL Pump Room
+|109|Jockey Out |1FL Pump Room
+|110|Pump Discharge |1FL Pump Room
+|111|Drysytem High Air |1FL Pump Room
+|112|Drysystem Law Air |1FL Pump Room
+|113|Drysystem Valve |1FL Pump Room
+|114|Dry System PS10|1FL Pump Rm
+|115|Valve Riser |1FL By Stairs
+|116|Valve Riser |1FL Stairs
+|117|Realy Purch Foward |1FL Garage
+|118|Relay Purch Reverse |1FL Garage
+|119|Relay Purch Damper |1FL Garage
+|120|Damper Purch Status |1FL Garage
+|121|Waterflow |2FL Stairs
+|122|Valve |2FL Stairs
+|123|Blank|Duals/clip
+|124|Blank|Duals/clip
+|125|Blank|Duals/clip
+|126|Blank|Duals/clip
+|127|Blank|Duals/clip
+|128|Blank|Duals/clip
+|129|Blank|Duals/clip
+|130|Waterflow |3FL Stairs
+|130|Waterflow |3FL Stairs
+|131|Valve |2FL Stairs
+|131|Valve |2FL Stairs
+|134|Blank|Duals/clip
+|135|Blank|Duals/clip
+|136|Blank|Duals/clip
+|137|Blank|Duals/clip
+|138|Blank|Duals/clip
+|139|Blank|Duals/clip
+|140|Waterflow |4FL Stairs
+|141|Valve |4FL Stairs
+|142|Blank|Duals/clip
+|143|Blank|Duals/clip
+|144|Blank|Duals/clip
+|145|Blank|Duals/clip
+|146|Blank|Duals/clip
+|147|Blank|Duals/clip
+|148|Blank|Duals/clip
+|149|Blank|Duals/clip
+|150|Waterflow |5FL Stairs
+|151|Valve |5FL Stairs
+|152|Blank|Duals/clip
+|153|Blank|Duals/clip
+|154|Blank|Duals/clip
+|155|Blank|Duals/clip
+|156|Blank|Duals/clip
+|157|Blank|Duals/clip
+|158|Blank|Duals/clip
+|159|Blank|Duals/clip
+|160|Waterflow |6FL Stairs
+|161|Valve |6FL Stairs
+|162|Blank|Duals/clip
+|163|Blank|Duals/clip
+|164|Blank|Duals/clip
+|165|Blank|Duals/clip
+|166|Blank|Duals/clip
+|167|Blank|Duals/clip
+|168|Blank|Duals/clip
+|169|Blank|Duals/clip
+|170|Waterflow |7FL Stairs
+|171|Valve |7FL Stairs
+|172|Blank|Duals/clip
+|173|Blank|Duals/clip
+|174|Blank|Duals/clip
+|175|Blank|Duals/clip
+|176|Blank|Duals/clip
+|177|Blank|Duals/clip
+|178|Blank|Duals/clip
+|179|Blank|Duals/clip
+|180|Waterflow |8FL Stairs
+|180|Waterflow |8FL Stairs
+|181|Valve |8FL Stairs
+|181|Valve |8FL Stairs
+|184|Blank|Duals/clip
+|185|Blank|Duals/clip
+|186|Blank|Duals/clip
+|187|Blank|Duals/clip
+|188|Blank|Duals/clip
+|189|Blank|Duals/clip
+|190|Waterflow |9FL Stairs
+|191|Valve |9FL Stairs
+|192|Relay Damper |Top Of Shaft A
+|193|Relay Damper |Top Of Shaft B
+|194|Relay Damper |Top Of Stairs A
+|195|Relay Damper |Top Of Stairs B
+|196|Relay Elev Recall |Roof EMR

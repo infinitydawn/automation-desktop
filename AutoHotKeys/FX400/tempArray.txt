@@ -1,0 +1,53 @@
+7.1|Heat Detector|1FL Laundry Rm
+|8.1|CO Detector|1FL Toddlers A
+|8.2|Spare|Spare
+|9.1|CO Detector|1FL HlwyByTrashRm
+|9.2|Spare|Spare
+|10.1|CO Detector|1FL LoungeRm
+|10.2|Spare|Spare
+|11.1|CO Detector|1FL MBB/Indoor Play
+|12.1|Smoke Detector|1FL By FACP
+|13.1|Heat Detector|1FL Pantry
+|14.1|Waterflow|1FL Stair B
+|14.2|Valve Tamper|1FL Stair B
+|15.1|CO Detector|1FL PreSchool 1B
+|15.2|Spare|Spare
+|16.1|CO Detector|1FL PreSchool 1A
+|16.2|Spare|Spare
+|17.1|CO Detector|1FL HlwyPreSchool
+|17.2|Spare|Spare
+|18.1|CO Detector|1FL PreSchool 2
+|18.2|Spare|Spare
+|19.1|CO Detector|1FL HlwyByPantry
+|19.2|Spare|Spare
+|20.1|CO Detector|1FL PreSchool 3
+|20.2|Spare|Spare
+|21.1|CO Detector|1FL Preppers B
+|21.2|Spare|Spare
+|22.1|CO Detector|1FL Preppers A
+|22.2|Spare|Spare
+|23.1|CO Detector|1FL Office
+|23.2|Spare|Spare
+|24.1|CO Detector|1FL Reception
+|24.2|Spare|Spare
+|25.1|CO Detector|1FL Infants A
+|25.2|Spare|Spare
+|26.1|CO Detector|1FL Infants B
+|26.2|Spare|Spare
+|27.1|CO Detector|1FL Pre K-K
+|27.2|Spare|Spare
+|28.1|CO Detector|1FL ElecCL in Pre-K
+|28.2|Spare|Spare
+|29.1|Pull Station|1FL Stair D Exit
+|29.2|Spare|Spare
+|30.1|Pull Station|1FL Stair C Exit
+|30.2|Spare|Spare
+|31.1|Pull Station|1FL Pre-K Exit
+|31.2|Spare|Spare
+|32.1|Pull Station|1FL Main Exit
+|32.2|Spare|Spare
+|33.1|Pull Station|1FL PreSchoolExit
+|33.2|Spare|Spare
+|34.1|Pull Station|1FL SideExitByStairA
+|34.2|Spare|Spare
+|35.1|Smoke Detector|Cellar ElecRmBy FDS

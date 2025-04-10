@@ -1,0 +1,52 @@
+125|A. Main Valve
+B. Before&After 1Fl Water Meter Room|1FL ?re Pump
+Rm
+|126|Dual Intake Discharge|1FL ?re Pump
+Rm
+|127|Dual Bypass 1 2|1FL ?re Pump
+Rm
+|128|Dual Jockey In Out|1FL ?re Pump
+Rm
+|129|A. Pump Run
+B. Pump Ac Fail
+
+1Fl ?re Pump
+Room|1FL ?re Pump
+Rm
+|130|Pump Phase Reversal|1FL ?re Pump
+Rm
+|131|Valve Tamper|1FL Stair B
+|132|Waterflow|2Fl
+|133|Speakers|2FL Refuse Rm
+|134|Waterflow|3Fl
+|135|Speakers|3FL Refuse Rm
+|136|Waterflow|4Fl
+|137|Speakers|4FL Refuse Rm
+|138|Waterflow|5Fl
+|139|Speakers|5FL Refuse Rm
+|140|Waterflow|6Fl
+|141|Speakers|6FL Refuse Rm
+|142|Waterflow|7Fl
+|143|Speakers|7FL Refuse Rolm
+|144|Waterflow|8Fl
+|145|Speakers|8FL Refuse Rm
+|146|Waterflow|9Fl
+|147|Valve Tamper|9FL Stair A
+|148|Valve Tamper|9FL Stair B
+|149|Speakers|9FL Refuse Rm
+|150|Waterflow|10Fl
+|151|Speakers|10FL Refuse Rm
+|152|Waterflow|11Fl
+|153|Speakers|11FL Refuse Rm
+|154|Waterflow|12Fl
+|155|Speakers|12FL Refuse Rm
+|156|Waterflow|13Fl
+|157|Speakers|13FL Refuse Rm
+|158|Waterflow|14Fl
+|159|Speakers|14FL Refuse Rm
+|160|Damper Relay|Top Of Stair A
+|161|Elev Recall Relay|Rm Emr
+|162|Damper Relay|Top Of Stair B
+|163|Damper Relay|Elev Shaft A
+|164|Damper Relay|Elev Shaft B
+|165|Damper Relay|Elev Shaft C
