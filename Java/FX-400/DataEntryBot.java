@@ -374,8 +374,8 @@ public class DataEntryBot {
 
     public void enterZoneList(ZoneList zoneList){
         try {
-            robot.keyPress(KeyEvent.VK_PAGE_UP); robot.keyRelease(KeyEvent.VK_PAGE_UP); robot.delay(delay);
-
+            //robot.keyPress(KeyEvent.VK_PAGE_UP); robot.keyRelease(KeyEvent.VK_PAGE_UP); robot.delay(delay);
+            pressKey(KeyEvent.VK_PAGE_UP);
             for(Zone zone : zoneList.zones){
                 if(!zone.getType().equals("Blank Device")){
                     updateZone(zone);
