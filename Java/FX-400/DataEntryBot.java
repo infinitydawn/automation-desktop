@@ -5,7 +5,6 @@ public class DataEntryBot {
     Robot robot;
     int delay = 200;
     private int skipCount = 19;
-    
 
     public DataEntryBot(){
         try {
@@ -17,16 +16,7 @@ public class DataEntryBot {
     }
 
     public void skipDevices(){
-        try {
-            Thread.sleep(delay);
-            for(int i = 0; i < skipCount; i++){
-                robot.keyPress(KeyEvent.VK_RIGHT); robot.keyRelease(KeyEvent.VK_RIGHT); Thread.sleep(15);
-            }
-
-        } catch (Exception e) {
-            // TODO: handle exception
-        }
-
+        pressKey(KeyEvent.VK_RIGHT, skipCount, 15);
     }
     
 
@@ -38,10 +28,9 @@ public class DataEntryBot {
             robot.keyRelease(KeyEvent.VK_SHIFT);
             robot.keyRelease(KeyEvent.VK_F10);
             robot.delay(delay);
-            robot.keyPress(KeyEvent.VK_DOWN); robot.keyRelease(KeyEvent.VK_DOWN);
-            robot.delay(delay);
-            robot.keyPress(KeyEvent.VK_ENTER); robot.keyRelease(KeyEvent.VK_ENTER);
-            robot.delay(delay);
+
+            pressKey(KeyEvent.VK_DOWN);
+            pressKey(KeyEvent.VK_ENTER);
             
         } catch (Exception e) {
             System.err.println(e);
@@ -50,65 +39,36 @@ public class DataEntryBot {
     
 
     public void addPhotoDetector(){
-        try {
-            open();
-            robot.keyPress(KeyEvent.VK_TAB); robot.keyRelease(KeyEvent.VK_TAB); robot.delay(delay);
-            robot.keyPress(KeyEvent.VK_TAB); robot.keyRelease(KeyEvent.VK_TAB); robot.delay(delay);
-            robot.keyPress(KeyEvent.VK_TAB); robot.keyRelease(KeyEvent.VK_TAB); robot.delay(delay);
-            skipDevices();
-            robot.keyPress(KeyEvent.VK_ENTER); robot.keyRelease(KeyEvent.VK_ENTER);
-            robot.delay(delay);
-            robot.keyPress(KeyEvent.VK_ESCAPE); robot.keyRelease(KeyEvent.VK_ESCAPE);
-            robot.delay(delay);
-            robot.keyPress(KeyEvent.VK_END); robot.keyRelease(KeyEvent.VK_END);
-            
-        } catch (Exception e) {
-            System.err.println(e);
-        }
+        open();
+        pressKey(KeyEvent.VK_TAB, 3);
+        skipDevices();
+        pressKey(KeyEvent.VK_ENTER);
+        pressKey(KeyEvent.VK_ESCAPE);
+        pressKey(KeyEvent.VK_END);
     }
 
 
     public void addAlarmInputMod(){
-        try {
-            open();
-            robot.keyPress(KeyEvent.VK_D); robot.keyRelease(KeyEvent.VK_D); robot.delay(delay);
-            robot.keyPress(KeyEvent.VK_D); robot.keyRelease(KeyEvent.VK_D); robot.delay(delay);
-            robot.keyPress(KeyEvent.VK_TAB); robot.keyRelease(KeyEvent.VK_TAB); robot.delay(delay);
-            robot.keyPress(KeyEvent.VK_TAB); robot.keyRelease(KeyEvent.VK_TAB); robot.delay(delay);
-            robot.keyPress(KeyEvent.VK_TAB); robot.keyRelease(KeyEvent.VK_TAB); robot.delay(delay);
-
-            skipDevices();
-
-            robot.keyPress(KeyEvent.VK_ENTER); robot.keyRelease(KeyEvent.VK_ENTER); robot.delay(delay);
-            robot.keyPress(KeyEvent.VK_ESCAPE); robot.keyRelease(KeyEvent.VK_ESCAPE); robot.delay(delay);
-
-            robot.keyPress(KeyEvent.VK_END); robot.keyRelease(KeyEvent.VK_END); robot.delay(delay);
-            
-        } catch (Exception e) {
-            System.err.println(e);
-        }
+        open();
+        pressKey(KeyEvent.VK_D, 2);
+        pressKey(KeyEvent.VK_TAB, 3);
+        skipDevices();
+        pressKey(KeyEvent.VK_ENTER);
+        pressKey(KeyEvent.VK_ESCAPE);
+        pressKey(KeyEvent.VK_END);
     }
 
 
     public void addNonLatchedSupv(){
-        try {
-            open();
-            robot.keyPress(KeyEvent.VK_D); robot.keyRelease(KeyEvent.VK_D); robot.delay(delay);
-            robot.keyPress(KeyEvent.VK_D); robot.keyRelease(KeyEvent.VK_D); robot.delay(delay);
-
-            robot.keyPress(KeyEvent.VK_TAB); robot.keyRelease(KeyEvent.VK_TAB); robot.delay(delay);
-            robot.keyPress(KeyEvent.VK_TAB); robot.keyRelease(KeyEvent.VK_TAB); robot.delay(delay);
-
-            robot.keyPress(KeyEvent.VK_N); robot.keyRelease(KeyEvent.VK_N); robot.delay(delay);
-
-            robot.keyPress(KeyEvent.VK_TAB); robot.keyRelease(KeyEvent.VK_TAB); robot.delay(delay);
-            skipDevices();
-            robot.keyPress(KeyEvent.VK_ENTER); robot.keyRelease(KeyEvent.VK_ENTER); robot.delay(delay);
-            robot.keyPress(KeyEvent.VK_ESCAPE); robot.keyRelease(KeyEvent.VK_ESCAPE); robot.delay(delay);
-            robot.keyPress(KeyEvent.VK_END); robot.keyRelease(KeyEvent.VK_END); robot.delay(delay);
-        } catch (Exception e) {
-            System.err.println(e);
-        }
+        open();
+        pressKey(KeyEvent.VK_D, 2);
+        pressKey(KeyEvent.VK_TAB, 2);
+        pressKey(KeyEvent.VK_N);
+        pressKey(KeyEvent.VK_TAB);
+        skipDevices();
+        pressKey(KeyEvent.VK_ENTER);
+        pressKey(KeyEvent.VK_ESCAPE);
+        pressKey(KeyEvent.VK_END);
     }
 
     public void updateSkipCount(int skipCount){
@@ -118,67 +78,37 @@ public class DataEntryBot {
 
 
     public void addLatchedSupv(){
-        try {
-            open();
-            robot.keyPress(KeyEvent.VK_D); robot.keyRelease(KeyEvent.VK_D); robot.delay(delay);
-            robot.keyPress(KeyEvent.VK_D); robot.keyRelease(KeyEvent.VK_D); robot.delay(delay);
-
-            robot.keyPress(KeyEvent.VK_TAB); robot.keyRelease(KeyEvent.VK_TAB); robot.delay(delay);
-            robot.keyPress(KeyEvent.VK_TAB); robot.keyRelease(KeyEvent.VK_TAB); robot.delay(delay);
-
-            robot.keyPress(KeyEvent.VK_L); robot.keyRelease(KeyEvent.VK_L); robot.delay(delay);
-            robot.keyPress(KeyEvent.VK_TAB); robot.keyRelease(KeyEvent.VK_TAB); robot.delay(delay);
-            skipDevices();
-
-            robot.keyPress(KeyEvent.VK_ENTER); robot.keyRelease(KeyEvent.VK_ENTER); robot.delay(delay);
-            robot.keyPress(KeyEvent.VK_ESCAPE); robot.keyRelease(KeyEvent.VK_ESCAPE); robot.delay(delay);
-            robot.keyPress(KeyEvent.VK_END); robot.keyRelease(KeyEvent.VK_END); robot.delay(delay);
-        } catch (Exception e) {
-            System.err.println(e);
-        }
+        open();
+        pressKey(KeyEvent.VK_D,2);
+        pressKey(KeyEvent.VK_TAB,2);
+        pressKey(KeyEvent.VK_L);
+        pressKey(KeyEvent.VK_TAB);
+        skipDevices();
+        pressKey(KeyEvent.VK_ENTER);
+        pressKey(KeyEvent.VK_ESCAPE);
+        pressKey(KeyEvent.VK_END);
     }
 
     public void addHeatDetector(){
-        try {
-            open();
-            robot.keyPress(KeyEvent.VK_H); robot.keyRelease(KeyEvent.VK_H); robot.delay(delay);
-            robot.keyPress(KeyEvent.VK_H); robot.keyRelease(KeyEvent.VK_H); robot.delay(delay);
-            robot.keyPress(KeyEvent.VK_H); robot.keyRelease(KeyEvent.VK_H); robot.delay(delay);
-
-            robot.keyPress(KeyEvent.VK_TAB); robot.keyRelease(KeyEvent.VK_TAB); robot.delay(delay);
-            robot.keyPress(KeyEvent.VK_TAB); robot.keyRelease(KeyEvent.VK_TAB); robot.delay(delay);
-            robot.keyPress(KeyEvent.VK_TAB); robot.keyRelease(KeyEvent.VK_TAB); robot.delay(delay);
-
-            skipDevices();
-
-            robot.keyPress(KeyEvent.VK_ENTER); robot.keyRelease(KeyEvent.VK_ENTER); robot.delay(delay);
-            robot.keyPress(KeyEvent.VK_ESCAPE); robot.keyRelease(KeyEvent.VK_ESCAPE); robot.delay(delay);
-            robot.keyPress(KeyEvent.VK_END); robot.keyRelease(KeyEvent.VK_END); robot.delay(delay);
-
-        } catch (Exception e) {
-            System.err.println(e);
-        }
+        open();
+        pressKey(KeyEvent.VK_H,3);
+        pressKey(KeyEvent.VK_TAB,3);
+        skipDevices();
+        pressKey(KeyEvent.VK_ENTER);
+        pressKey(KeyEvent.VK_ESCAPE);
+        pressKey(KeyEvent.VK_END);
     }
 
 
 
     public void addRelay(){
-        try {
-            open();
-            robot.keyPress(KeyEvent.VK_D); robot.keyRelease(KeyEvent.VK_D); robot.delay(delay);
-
-            robot.keyPress(KeyEvent.VK_TAB); robot.keyRelease(KeyEvent.VK_TAB); robot.delay(delay);
-            robot.keyPress(KeyEvent.VK_TAB); robot.keyRelease(KeyEvent.VK_TAB); robot.delay(delay);
-
-            skipDevices();
-
-            robot.keyPress(KeyEvent.VK_ENTER); robot.keyRelease(KeyEvent.VK_ENTER); robot.delay(delay);
-            robot.keyPress(KeyEvent.VK_ESCAPE); robot.keyRelease(KeyEvent.VK_ESCAPE); robot.delay(delay);
-            robot.keyPress(KeyEvent.VK_END); robot.keyRelease(KeyEvent.VK_END); robot.delay(delay);
-            
-        } catch (Exception e) {
-            System.err.println(e);
-        }
+        open();
+        pressKey(KeyEvent.VK_D);
+        pressKey(KeyEvent.VK_TAB, 2);
+        skipDevices();
+        pressKey(KeyEvent.VK_ENTER);
+        pressKey(KeyEvent.VK_ESCAPE);
+        pressKey(KeyEvent.VK_END);
     }
 
     private void enterTag(String tag){
@@ -216,33 +146,28 @@ public class DataEntryBot {
             Thread.sleep(delay);
             switch(zone.getType()){
                 case "Photo Detector":
-                    robot.keyPress(KeyEvent.VK_A); robot.keyRelease(KeyEvent.VK_A); robot.delay(delay);
+                    pressKey(KeyEvent.VK_A);
                     break;
                 case "Alarm Input":
-                    robot.keyPress(KeyEvent.VK_M); robot.keyRelease(KeyEvent.VK_M); robot.delay(delay);
-                    robot.keyPress(KeyEvent.VK_A); robot.keyRelease(KeyEvent.VK_A); robot.delay(delay);
-                    robot.keyPress(KeyEvent.VK_A); robot.keyRelease(KeyEvent.VK_A); robot.delay(delay);
-                    robot.keyPress(KeyEvent.VK_A); robot.keyRelease(KeyEvent.VK_A); robot.delay(delay);
+                    pressKey(KeyEvent.VK_M);
+                    pressKey(KeyEvent.VK_A, 3);
                     break;
                 case "Non-latched Supervisory":
-                    robot.keyPress(KeyEvent.VK_N); robot.keyRelease(KeyEvent.VK_N); robot.delay(delay);
+                    pressKey(KeyEvent.VK_N);
                     break;
                 case "Latched Supervisory":
-                    robot.keyPress(KeyEvent.VK_L); robot.keyRelease(KeyEvent.VK_L); robot.delay(delay);
+                    pressKey(KeyEvent.VK_L);
                     break;
                 case "Heat Detector":
-                    robot.keyPress(KeyEvent.VK_M); robot.keyRelease(KeyEvent.VK_M); robot.delay(delay);
-                    robot.keyPress(KeyEvent.VK_A); robot.keyRelease(KeyEvent.VK_A); robot.delay(delay);
-                    robot.keyPress(KeyEvent.VK_A); robot.keyRelease(KeyEvent.VK_A); robot.delay(delay);
-                    robot.keyPress(KeyEvent.VK_A); robot.keyRelease(KeyEvent.VK_A); robot.delay(delay);
+                    pressKey(KeyEvent.VK_M);
+                    pressKey(KeyEvent.VK_A, 3);
                     break;
                 case "Blank Device":
-                    robot.keyPress(KeyEvent.VK_N); robot.keyRelease(KeyEvent.VK_N); robot.delay(delay);
-                    robot.keyPress(KeyEvent.VK_B); robot.keyRelease(KeyEvent.VK_B); robot.delay(delay);
-                    robot.keyPress(KeyEvent.VK_B); robot.keyRelease(KeyEvent.VK_B); robot.delay(delay);
+                    pressKey(KeyEvent.VK_N);
+                    pressKey(KeyEvent.VK_B, 2);
                     break;
                 case "Relay":
-                    robot.keyPress(KeyEvent.VK_R); robot.keyRelease(KeyEvent.VK_R); robot.delay(delay);
+                    pressKey(KeyEvent.VK_R);
                     break;
             }
             robot.keyPress(KeyEvent.VK_ENTER); robot.keyRelease(KeyEvent.VK_ENTER); robot.delay(delay);
@@ -256,13 +181,12 @@ public class DataEntryBot {
         updateType(zone);
         
         if(zone.isNS()){
-            robot.keyPress(KeyEvent.VK_N); robot.keyRelease(KeyEvent.VK_N); robot.delay(delay);
+            pressKey(KeyEvent.VK_N);
         }
 
-        robot.keyPress(KeyEvent.VK_ENTER); robot.keyRelease(KeyEvent.VK_ENTER); robot.delay(delay);
-
-        robot.keyPress(KeyEvent.VK_ESCAPE); robot.keyRelease(KeyEvent.VK_ESCAPE); robot.delay(delay);
-        robot.keyPress(KeyEvent.VK_DOWN); robot.keyRelease(KeyEvent.VK_DOWN); robot.delay(delay);
+        pressKey(KeyEvent.VK_ENTER);
+        pressKey(KeyEvent.VK_ESCAPE);
+        pressKey(KeyEvent.VK_DOWN);
     }
 
 
@@ -285,8 +209,7 @@ public class DataEntryBot {
 
     public void enterZoneList(ZoneList zoneList){
         try {
-            robot.keyPress(KeyEvent.VK_PAGE_UP); robot.keyRelease(KeyEvent.VK_PAGE_UP); robot.delay(delay);
-
+            pressKey(KeyEvent.VK_PAGE_UP);
             for(Zone zone : zoneList.zones){
                 if(!zone.getType().equals("Blank Device")){
                     updateZone(zone);
@@ -296,5 +219,38 @@ public class DataEntryBot {
         } catch (Exception e) {
             // TODO: handle exception
         }
+    }
+
+    //Give key and distance, press and release key distance times, and delay if provided
+    public void pressKey(int key, int targetDistance, int threadSleep)
+    {
+        try {
+            Thread.sleep(delay);
+
+            for(int i = 0; i < targetDistance; i++){
+            
+                robot.keyPress(key); 
+                robot.keyRelease(key);
+
+                robot.delay(delay);
+
+                if (threadSleep > 0)
+                {
+                    Thread.sleep(15);
+                }
+            }
+        }catch (Exception e) {
+            // TODO: handle exception
+        }
+    }  
+
+    public void pressKey(int key, int targetDistance)
+    {
+        pressKey(key, targetDistance, 0);
+    }
+
+    public void pressKey(int key)
+    {
+        pressKey(key, 1, 0);
     }
 }
