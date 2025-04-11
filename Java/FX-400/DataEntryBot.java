@@ -6,6 +6,8 @@ public class DataEntryBot {
     int delay = 200;
     private int skipCount = 19;
     
+    private final boolean ROBOT_DELAY = true;
+    private final boolean THREAD_DELAY = true;
 
     public DataEntryBot(){
         try {
@@ -297,4 +299,27 @@ public class DataEntryBot {
             // TODO: handle exception
         }
     }
+
+    //Give key and distance, press key distance times
+    public void reachEntry(int key, int targetDistance)
+    {
+        for(int i = 0; i < targetDistance; i++){
+        try {
+            if(THREAD_DELAY){
+                Thread.sleep(delay);
+            }
+
+            robot.keyPress(key); 
+            robot.keyRelease(key);
+
+            if(ROBOT_DELAY)
+            {
+                robot.delay(delay);
+            }
+            
+            }catch (Exception e) {
+            // TODO: handle exception
+            }
+        }
+    }   
 }
