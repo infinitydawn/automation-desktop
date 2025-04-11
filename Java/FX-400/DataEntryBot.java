@@ -16,7 +16,7 @@ public class DataEntryBot {
     }
 
     public void skipDevices(){
-        pressKey(KeyEvent.VK_RIGHT, skipCount, 15);
+        pressKey(KeyEvent.VK_RIGHT, skipCount, 2);
     }
     
 
