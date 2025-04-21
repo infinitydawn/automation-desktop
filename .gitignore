@@ -1,2 +1,3 @@
 *.class
-dependencies/
+#dependencies/
+dependencies/*.dll
