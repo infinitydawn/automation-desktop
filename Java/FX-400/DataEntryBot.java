@@ -1,9 +1,7 @@
 import java.awt.Robot;
 import java.awt.event.KeyEvent;
-import com.github.kwhat.jnativehook.keyboard.NativeKeyListener;
-import com.github.kwhat.jnativehook.keyboard.NativeKeyEvent;
 
-public class DataEntryBot implements NativeKeyListener {
+public class DataEntryBot {
     Robot robot;
     int delay = 200;
     private int skipCount = 19;

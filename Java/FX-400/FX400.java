@@ -1,6 +1,24 @@
-public class FX400 {
+import com.github.kwhat.jnativehook.GlobalScreen;
+import com.github.kwhat.jnativehook.NativeHookException;
+import com.github.kwhat.jnativehook.keyboard.NativeKeyEvent;
+import com.github.kwhat.jnativehook.keyboard.NativeKeyListener;
+
+public class FX400 implements NativeKeyListener{
 
     public static void main(String[] args) throws Exception {
+
+        try {
+			GlobalScreen.registerNativeHook();
+            System.out.println("ohked");
+		}
+		catch (NativeHookException ex) {
+			System.err.println("There was a problem registering the native hook.");
+			System.err.println(ex.getMessage());
+
+			System.exit(1);
+		}
+
+		GlobalScreen.addNativeKeyListener(new FX400());
 
         DataEntryBot bot = new DataEntryBot();
         ReadTempArray reader = new ReadTempArray();
@@ -86,4 +104,15 @@ public class FX400 {
         // robot.keyRelease(KeyEvent.VK_E);
         // // ... (and so on)
     }
+
+    public void nativeKeyPressed(NativeKeyEvent e) {
+		if (e.getKeyCode() == NativeKeyEvent.VC_BACKQUOTE) {
+            try {
+                GlobalScreen.unregisterNativeHook();
+                System.exit(0);
+            } catch (NativeHookException nativeHookException) {
+                nativeHookException.printStackTrace();
+            }
+        }
+	}
 }
