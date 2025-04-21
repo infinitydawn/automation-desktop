@@ -7,9 +7,9 @@ public class FX400 implements NativeKeyListener{
 
     public static void main(String[] args) throws Exception {
 
+        //Register escape button
         try {
 			GlobalScreen.registerNativeHook();
-            System.out.println("ohked");
 		}
 		catch (NativeHookException ex) {
 			System.err.println("There was a problem registering the native hook.");
@@ -20,6 +20,7 @@ public class FX400 implements NativeKeyListener{
 
 		GlobalScreen.addNativeKeyListener(new FX400());
 
+        //Data entry stuff
         DataEntryBot bot = new DataEntryBot();
         ReadTempArray reader = new ReadTempArray();
         String[][] zoneParts = reader.readFile();
