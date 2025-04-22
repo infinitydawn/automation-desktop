@@ -6,7 +6,8 @@ import java.io.*;
 import javax.swing.*;
 
 // Main class
-class GFG {
+public class GFG {
+
     public static File getExcelFile(){
         try {
             // Using this process to invoke the constructor,
