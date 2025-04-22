@@ -1,3 +1,4 @@
 *.class
 #dependencies/
 **/dependencies/*.dll
+**/\.vscode
