@@ -3,6 +3,7 @@ import com.github.kwhat.jnativehook.NativeHookException;
 import com.github.kwhat.jnativehook.keyboard.NativeKeyEvent;
 import com.github.kwhat.jnativehook.keyboard.NativeKeyListener;
 
+
 public class FX400 implements NativeKeyListener{
 
     public static void main(String[] args) throws Exception {
