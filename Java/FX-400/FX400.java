@@ -1,8 +1,8 @@
+import java.util.ArrayList;
 import com.github.kwhat.jnativehook.GlobalScreen;
 import com.github.kwhat.jnativehook.NativeHookException;
 import com.github.kwhat.jnativehook.keyboard.NativeKeyEvent;
 import com.github.kwhat.jnativehook.keyboard.NativeKeyListener;
-
 
 public class FX400 implements NativeKeyListener{
 
@@ -26,7 +26,6 @@ public class FX400 implements NativeKeyListener{
         ReadTempArray reader = new ReadTempArray();
         String[][] zoneParts = reader.readFile();
         ZoneList zoneList = new ZoneList();
-        int skipCount = 0;
 
         String[] addresses = zoneParts[0];
         String[] tags1 = zoneParts[1];
@@ -39,15 +38,21 @@ public class FX400 implements NativeKeyListener{
 
         zoneList.displayZoneList();
 
-        if (zoneList.zones.get(0).getAddress() != 0) {
-            skipCount = (int) (zoneList.zones.get(0).getAddress() - 1);
-            bot.updateSkipCount(skipCount);
-        }
+        ArrayList<Zone> zones = zoneList.zones;
+        Zone zone = zones.get(0);
+        int skip_count = (int) zone.getAddress() - 1;
 
-        System.out.println(skipCount);
+        for(int current_zone = 0; current_zone < zones.size(); current_zone++) {
 
-        for (Zone zone : zoneList.zones) {
+            zone = zones.get(current_zone);
+            //Get difference of current and previous address, then -1
+            if(current_zone > 0){
+                skip_count += (int) zone.getAddress() - (int) zones.get(current_zone - 1).getAddress() - 1;
+            }
+
             System.out.println("Checking: " + zone.getZoneinfo());
+
+            bot.updateSkipCount(skip_count);
 
             switch (zone.getType()) {
                 case "Photo Detector":
@@ -68,10 +73,6 @@ public class FX400 implements NativeKeyListener{
                 case "Relay":
                     bot.addRelay();
                     break;
-                default:
-                    skipCount += 1;
-                    bot.updateSkipCount(skipCount);
-                    System.out.println("  Skipping zone: " + zone.getZoneinfo() + " (skip count: " + skipCount + ")");
             }
         }
 
