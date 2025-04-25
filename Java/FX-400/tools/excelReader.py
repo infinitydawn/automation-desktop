@@ -1,12 +1,18 @@
+from tkinter import Tk
+from tkinter.filedialog import askopenfilename
 import pandas as pd
 
-raw_df = pd.read_csv('../assets/data.csv', encoding='utf-8')
+Tk().withdraw() # we don't want a full GUI, so keep the root window from appearing
+file_path = askopenfilename(filetypes=[("CSV files", "*.csv"), ("Excel files", "*.xlsx")]) # show an "Open" dialog box and return the path to the selected file
+
+raw_df = pd.read_csv(file_path, encoding='utf-8')
 df = raw_df.sort_values(by = 'Zone', ascending=True)
 
-# print(df)
+zoneColumn = df['Zone']
+typeColumn = df['Type']
+locationColumn = df['Location']
 
-print("Dataframe loaded and sorted by Zone")
-
+print(" * Dataframe loaded and sorted by Zone. Starting checks...")
 
 def check_decimal(number):
     number_str = str(number)
@@ -16,45 +22,52 @@ def check_decimal(number):
         return True
     else:
         return False
-    
-#haha
 
-def check_columns(df):
+
+def check_column_headers(df):
+    print(" * Checking if all headers are present...")
     required_columns = ['Zone', 'Type', 'Location']
     for column in required_columns:
         if column not in df.columns:
             errorMessage = f"Missing required column: {column}"
             raise ValueError(errorMessage)
 
-
-# check if the columns are present in the dataframe
-check_columns(df)
-
-zoneColumn = df['Zone']
-typeColumn = df['Type']
-locationColumn = df['Location']
-
-print(zoneColumn)
-
-# check if the zone column is in correct format
-for index, value in enumerate(zoneColumn):
-    if(check_decimal(value) == False):
-        errorMessage = f"Zone: {value}, row {index+1} is not in correct format, make sure it ends with .1 or .2"
-        raise ValueError(errorMessage)
-
-    # print(f"Index: {index}, Value: {value}")
-    # print(f"correct format: {check_decimal(value)}")
-
-print("Check if every .2 zone has a .1 zone...")
-# check if every .2 zone has a .1 zone
-for index, value in enumerate(zoneColumn):
-    
-    if(check_decimal(value) == True and str(value).endswith(".2")):
-        # print(f"Zone: {value}, row {index+1} is in correct format")
-        # print(f"this zone: {value}, previous zone: {zoneColumn[index-1]}")
-        if(value - 0.1 not in zoneColumn):
-            errorMessage = f"Zone: {value}, row {index+1} is .2 zone but previous zone: {zoneColumn[index-1]} is not .1 zone"
+#check if all zones are decimals (0.1 or 0.2)
+def check_zone_format(zoneColumn):
+    print(" * Checking if the zone column is in the correct format...")
+    for index, value in enumerate(zoneColumn):
+        if(check_decimal(value) == False):
+            errorMessage = f"Zone: {value}, row {index+1} is not in correct format, make sure it ends with .1 or .2"
             raise ValueError(errorMessage)
+
+# check if every .2 zone has a .1 zone
+def check_subaddresses(zoneColumn):
+    print(" * Checking if every .2 zone has a .1 zone...")
+    for index, value in enumerate(zoneColumn):
+        try:
+            value = float(value)  # Ensure the value is numeric
+            if check_decimal(value) and str(value).endswith(".2"):
+                prev_zone = round(value - 0.1, 2)
+                
+                if prev_zone not in zoneColumn.astype(float).values:
+                    errorMessage = f"Zone: {value}, row {index+1} is .2 zone but there is no zone number {prev_zone} in the list, make sure there is a .1 zone before it"
+                    raise ValueError(errorMessage)
+        except ValueError as e:
+            raise ValueError(f"{e}")
+
+    
+# check if the columns are present in the dataframe
+check_column_headers(df)
+check_zone_format(zoneColumn)
+
+# check if every .2 zone has a .1 zone
+check_subaddresses(zoneColumn)
+
+
+df.to_csv('../assets/temp_zones.csv', index=False)
+
+
+
 
 
 
