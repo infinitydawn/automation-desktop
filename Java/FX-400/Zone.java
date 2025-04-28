@@ -42,7 +42,7 @@ class Zone {
             this.isNS = true;
             this.isDualInput = true;
         } else if (Zone.checkTags(tag, new String[] { "pull"})) {
-            type = "Alarm Input";
+            type = "Alarm Input Class A";
             this.isPullSttn = true;
         } else if (Zone.checkTags(tag, new String[] { "co", "carb" })) {
             type = "Latched Supervisory";

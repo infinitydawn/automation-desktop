@@ -70,6 +70,9 @@ public class FX400 implements NativeKeyListener{
                 case "Heat Detector":
                     bot.addHeatDetector();
                     break;
+                case "Alarm Input Class A":
+                    bot.addAlarmInputClassA();
+                    break;
                 case "Relay":
                     bot.addRelay();
                     break;
