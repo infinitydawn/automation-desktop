@@ -99,6 +99,18 @@ public class DataEntryBot {
         pressKey(KeyEvent.VK_END);
     }
 
+    public void addAlarmInputClassA(){
+        open();
+        pressKey(KeyEvent.VK_D, 2);
+        pressKey(KeyEvent.VK_TAB, 1);
+        pressKey(KeyEvent.VK_C, 1);
+        pressKey(KeyEvent.VK_TAB, 2);
+        skipDevices();
+        pressKey(KeyEvent.VK_ENTER);
+        pressKey(KeyEvent.VK_ESCAPE);
+        pressKey(KeyEvent.VK_END);
+    }
+
 
 
     public void addRelay(){
