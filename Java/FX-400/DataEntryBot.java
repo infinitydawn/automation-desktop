@@ -209,7 +209,7 @@ public class DataEntryBot {
 
     public void enterZoneList(ZoneList zoneList){
         try {
-            pressKey(KeyEvent.VK_PAGE_UP);
+            pressKey(KeyEvent.VK_HOME); 
             for(Zone zone : zoneList.zones){
                 if(!zone.getType().equals("Blank Device")){
                     updateZone(zone);
