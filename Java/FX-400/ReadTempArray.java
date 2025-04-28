@@ -8,9 +8,11 @@ public class ReadTempArray {
     // }
 
     public String [][] readFile() throws Exception {
-        File tempFile = new File("assets/tempArr.txt");
+        File tempFile = new File("assets/temp_zones.csv");
         Scanner tempScan = new Scanner(tempFile);
         String content = "";
+
+        tempScan.nextLine();
 
         while (tempScan.hasNext()) {
             content += tempScan.nextLine();
@@ -18,7 +20,11 @@ public class ReadTempArray {
 
         tempScan.close();
 
-        String[] parts = content.split("\\|");
+        System.out.println(content);
+
+
+
+        String[] parts = content.split("\\,");
         String[] addresses = new String[parts.length / 3];
         String[] tag1 = new String[parts.length / 3];
         String[] tag2 = new String[parts.length / 3];
