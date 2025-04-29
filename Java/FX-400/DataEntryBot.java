@@ -31,7 +31,6 @@ public class DataEntryBot extends Robot{
     }  
 
     public void pressKey(int key, int target_distance){
-        target_distance = Math.max(1, target_distance);
         pressKey(key, target_distance, DELAY_STRENGTH);
     }
 
