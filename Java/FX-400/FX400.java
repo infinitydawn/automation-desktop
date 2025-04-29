@@ -114,7 +114,7 @@ public class FX400 extends Thread{
     }
 
     public void skipDevices(){
-        bot.pressKey(KeyEvent.VK_RIGHT, skip_count, 2);
+        bot.pressKey(KeyEvent.VK_RIGHT, skip_count, 0);
     }
 
     public void open(){
@@ -229,11 +229,11 @@ public class FX400 extends Thread{
     private void updateTags(Zone zone){
         try {
             Thread.sleep(delay);
-            bot.pressKey(KeyEvent.VK_ENTER, 1, 15);
+            bot.pressKey(KeyEvent.VK_ENTER, 1, 0);
             enterTag(zone.getTag1());
-            bot.pressKey(KeyEvent.VK_ENTER, 1, 15);
+            bot.pressKey(KeyEvent.VK_ENTER, 1, 0);
             enterTag(zone.getTag2());
-            bot.pressKey(KeyEvent.VK_ENTER, 1, 15);
+            bot.pressKey(KeyEvent.VK_ENTER, 1, 0);
         } catch (Exception e) {
             e.printStackTrace();
         }
