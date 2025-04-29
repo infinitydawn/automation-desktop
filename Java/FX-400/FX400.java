@@ -11,7 +11,7 @@ public class FX400 extends Thread{
         try {
             bot = new DataEntryBot();
         } catch (Exception e) {
-            System.err.println(e);
+            e.printStackTrace();
         }
     }
 
@@ -104,6 +104,7 @@ public class FX400 extends Thread{
             System.out.println("FX400 Entry Complete");
         }
         catch(Exception e){
+            e.printStackTrace();
         }
     }
 
@@ -232,7 +233,7 @@ public class FX400 extends Thread{
             //bot.keyPress(KeyEvent.VK_ENTER); bot.keyRelease(KeyEvent.VK_ENTER); bot.delay(delay);
             bot.pressKey(KeyEvent.VK_ENTER, 1, 15);
         } catch (Exception e) {
-            // TODO: handle exception
+            e.printStackTrace();
         }
     }
 
@@ -267,7 +268,7 @@ public class FX400 extends Thread{
             }
             bot.keyPress(KeyEvent.VK_ENTER); bot.keyRelease(KeyEvent.VK_ENTER); bot.delay(delay);
         } catch (Exception e) {
-            // TODO: handle exception
+            e.printStackTrace();
         }
     }
 
@@ -296,8 +297,7 @@ public class FX400 extends Thread{
                 updateRow(new subZone(zone.getAddress()+0.1, "    Spare", zone.getTag2()));
             }
         } catch (Exception e) {
-            // TODO: handle exception
-            System.out.println(e);
+            e.printStackTrace();
         }
         
     }
@@ -312,7 +312,7 @@ public class FX400 extends Thread{
             }
             
         } catch (Exception e) {
-            // TODO: handle exception
+            e.printStackTrace();
         }
     }
 }
