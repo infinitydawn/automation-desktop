@@ -6,6 +6,7 @@ public class FX400 extends Thread{
     private DataEntryBot bot;
     private int skip_count = 19;
     private int delay = 200;
+    private boolean is_running = false; //used to stop the bot from running without closing process
 
     public FX400(){
         try {
@@ -17,6 +18,8 @@ public class FX400 extends Thread{
 
     public void run() {
         try{
+            is_running = true;
+
             ReadTempArray reader = new ReadTempArray();
             String[][] zoneParts = reader.readFile();
             ZoneList zoneList = new ZoneList();
@@ -36,7 +39,7 @@ public class FX400 extends Thread{
             Zone zone = zones.get(0);
             skip_count = (int) zone.getAddress() - 1;
 
-            for(int current_zone = 0; current_zone < zones.size(); current_zone++) {
+            for(int current_zone = 0; current_zone < zones.size() && is_running; current_zone++) {
 
                 zone = zones.get(current_zone);
                 //Get difference of current and previous address, then -1
@@ -71,8 +74,9 @@ public class FX400 extends Thread{
                 }
             }
 
-            enterZoneList(zoneList);
-
+            if(is_running){
+                enterZoneList(zoneList);
+            }
             // zoneList.addZone(1.1, "Waterflow ");
             // zoneList.addZone(2.1, "valve ");
             // zoneList.addZone(2.2, "discharge ");
@@ -102,6 +106,7 @@ public class FX400 extends Thread{
             // bot.keyRelease(KeyEvent.VK_E);
             // // ... (and so on)
             System.out.println("FX400 Entry Complete");
+            is_running = false;
         }
         catch(Exception e){
             e.printStackTrace();
@@ -310,6 +315,15 @@ public class FX400 extends Thread{
             
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    public void setIsRunning(boolean status){
+        is_running = status;
+
+        //Set bot to null to prevent further inputs
+        if(!is_running){
+            bot = null;
         }
     }
 }

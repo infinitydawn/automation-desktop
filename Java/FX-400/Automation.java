@@ -27,7 +27,10 @@ public class Automation implements NativeKeyListener{
     }
 
     public void nativeKeyPressed(NativeKeyEvent e) {
+        
 		if (e.getKeyCode() == NativeKeyEvent.VC_BACKQUOTE) {
+
+            //Closes the program completely - will have to restart it
             try {
                 System.out.println("Exiting Program");
                 GlobalScreen.unregisterNativeHook();
@@ -35,6 +38,17 @@ public class Automation implements NativeKeyListener{
             } catch (NativeHookException nativeHookException) {
                 nativeHookException.printStackTrace();
             }
+
+            /*
+            //Stops the data entry bot WITHOUT requiring a restart  - this will throw errors, may want to catch them properly
+            try {
+                System.out.println("Exiting Program");
+                fx400.interrupt();
+                fx400.setIsRunning(false);
+            } catch (Exception nativeHookException) {
+                nativeHookException.printStackTrace();
+            }
+            */
         }
 
         if (e.getKeyCode() == NativeKeyEvent.VC_F2) {
