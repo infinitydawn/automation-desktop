@@ -2,6 +2,8 @@ import java.awt.Robot;
 
 public class DataEntryBot extends Robot{
 
+    private final int DELAY_STRENGTH = 0;
+
     private int delay; //default 200
 
     public DataEntryBot(int delay) throws Exception{
@@ -30,10 +32,10 @@ public class DataEntryBot extends Robot{
     }  
 
     public void pressKey(int key, int target_distance){
-        pressKey(key, target_distance, 0);
+        pressKey(key, target_distance, DELAY_STRENGTH);
     }
 
     public void pressKey(int key){
-        pressKey(key, 1, 0);
+        pressKey(key, 1, DELAY_STRENGTH);
     }
 }
