@@ -5,7 +5,16 @@ import pandas as pd
 Tk().withdraw() # we don't want a full GUI, so keep the root window from appearing
 file_path = askopenfilename(filetypes=[("CSV files", "*.csv"), ("Excel files", "*.xlsx")]) # show an "Open" dialog box and return the path to the selected file
 
-raw_df = pd.read_csv(file_path, encoding='utf-8')
+raw_df = ""
+
+if file_path.endswith('.xlsx'):
+    raw_df = pd.read_excel(file_path, engine='openpyxl')
+elif file_path.endswith('.csv'):
+    raw_df = pd.read_csv(file_path, encoding='utf-8')
+    if not file_path.endswith('.csv'):
+        raise ValueError("The selected file is not a .CSV Or .XLSX file.")
+
+
 df = raw_df.sort_values(by = 'Zone', ascending=True)
 
 zoneColumn = df['Zone']
