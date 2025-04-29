@@ -2,8 +2,7 @@ import java.awt.Robot;
 
 public class DataEntryBot extends Robot{
 
-    private final int DELAY_STRENGTH = 0;
-
+    private int DELAY_STRENGTH = 0;
     private int delay; //default 200
 
     public DataEntryBot(int delay) throws Exception{
