@@ -2,13 +2,16 @@ import java.awt.Robot;
 import java.awt.event.KeyEvent;
 
 public class DataEntryBot {
+
+    private final int START_DELAY = 5000; // default 5000
+
     Robot robot;
     int delay = 200;
     private int skipCount = 19;
 
     public DataEntryBot(){
         try {
-            Thread.sleep(5000);
+            Thread.sleep(START_DELAY);
             robot = new Robot();
         } catch (Exception e) {
             System.err.println(e);
