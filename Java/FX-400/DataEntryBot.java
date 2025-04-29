@@ -30,7 +30,7 @@ public class DataEntryBot extends Robot{
                 }
             }
         }catch (Exception e) {
-            // TODO: handle exception
+            e.printStackTrace();
         }
     }  
 
