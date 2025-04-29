@@ -39,15 +39,16 @@ public class Automation implements NativeKeyListener{
 
         if (e.getKeyCode() == NativeKeyEvent.VC_F2) {
             try {
-                if(fx400 == null){
+                //Start a new thread only if it doesn't exist or is no longer alive
+                if(fx400 == null || (fx400 != null && !fx400.isAlive())){
+                    fx400 = new FX400();
+                }
+
+                if(!fx400.isAlive()){
                     Thread.sleep(START_DELAY);
 
-                    System.out.println("Starting FX400");
-
-                    fx400 = new FX400();
-                    if(!fx400.isAlive()){
-                        fx400.start();
-                    }
+                    System.out.println("Starting FX400 Data Entry");      
+                    fx400.start();
                 }
             } catch (Exception except) {
                 except.printStackTrace();

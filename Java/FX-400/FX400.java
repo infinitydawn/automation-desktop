@@ -224,13 +224,10 @@ public class FX400 extends Thread{
     private void updateTags(Zone zone){
         try {
             Thread.sleep(delay);
-            //bot.keyPress(KeyEvent.VK_ENTER); bot.keyRelease(KeyEvent.VK_ENTER); bot.delay(delay);
             bot.pressKey(KeyEvent.VK_ENTER, 1, 15);
             enterTag(zone.getTag1());
-            //bot.keyPress(KeyEvent.VK_ENTER); bot.keyRelease(KeyEvent.VK_ENTER); bot.delay(delay);
             bot.pressKey(KeyEvent.VK_ENTER, 1, 15);
             enterTag(zone.getTag2());
-            //bot.keyPress(KeyEvent.VK_ENTER); bot.keyRelease(KeyEvent.VK_ENTER); bot.delay(delay);
             bot.pressKey(KeyEvent.VK_ENTER, 1, 15);
         } catch (Exception e) {
             e.printStackTrace();
