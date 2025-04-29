@@ -30,10 +30,10 @@ public class DataEntryBot extends Robot{
     }  
 
     public void pressKey(int key, int target_distance){
-        pressKey(key, target_distance, 1);
+        pressKey(key, target_distance, 0);
     }
 
     public void pressKey(int key){
-        pressKey(key, 1, 1);
+        pressKey(key, 1, 0);
     }
 }
