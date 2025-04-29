@@ -5,8 +5,9 @@ import com.github.kwhat.jnativehook.keyboard.NativeKeyListener;
 
 public class Automation implements NativeKeyListener{
 
+    private final int START_DELAY = 0;
+
     private FX400 fx400;
-    private int START_DELAY;
 
     public static void main(String[] args){
         //Register escape button
@@ -36,6 +37,7 @@ public class Automation implements NativeKeyListener{
         if (e.getKeyCode() == NativeKeyEvent.VC_ALT) {
             try {
                 if(fx400 == null){
+                    Thread.sleep(START_DELAY);
                     fx400 = new FX400();
                     if(!fx400.isAlive()){
                         fx400.start();
