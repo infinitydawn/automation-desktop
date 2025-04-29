@@ -9,7 +9,6 @@ public class FX400 extends Thread{
 
     public FX400(){
         try {
-            //Thread.sleep(START_DELAY);
             bot = new DataEntryBot();
         } catch (Exception e) {
             System.err.println(e);
@@ -72,7 +71,7 @@ public class FX400 extends Thread{
                 }
             }
 
-        enterZoneList(zoneList);
+            enterZoneList(zoneList);
 
             // zoneList.addZone(1.1, "Waterflow ");
             // zoneList.addZone(2.1, "valve ");
@@ -102,9 +101,9 @@ public class FX400 extends Thread{
             // bot.keyPress(KeyEvent.VK_E);
             // bot.keyRelease(KeyEvent.VK_E);
             // // ... (and so on)
+            System.out.println("FX400 Entry Complete");
         }
         catch(Exception e){
-
         }
     }
 
@@ -224,11 +223,14 @@ public class FX400 extends Thread{
     private void updateTags(Zone zone){
         try {
             Thread.sleep(delay);
-            bot.keyPress(KeyEvent.VK_ENTER); bot.keyRelease(KeyEvent.VK_ENTER); bot.delay(delay);
+            //bot.keyPress(KeyEvent.VK_ENTER); bot.keyRelease(KeyEvent.VK_ENTER); bot.delay(delay);
+            bot.pressKey(KeyEvent.VK_ENTER, 1, 15);
             enterTag(zone.getTag1());
-            bot.keyPress(KeyEvent.VK_ENTER); bot.keyRelease(KeyEvent.VK_ENTER); bot.delay(delay);
+            //bot.keyPress(KeyEvent.VK_ENTER); bot.keyRelease(KeyEvent.VK_ENTER); bot.delay(delay);
+            bot.pressKey(KeyEvent.VK_ENTER, 1, 15);
             enterTag(zone.getTag2());
-            bot.keyPress(KeyEvent.VK_ENTER); bot.keyRelease(KeyEvent.VK_ENTER); bot.delay(delay);
+            //bot.keyPress(KeyEvent.VK_ENTER); bot.keyRelease(KeyEvent.VK_ENTER); bot.delay(delay);
+            bot.pressKey(KeyEvent.VK_ENTER, 1, 15);
         } catch (Exception e) {
             // TODO: handle exception
         }

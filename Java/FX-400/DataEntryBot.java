@@ -19,15 +19,14 @@ public class DataEntryBot extends Robot{
             Thread.sleep(delay);
 
             for(int i = 0; i < targetDistance; i++){
-            
+
                 this.keyPress(key); 
                 this.keyRelease(key);
 
                 this.delay(delay);
 
-                if (threadSleep > 0)
-                {
-                    Thread.sleep(15);
+                if (threadSleep > 0){
+                    Thread.sleep(threadSleep);
                 }
             }
         }catch (Exception e) {
@@ -35,13 +34,11 @@ public class DataEntryBot extends Robot{
         }
     }  
 
-    public void pressKey(int key, int targetDistance)
-    {
+    public void pressKey(int key, int targetDistance){
         pressKey(key, targetDistance, 0);
     }
 
-    public void pressKey(int key)
-    {
+    public void pressKey(int key){
         pressKey(key, 1, 0);
     }
 }
