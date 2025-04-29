@@ -1,124 +1,316 @@
 import java.util.ArrayList;
-import com.github.kwhat.jnativehook.GlobalScreen;
-import com.github.kwhat.jnativehook.NativeHookException;
-import com.github.kwhat.jnativehook.keyboard.NativeKeyEvent;
-import com.github.kwhat.jnativehook.keyboard.NativeKeyListener;
+import java.awt.event.KeyEvent;
 
-public class FX400 implements NativeKeyListener{
+public class FX400 extends Thread{
 
-    public static void main(String[] args) throws Exception {
+    private DataEntryBot bot;
+    private int skip_count = 19;
+    private int delay = 200;
 
-        //Register escape button
+    public FX400(){
         try {
-			GlobalScreen.registerNativeHook();
-		}
-		catch (NativeHookException ex) {
-			System.err.println("There was a problem registering the native hook.");
-			System.err.println(ex.getMessage());
-
-			System.exit(1);
-		}
-
-		GlobalScreen.addNativeKeyListener(new FX400());
-
-        //Data entry stuff
-        DataEntryBot bot = new DataEntryBot();
-        ReadTempArray reader = new ReadTempArray();
-        String[][] zoneParts = reader.readFile();
-        ZoneList zoneList = new ZoneList();
-
-        String[] addresses = zoneParts[0];
-        String[] tags1 = zoneParts[1];
-        String[] tags2 = zoneParts[2];
-
-        for (int i = 0; i < addresses.length; i++) {
-            System.out.println(" - - - - -  + " + tags1[i]);
-            zoneList.addZone(Double.parseDouble(addresses[i]), tags1[i], tags2[i]);
+            //Thread.sleep(START_DELAY);
+            bot = new DataEntryBot();
+        } catch (Exception e) {
+            System.err.println(e);
         }
-
-        zoneList.displayZoneList();
-
-        ArrayList<Zone> zones = zoneList.zones;
-        Zone zone = zones.get(0);
-        int skip_count = (int) zone.getAddress() - 1;
-
-        for(int current_zone = 0; current_zone < zones.size(); current_zone++) {
-
-            zone = zones.get(current_zone);
-            //Get difference of current and previous address, then -1
-            if(current_zone > 0){
-                skip_count += (int) zone.getAddress() - (int) zones.get(current_zone - 1).getAddress() - 1;
-            }
-
-            System.out.println("Checking: " + zone.getZoneinfo());
-
-            bot.updateSkipCount(skip_count);
-
-            switch (zone.getType()) {
-                case "Photo Detector":
-                    bot.addPhotoDetector();
-                    break;
-                case "Alarm Input":
-                    bot.addAlarmInputMod();
-                    break;
-                case "Non-latched Supervisory":
-                    bot.addNonLatchedSupv();
-                    break;
-                case "Latched Supervisory":
-                    bot.addLatchedSupv();
-                    break;
-                case "Heat Detector":
-                    bot.addHeatDetector();
-                    break;
-                case "Alarm Input Class A":
-                    bot.addAlarmInputClassA();
-                    break;
-                case "Relay":
-                    bot.addRelay();
-                    break;
-            }
-        }
-
-       bot.enterZoneList(zoneList);
-
-        // zoneList.addZone(1.1, "Waterflow ");
-        // zoneList.addZone(2.1, "valve ");
-        // zoneList.addZone(2.2, "discharge ");
-        // zoneList.addZone(3.1, "Damper ");
-        // zoneList.addZone(4.1, "jocky ");
-        // zoneList.addZone(5.1, "duct ");
-        // zoneList.addZone(5.2, "bypass ");
-        // zoneList.addZone(20, "waterflow");
-        // zoneList.addZone(21, "smoke");
-
-        // if (Zone.classify("smoke").equals("Photo Detector")) {
-        // bot.addPhotoDetector();
-        // }
-
-        // System.out.println(Zone.classify("Waterflow "));
-        // System.out.println(Zone.classify("valve "));
-        // System.out.println(Zone.classify("smoke "));
-        // System.out.println(Zone.classify("Damper "));
-        // System.out.println(Zone.classify("jocky "));
-        // System.out.println(Zone.classify("duct "));
-        // System.out.println(Zone.classify("bypass "));
-
-        // //Simulate typing "Hello, World!"
-        // robot.keyPress(KeyEvent.VK_H);
-        // robot.keyRelease(KeyEvent.VK_H);
-        // robot.keyPress(KeyEvent.VK_E);
-        // robot.keyRelease(KeyEvent.VK_E);
-        // // ... (and so on)
     }
 
-    public void nativeKeyPressed(NativeKeyEvent e) {
-		if (e.getKeyCode() == NativeKeyEvent.VC_BACKQUOTE) {
-            try {
-                GlobalScreen.unregisterNativeHook();
-                System.exit(0);
-            } catch (NativeHookException nativeHookException) {
-                nativeHookException.printStackTrace();
+    public void run() {
+        try{
+            ReadTempArray reader = new ReadTempArray();
+            String[][] zoneParts = reader.readFile();
+            ZoneList zoneList = new ZoneList();
+
+            String[] addresses = zoneParts[0];
+            String[] tags1 = zoneParts[1];
+            String[] tags2 = zoneParts[2];
+
+            for (int i = 0; i < addresses.length; i++) {
+                System.out.println(" - - - - -  + " + tags1[i]);
+                zoneList.addZone(Double.parseDouble(addresses[i]), tags1[i], tags2[i]);
             }
+
+            zoneList.displayZoneList();
+
+            ArrayList<Zone> zones = zoneList.zones;
+            Zone zone = zones.get(0);
+            skip_count = (int) zone.getAddress() - 1;
+
+            for(int current_zone = 0; current_zone < zones.size(); current_zone++) {
+
+                zone = zones.get(current_zone);
+                //Get difference of current and previous address, then -1
+                if(current_zone > 0){
+                    skip_count += (int) zone.getAddress() - (int) zones.get(current_zone - 1).getAddress() - 1;
+                }
+
+                System.out.println("Checking: " + zone.getZoneinfo());
+
+                switch (zone.getType()) {
+                    case "Photo Detector":
+                        addPhotoDetector();
+                        break;
+                    case "Alarm Input":
+                        addAlarmInputMod();
+                        break;
+                    case "Non-latched Supervisory":
+                        addNonLatchedSupv();
+                        break;
+                    case "Latched Supervisory":
+                        addLatchedSupv();
+                        break;
+                    case "Heat Detector":
+                        addHeatDetector();
+                        break;
+                    case "Alarm Input Class A":
+                        addAlarmInputClassA();
+                        break;
+                    case "Relay":
+                        addRelay();
+                        break;
+                }
+            }
+
+        enterZoneList(zoneList);
+
+            // zoneList.addZone(1.1, "Waterflow ");
+            // zoneList.addZone(2.1, "valve ");
+            // zoneList.addZone(2.2, "discharge ");
+            // zoneList.addZone(3.1, "Damper ");
+            // zoneList.addZone(4.1, "jocky ");
+            // zoneList.addZone(5.1, "duct ");
+            // zoneList.addZone(5.2, "bypass ");
+            // zoneList.addZone(20, "waterflow");
+            // zoneList.addZone(21, "smoke");
+
+            // if (Zone.classify("smoke").equals("Photo Detector")) {
+            // bot.addPhotoDetector();
+            // }
+
+            // System.out.println(Zone.classify("Waterflow "));
+            // System.out.println(Zone.classify("valve "));
+            // System.out.println(Zone.classify("smoke "));
+            // System.out.println(Zone.classify("Damper "));
+            // System.out.println(Zone.classify("jocky "));
+            // System.out.println(Zone.classify("duct "));
+            // System.out.println(Zone.classify("bypass "));
+
+            // //Simulate typing "Hello, World!"
+            // bot.keyPress(KeyEvent.VK_H);
+            // bot.keyRelease(KeyEvent.VK_H);
+            // bot.keyPress(KeyEvent.VK_E);
+            // bot.keyRelease(KeyEvent.VK_E);
+            // // ... (and so on)
         }
-	}
+        catch(Exception e){
+
+        }
+    }
+
+    public void skipDevices(){
+        bot.pressKey(KeyEvent.VK_RIGHT, skip_count, 2);
+    }
+
+    public void open(){
+        try {
+            Thread.sleep(delay);
+            bot.keyPress(KeyEvent.VK_SHIFT);
+            bot.keyPress(KeyEvent.VK_F10);
+            bot.keyRelease(KeyEvent.VK_SHIFT);
+            bot.keyRelease(KeyEvent.VK_F10);
+            bot.delay(delay);
+
+            bot.pressKey(KeyEvent.VK_DOWN);
+            bot.pressKey(KeyEvent.VK_ENTER);
+            
+        } catch (Exception e) {
+            System.err.println(e);
+        }
+    }
+    
+    public void addPhotoDetector(){
+        open();
+        bot.pressKey(KeyEvent.VK_TAB, 3);
+        skipDevices();
+        bot.pressKey(KeyEvent.VK_ENTER);
+        bot.pressKey(KeyEvent.VK_ESCAPE);
+        bot.pressKey(KeyEvent.VK_END);
+    }
+
+    public void addAlarmInputMod(){
+        open();
+        bot.pressKey(KeyEvent.VK_D, 2);
+        bot.pressKey(KeyEvent.VK_TAB, 3);
+        skipDevices();
+        bot.pressKey(KeyEvent.VK_ENTER);
+        bot.pressKey(KeyEvent.VK_ESCAPE);
+        bot.pressKey(KeyEvent.VK_END);
+    }
+
+    public void addNonLatchedSupv(){
+        open();
+        bot.pressKey(KeyEvent.VK_D, 2);
+        bot.pressKey(KeyEvent.VK_TAB, 2);
+        bot.pressKey(KeyEvent.VK_N);
+        bot.pressKey(KeyEvent.VK_TAB);
+        skipDevices();
+        bot.pressKey(KeyEvent.VK_ENTER);
+        bot.pressKey(KeyEvent.VK_ESCAPE);
+        bot.pressKey(KeyEvent.VK_END);
+    }
+
+    public void addLatchedSupv(){
+        open();
+        bot.pressKey(KeyEvent.VK_D,2);
+        bot.pressKey(KeyEvent.VK_TAB,2);
+        bot.pressKey(KeyEvent.VK_L);
+        bot.pressKey(KeyEvent.VK_TAB);
+        skipDevices();
+        bot.pressKey(KeyEvent.VK_ENTER);
+        bot.pressKey(KeyEvent.VK_ESCAPE);
+        bot.pressKey(KeyEvent.VK_END);
+    }
+
+    public void addHeatDetector(){
+        open();
+        bot.pressKey(KeyEvent.VK_H,3);
+        bot.pressKey(KeyEvent.VK_TAB,3);
+        skipDevices();
+        bot.pressKey(KeyEvent.VK_ENTER);
+        bot.pressKey(KeyEvent.VK_ESCAPE);
+        bot.pressKey(KeyEvent.VK_END);
+    }
+
+    public void addAlarmInputClassA(){
+        open();
+        bot.pressKey(KeyEvent.VK_D, 2);
+        bot.pressKey(KeyEvent.VK_TAB, 1);
+        bot.pressKey(KeyEvent.VK_C, 1);
+        bot.pressKey(KeyEvent.VK_TAB, 2);
+        skipDevices();
+        bot.pressKey(KeyEvent.VK_ENTER);
+        bot.pressKey(KeyEvent.VK_ESCAPE);
+        bot.pressKey(KeyEvent.VK_END);
+    }
+
+    public void addRelay(){
+        open();
+        bot.pressKey(KeyEvent.VK_D);
+        bot.pressKey(KeyEvent.VK_TAB, 2);
+        skipDevices();
+        bot.pressKey(KeyEvent.VK_ENTER);
+        bot.pressKey(KeyEvent.VK_ESCAPE);
+        bot.pressKey(KeyEvent.VK_END);
+    }
+
+    private void enterTag(String tag){
+        try {
+            Thread.sleep(delay);
+            for(int i = 0; i < tag.length(); i++){
+                char c = tag.charAt(i);
+                int keyCode = KeyEvent.getExtendedKeyCodeForChar(c);
+                if (keyCode == KeyEvent.VK_UNDEFINED) {
+                    System.err.println("Key code not found for character: " + c);
+                } else {
+                    bot.keyPress(keyCode); bot.keyRelease(keyCode); Thread.sleep(15);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println(e);
+        }
+    }
+
+    private void updateTags(Zone zone){
+        try {
+            Thread.sleep(delay);
+            bot.keyPress(KeyEvent.VK_ENTER); bot.keyRelease(KeyEvent.VK_ENTER); bot.delay(delay);
+            enterTag(zone.getTag1());
+            bot.keyPress(KeyEvent.VK_ENTER); bot.keyRelease(KeyEvent.VK_ENTER); bot.delay(delay);
+            enterTag(zone.getTag2());
+            bot.keyPress(KeyEvent.VK_ENTER); bot.keyRelease(KeyEvent.VK_ENTER); bot.delay(delay);
+        } catch (Exception e) {
+            // TODO: handle exception
+        }
+    }
+
+    private void updateType(Zone zone){
+        try {
+            Thread.sleep(delay);
+            switch(zone.getType()){
+                case "Photo Detector":
+                    bot.pressKey(KeyEvent.VK_A);
+                    break;
+                case "Alarm Input":
+                    bot.pressKey(KeyEvent.VK_M);
+                    bot.pressKey(KeyEvent.VK_A, 3);
+                    break;
+                case "Non-latched Supervisory":
+                    bot.pressKey(KeyEvent.VK_N);
+                    break;
+                case "Latched Supervisory":
+                    bot.pressKey(KeyEvent.VK_L);
+                    break;
+                case "Heat Detector":
+                    bot.pressKey(KeyEvent.VK_M);
+                    bot.pressKey(KeyEvent.VK_A, 3);
+                    break;
+                case "Blank Device":
+                    bot.pressKey(KeyEvent.VK_N);
+                    bot.pressKey(KeyEvent.VK_B, 2);
+                    break;
+                case "Relay":
+                    bot.pressKey(KeyEvent.VK_R);
+                    break;
+            }
+            bot.keyPress(KeyEvent.VK_ENTER); bot.keyRelease(KeyEvent.VK_ENTER); bot.delay(delay);
+        } catch (Exception e) {
+            // TODO: handle exception
+        }
+    }
+
+    private void updateRow(Zone zone){
+        updateTags(zone);
+        updateType(zone);
+        
+        if(zone.isNS()){
+            bot.pressKey(KeyEvent.VK_N);
+        }
+
+        bot.pressKey(KeyEvent.VK_ENTER);
+        bot.pressKey(KeyEvent.VK_ESCAPE);
+        bot.pressKey(KeyEvent.VK_DOWN);
+    }
+
+
+    private void updateZone(Zone zone){
+        try {
+            updateRow(zone);
+
+            if (zone.getSubAddress() != null){
+                updateRow(zone.getSubAddress());
+            } else if(zone.isDualInput() || zone.getType().equals("Relay")) {
+                // add empty
+                updateRow(new subZone(zone.getAddress()+0.1, "    Spare", zone.getTag2()));
+            }
+        } catch (Exception e) {
+            // TODO: handle exception
+            System.out.println(e);
+        }
+        
+    }
+
+    public void enterZoneList(ZoneList zoneList){
+        try {
+            bot.pressKey(KeyEvent.VK_HOME); 
+            for(Zone zone : zoneList.zones){
+                if(!zone.getType().equals("Blank Device")){
+                    updateZone(zone);
+                }
+            }
+            
+        } catch (Exception e) {
+            // TODO: handle exception
+        }
+    }
 }
