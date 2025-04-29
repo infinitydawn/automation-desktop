@@ -23,7 +23,7 @@ public class Automation implements NativeKeyListener{
 
         GlobalScreen.addNativeKeyListener(new Automation());
 
-        System.out.println("Program ready. Press ALT to start, ` to Exit.");
+        System.out.println("Program ready. Press F2 to start, ` to Exit.");
     }
 
     public void nativeKeyPressed(NativeKeyEvent e) {
@@ -37,7 +37,7 @@ public class Automation implements NativeKeyListener{
             }
         }
 
-        if (e.getKeyCode() == NativeKeyEvent.VC_ALT) {
+        if (e.getKeyCode() == NativeKeyEvent.VC_F2) {
             try {
                 if(fx400 == null){
                     Thread.sleep(START_DELAY);
