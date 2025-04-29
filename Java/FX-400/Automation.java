@@ -22,11 +22,14 @@ public class Automation implements NativeKeyListener{
 		}
 
         GlobalScreen.addNativeKeyListener(new Automation());
+
+        System.out.println("Program ready. Press ALT to start, ` to Exit.");
     }
 
     public void nativeKeyPressed(NativeKeyEvent e) {
 		if (e.getKeyCode() == NativeKeyEvent.VC_BACKQUOTE) {
             try {
+                System.out.println("Exiting Program");
                 GlobalScreen.unregisterNativeHook();
                 System.exit(0);
             } catch (NativeHookException nativeHookException) {
@@ -38,6 +41,9 @@ public class Automation implements NativeKeyListener{
             try {
                 if(fx400 == null){
                     Thread.sleep(START_DELAY);
+
+                    System.out.println("Starting FX400");
+
                     fx400 = new FX400();
                     if(!fx400.isAlive()){
                         fx400.start();
