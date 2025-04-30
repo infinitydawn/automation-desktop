@@ -3,16 +3,16 @@ import java.awt.event.KeyEvent;
 
 public class FX400 extends Thread{
 
-    protected DataEntryBot bot;
-    protected int skip_count = 19;
-    protected boolean is_running = false; //used to stop the bot from running without closing process
-    protected boolean is_AR_paused = false; //used to prompt user to enable AR related settings -- MAKE USE OF THIS IF PAUSING GUI
-
     protected int DELAY = 200; //Default 200. Delay time for everything. Multiply by delay strength to change length
     protected double TAG_DELAY_STRENGTH = 0; //Default 0. Delay when entering tag letters
     protected double ENTER_DELAY_STRENGTH = 1; // Default 1. Delay after pressing Enter (Writes to database. Larger databases may want this higher)
     //protected double DROPDOWN_DELAY_STRENGTH = 0; // Default 0. Delay when scrolling through dropdown menus. UNUSED
     protected boolean BYPASS_AR_PAUSE = false; //Prevents the AR prompt from showing
+
+    protected DataEntryBot bot;
+    protected int skip_count = 19;
+    protected boolean is_running = false; //used to stop the bot from running without closing process
+    protected boolean is_AR_paused = false; //used to prompt user to enable AR related settings -- MAKE USE OF THIS IF PAUSING GUI
 
     public FX400(){
         try {
