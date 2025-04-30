@@ -2,7 +2,8 @@ import java.awt.Robot;
 
 public class DataEntryBot extends Robot{
 
-    private int delay;
+    private int delay; //default 200
+    private int DELAY_STRENGTH = 0; //multiple delay by this to determine final delay time
 
     public DataEntryBot(int delay) throws Exception{
         this.delay = delay;
@@ -12,33 +13,28 @@ public class DataEntryBot extends Robot{
         this(200);
     }
 
-    //Give key and distance, press and release key distance times, and delay if provided
-    public void pressKey(int key, int targetDistance, int threadSleep)
+    //Give key and distance, press and release key distance times, and multiply delay if provided
+    public void pressKey(int key, int target_distance, int delay_strength)
     {
         try {
-            Thread.sleep(delay);
 
-            for(int i = 0; i < targetDistance; i++){
+            for(int i = 0; i < target_distance; i++){
 
                 this.keyPress(key); 
                 this.keyRelease(key);
 
-                this.delay(delay);
-
-                if (threadSleep > 0){
-                    Thread.sleep(threadSleep);
-                }
+                this.delay(delay * delay_strength);
             }
         }catch (Exception e) {
             e.printStackTrace();
         }
     }  
 
-    public void pressKey(int key, int targetDistance){
-        pressKey(key, targetDistance, 0);
+    public void pressKey(int key, int target_distance){
+        pressKey(key, target_distance, DELAY_STRENGTH);
     }
 
     public void pressKey(int key){
-        pressKey(key, 1, 0);
+        pressKey(key, 1, DELAY_STRENGTH);
     }
 }
