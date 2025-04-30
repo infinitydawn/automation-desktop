@@ -282,7 +282,7 @@ public class FX400 extends Thread{
             bot.pressKey(KeyEvent.VK_N);
         }
 
-        bot.pressKey(KeyEvent.VK_ENTER, 0 , 1);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , 1);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_DOWN);
     }
