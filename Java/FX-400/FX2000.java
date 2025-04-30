@@ -150,20 +150,6 @@ public class FX2000 extends FX400{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    /*
-    public void addAlarmInputClassA(){
-        open();
-        bot.pressKey(KeyEvent.VK_D, 2);
-        bot.pressKey(KeyEvent.VK_TAB, 1);
-        bot.pressKey(KeyEvent.VK_C, 1);
-        bot.pressKey(KeyEvent.VK_TAB, 2);
-        skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , 1);
-        bot.pressKey(KeyEvent.VK_ESCAPE);
-        bot.pressKey(KeyEvent.VK_END);
-    }
-    */
-
     public void addRelay(){
         open();
         bot.pressKey(KeyEvent.VK_R);
