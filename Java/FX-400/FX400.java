@@ -3,10 +3,10 @@ import java.awt.event.KeyEvent;
 
 public class FX400 extends Thread{
 
-    private DataEntryBot bot;
-    private int skip_count = 19;
-    private int delay = 200;
-    private boolean is_running = false; //used to stop the bot from running without closing process
+    protected DataEntryBot bot;
+    protected int skip_count = 19;
+    protected int delay = 200;
+    protected boolean is_running = false; //used to stop the bot from running without closing process
 
     public FX400(){
         try {
