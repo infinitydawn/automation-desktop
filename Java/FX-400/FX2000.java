@@ -26,9 +26,20 @@ public class FX2000 extends FX400{
             for (int i = 0; i < addresses.length; i++) {
                 System.out.println(" - - - - -  + " + tags1[i]);
                 zoneList.addZone(Double.parseDouble(addresses[i]), tags1[i], tags2[i]);
+
+                if(Zone.checkTags(tags1[i], new String[] {"shutdown"})){
+                    is_AR_paused = true;
+                }
             }
 
             zoneList.displayZoneList();
+
+            if(is_AR_paused){
+                System.out.println("AR related device discovered, please enable then press F2 to continue.");
+            }
+            while(is_AR_paused){
+                Thread.sleep(DELAY); //Wait until start button pressed again
+            }
 
             ArrayList<Zone> zones = zoneList.zones;
             Zone zone = zones.get(0);

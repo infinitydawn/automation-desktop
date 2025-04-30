@@ -20,9 +20,7 @@ public class ReadTempArray {
 
         tempScan.close();
 
-        System.out.println(content);
-
-
+        //System.out.println(content);
 
         String[] parts = content.split("\\,");
         String[] addresses = new String[parts.length / 3];

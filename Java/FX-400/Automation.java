@@ -11,7 +11,7 @@ public class Automation implements NativeKeyListener{
     private FX2000 fx2000;
 
     public static void main(String[] args){
-        //Register escape button
+        //Register key presses
         try {
 			GlobalScreen.registerNativeHook();
 		}
@@ -65,14 +65,16 @@ public class Automation implements NativeKeyListener{
 
                     System.out.println("Starting FX400 Data Entry");      
                     fx400.start();
+                }else if(fx400.isAlive() && fx400.getIsARPaused()){
+                    fx400.setIsARPaused(false);
                 }
             } catch (Exception except) {
                 except.printStackTrace();
             }
         }
         
-        /*
-         if (e.getKeyCode() == NativeKeyEvent.VC_F2) {
+        
+         if (e.getKeyCode() == NativeKeyEvent.VC_F3) {
             try {
                 //Start a new thread only if it doesn't exist or is no longer alive
                 if(fx2000 == null || (fx2000 != null && !fx2000.isAlive())){
@@ -84,12 +86,13 @@ public class Automation implements NativeKeyListener{
 
                     System.out.println("Starting FX2000 Data Entry");      
                     fx2000.start();
+                }else if(fx2000.isAlive() && fx2000.getIsARPaused()){
+                    fx2000.setIsARPaused(false);
                 }
             } catch (Exception except) {
                 except.printStackTrace();
             }
         }
-        */
         
 	}
 }
