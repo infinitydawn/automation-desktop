@@ -164,7 +164,7 @@ public class FX2000 extends FX400{
         bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH); //make up for not updating Type
         
         if(zone.isNS()){
-            bot.pressKey(KeyEvent.VK_N);
+            bot.pressKey(KeyEvent.VK_N, 1, ENTER_DELAY_STRENGTH);
         }
 
         bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
