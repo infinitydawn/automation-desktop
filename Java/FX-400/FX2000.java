@@ -152,6 +152,11 @@ public class FX2000 extends FX400{
         }
 
         bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+
+        if(zone.isAR()){
+            bot.pressKey(KeyEvent.VK_A);
+            bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        }
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_DOWN);
     }
