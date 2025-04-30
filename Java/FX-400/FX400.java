@@ -3,10 +3,10 @@ import java.awt.event.KeyEvent;
 
 public class FX400 extends Thread{
 
-    private DataEntryBot bot;
-    private int skip_count = 19;
-    private int delay = 200;
-    private boolean is_running = false; //used to stop the bot from running without closing process
+    protected DataEntryBot bot;
+    protected int skip_count = 19;
+    protected int delay = 200;
+    protected boolean is_running = false; //used to stop the bot from running without closing process
 
     public FX400(){
         try {
@@ -226,7 +226,7 @@ public class FX400 extends Thread{
         }
     }
 
-    private void updateTags(Zone zone){
+    public void updateTags(Zone zone){
         try {
             Thread.sleep(delay);
             bot.pressKey(KeyEvent.VK_ENTER, 1, 1);
@@ -274,7 +274,7 @@ public class FX400 extends Thread{
         }
     }
 
-    private void updateRow(Zone zone){
+    public void updateRow(Zone zone){
         updateTags(zone);
         updateType(zone);
         
@@ -288,7 +288,7 @@ public class FX400 extends Thread{
     }
 
 
-    private void updateZone(Zone zone){
+    public void updateZone(Zone zone){
         try {
             updateRow(zone);
 
