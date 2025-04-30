@@ -226,7 +226,7 @@ public class FX400 extends Thread{
         }
     }
 
-    private void updateTags(Zone zone){
+    public void updateTags(Zone zone){
         try {
             Thread.sleep(delay);
             bot.pressKey(KeyEvent.VK_ENTER, 1, 1);
@@ -274,7 +274,7 @@ public class FX400 extends Thread{
         }
     }
 
-    private void updateRow(Zone zone){
+    public void updateRow(Zone zone){
         updateTags(zone);
         updateType(zone);
         
@@ -282,13 +282,13 @@ public class FX400 extends Thread{
             bot.pressKey(KeyEvent.VK_N);
         }
 
-        bot.pressKey(KeyEvent.VK_ENTER, 0 , 1);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , 1);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_DOWN);
     }
 
 
-    private void updateZone(Zone zone){
+    public void updateZone(Zone zone){
         try {
             updateRow(zone);
 
