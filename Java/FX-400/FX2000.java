@@ -1,0 +1,242 @@
+import java.util.ArrayList;
+import java.awt.event.KeyEvent;
+
+public class FX2000 extends FX400{
+
+    private DataEntryBot bot;
+    private int skip_count = 19;
+    private int delay = 200;
+    private boolean is_running = false; //used to stop the bot from running without closing process
+
+    public FX2000(){
+        try {
+            bot = new DataEntryBot();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void run() {
+        try{
+            is_running = true;
+
+            ReadTempArray reader = new ReadTempArray();
+            String[][] zoneParts = reader.readFile();
+            ZoneList zoneList = new ZoneList();
+
+            String[] addresses = zoneParts[0];
+            String[] tags1 = zoneParts[1];
+            String[] tags2 = zoneParts[2];
+
+            for (int i = 0; i < addresses.length; i++) {
+                System.out.println(" - - - - -  + " + tags1[i]);
+                zoneList.addZone(Double.parseDouble(addresses[i]), tags1[i], tags2[i]);
+            }
+
+            zoneList.displayZoneList();
+
+            ArrayList<Zone> zones = zoneList.zones;
+            Zone zone = zones.get(0);
+            skip_count = (int) zone.getAddress() - 1;
+
+            for(int current_zone = 0; current_zone < zones.size() && is_running; current_zone++) {
+
+                zone = zones.get(current_zone);
+                //Get difference of current and previous address, then -1
+                if(current_zone > 0){
+                    skip_count += (int) zone.getAddress() - (int) zones.get(current_zone - 1).getAddress() - 1;
+                }
+
+                System.out.println("Checking: " + zone.getZoneinfo());
+
+                switch (zone.getType()) {
+                    case "Photo Detector":
+                        addPhotoDetector();
+                        break;
+                    case "Alarm Input":
+                        addAlarmInputMod();
+                        break;
+                    case "Non-latched Supervisory":
+                        addNonLatchedSupv();
+                        break;
+                    case "Latched Supervisory":
+                        addLatchedSupv();
+                        break;
+                    case "Heat Detector":
+                        addHeatDetector();
+                        break;
+                    case "Alarm Input Class A":
+                        addAlarmInputClassA();
+                        break;
+                    case "Relay":
+                        addRelay();
+                        break;
+                }
+            }
+
+            if(is_running){
+                enterZoneList(zoneList);
+            }
+            // zoneList.addZone(1.1, "Waterflow ");
+            // zoneList.addZone(2.1, "valve ");
+            // zoneList.addZone(2.2, "discharge ");
+            // zoneList.addZone(3.1, "Damper ");
+            // zoneList.addZone(4.1, "jocky ");
+            // zoneList.addZone(5.1, "duct ");
+            // zoneList.addZone(5.2, "bypass ");
+            // zoneList.addZone(20, "waterflow");
+            // zoneList.addZone(21, "smoke");
+
+            // if (Zone.classify("smoke").equals("Photo Detector")) {
+            // bot.addPhotoDetector();
+            // }
+
+            // System.out.println(Zone.classify("Waterflow "));
+            // System.out.println(Zone.classify("valve "));
+            // System.out.println(Zone.classify("smoke "));
+            // System.out.println(Zone.classify("Damper "));
+            // System.out.println(Zone.classify("jocky "));
+            // System.out.println(Zone.classify("duct "));
+            // System.out.println(Zone.classify("bypass "));
+
+            // //Simulate typing "Hello, World!"
+            // bot.keyPress(KeyEvent.VK_H);
+            // bot.keyRelease(KeyEvent.VK_H);
+            // bot.keyPress(KeyEvent.VK_E);
+            // bot.keyRelease(KeyEvent.VK_E);
+            // // ... (and so on)
+            System.out.println("FX2000 Entry Complete");
+            is_running = false;
+        }
+        catch(Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    public void open(){
+        try {
+            Thread.sleep(delay);
+            bot.keyPress(KeyEvent.VK_SHIFT);
+            bot.keyPress(KeyEvent.VK_F10);
+            bot.keyRelease(KeyEvent.VK_SHIFT);
+            bot.keyRelease(KeyEvent.VK_F10);
+            bot.delay(delay);
+
+            bot.pressKey(KeyEvent.VK_DOWN);
+            bot.pressKey(KeyEvent.VK_ENTER, 1 , 1);
+            
+        } catch (Exception e) {
+            System.err.println(e);
+        }
+    }
+    
+    public void addPhotoDetector(){
+        open();
+        bot.pressKey(KeyEvent.VK_TAB, 3);
+        skipDevices();
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , 1);
+        bot.pressKey(KeyEvent.VK_ESCAPE);
+        bot.pressKey(KeyEvent.VK_END);
+    }
+
+    public void addAlarmInputMod(){
+        open();
+        bot.pressKey(KeyEvent.VK_D, 2);
+        bot.pressKey(KeyEvent.VK_TAB, 3);
+        skipDevices();
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , 1);
+        bot.pressKey(KeyEvent.VK_ESCAPE);
+        bot.pressKey(KeyEvent.VK_END);
+    }
+
+    public void addNonLatchedSupv(){
+        open();
+        bot.pressKey(KeyEvent.VK_D, 2);
+        bot.pressKey(KeyEvent.VK_TAB, 2);
+        bot.pressKey(KeyEvent.VK_N);
+        bot.pressKey(KeyEvent.VK_TAB);
+        skipDevices();
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , 1);
+        bot.pressKey(KeyEvent.VK_ESCAPE);
+        bot.pressKey(KeyEvent.VK_END);
+    }
+
+    public void addLatchedSupv(){
+        open();
+        bot.pressKey(KeyEvent.VK_D,2);
+        bot.pressKey(KeyEvent.VK_TAB,2);
+        bot.pressKey(KeyEvent.VK_L);
+        bot.pressKey(KeyEvent.VK_TAB);
+        skipDevices();
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , 1);
+        bot.pressKey(KeyEvent.VK_ESCAPE);
+        bot.pressKey(KeyEvent.VK_END);
+    }
+
+    public void addHeatDetector(){
+        open();
+        bot.pressKey(KeyEvent.VK_H,3);
+        bot.pressKey(KeyEvent.VK_TAB,3);
+        skipDevices();
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , 1);
+        bot.pressKey(KeyEvent.VK_ESCAPE);
+        bot.pressKey(KeyEvent.VK_END);
+    }
+
+    public void addAlarmInputClassA(){
+        open();
+        bot.pressKey(KeyEvent.VK_D, 2);
+        bot.pressKey(KeyEvent.VK_TAB, 1);
+        bot.pressKey(KeyEvent.VK_C, 1);
+        bot.pressKey(KeyEvent.VK_TAB, 2);
+        skipDevices();
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , 1);
+        bot.pressKey(KeyEvent.VK_ESCAPE);
+        bot.pressKey(KeyEvent.VK_END);
+    }
+
+    public void addRelay(){
+        open();
+        bot.pressKey(KeyEvent.VK_D);
+        bot.pressKey(KeyEvent.VK_TAB, 2);
+        skipDevices();
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , 1);
+        bot.pressKey(KeyEvent.VK_ESCAPE);
+        bot.pressKey(KeyEvent.VK_END);
+    }
+
+    private void updateType(Zone zone){
+        try {
+            Thread.sleep(delay);
+            switch(zone.getType()){
+                case "Photo Detector":
+                    bot.pressKey(KeyEvent.VK_A);
+                    break;
+                case "Alarm Input":
+                    bot.pressKey(KeyEvent.VK_M);
+                    bot.pressKey(KeyEvent.VK_A, 3);
+                    break;
+                case "Non-latched Supervisory":
+                    bot.pressKey(KeyEvent.VK_N);
+                    break;
+                case "Latched Supervisory":
+                    bot.pressKey(KeyEvent.VK_L);
+                    break;
+                case "Heat Detector":
+                    bot.pressKey(KeyEvent.VK_M);
+                    bot.pressKey(KeyEvent.VK_A, 3);
+                    break;
+                case "Blank Device":
+                    bot.pressKey(KeyEvent.VK_N);
+                    bot.pressKey(KeyEvent.VK_B, 2);
+                    break;
+                case "Relay":
+                    bot.pressKey(KeyEvent.VK_R);
+                    break;
+            }
+            bot.keyPress(KeyEvent.VK_ENTER); bot.keyRelease(KeyEvent.VK_ENTER); bot.delay(delay);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
