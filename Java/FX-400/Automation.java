@@ -5,7 +5,7 @@ import com.github.kwhat.jnativehook.keyboard.NativeKeyListener;
 
 public class Automation implements NativeKeyListener{
 
-    private final int START_DELAY = 0;
+    private int START_DELAY = 0;
 
     private FX400 fx400;
 

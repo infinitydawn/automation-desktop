@@ -114,7 +114,7 @@ public class FX400 extends Thread{
     }
 
     public void skipDevices(){
-        bot.pressKey(KeyEvent.VK_RIGHT, skip_count, 2);
+        bot.pressKey(KeyEvent.VK_RIGHT, skip_count);
     }
 
     public void open(){
@@ -127,7 +127,7 @@ public class FX400 extends Thread{
             bot.delay(delay);
 
             bot.pressKey(KeyEvent.VK_DOWN);
-            bot.pressKey(KeyEvent.VK_ENTER);
+            bot.pressKey(KeyEvent.VK_ENTER, 1 , 1);
             
         } catch (Exception e) {
             System.err.println(e);
@@ -138,7 +138,7 @@ public class FX400 extends Thread{
         open();
         bot.pressKey(KeyEvent.VK_TAB, 3);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , 1);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -148,7 +148,7 @@ public class FX400 extends Thread{
         bot.pressKey(KeyEvent.VK_D, 2);
         bot.pressKey(KeyEvent.VK_TAB, 3);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , 1);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -160,7 +160,7 @@ public class FX400 extends Thread{
         bot.pressKey(KeyEvent.VK_N);
         bot.pressKey(KeyEvent.VK_TAB);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , 1);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -172,7 +172,7 @@ public class FX400 extends Thread{
         bot.pressKey(KeyEvent.VK_L);
         bot.pressKey(KeyEvent.VK_TAB);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , 1);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -182,7 +182,7 @@ public class FX400 extends Thread{
         bot.pressKey(KeyEvent.VK_H,3);
         bot.pressKey(KeyEvent.VK_TAB,3);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , 1);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -194,7 +194,7 @@ public class FX400 extends Thread{
         bot.pressKey(KeyEvent.VK_C, 1);
         bot.pressKey(KeyEvent.VK_TAB, 2);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , 1);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -204,7 +204,7 @@ public class FX400 extends Thread{
         bot.pressKey(KeyEvent.VK_D);
         bot.pressKey(KeyEvent.VK_TAB, 2);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , 1);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -218,7 +218,7 @@ public class FX400 extends Thread{
                 if (keyCode == KeyEvent.VK_UNDEFINED) {
                     System.err.println("Key code not found for character: " + c);
                 } else {
-                    bot.keyPress(keyCode); bot.keyRelease(keyCode); Thread.sleep(15);
+                    bot.keyPress(keyCode); bot.keyRelease(keyCode);
                 }
             }
         } catch (Exception e) {
@@ -229,11 +229,11 @@ public class FX400 extends Thread{
     private void updateTags(Zone zone){
         try {
             Thread.sleep(delay);
-            bot.pressKey(KeyEvent.VK_ENTER, 1, 15);
+            bot.pressKey(KeyEvent.VK_ENTER, 1, 1);
             enterTag(zone.getTag1());
-            bot.pressKey(KeyEvent.VK_ENTER, 1, 15);
+            bot.pressKey(KeyEvent.VK_ENTER, 1, 1);
             enterTag(zone.getTag2());
-            bot.pressKey(KeyEvent.VK_ENTER, 1, 15);
+            bot.pressKey(KeyEvent.VK_ENTER, 1, 1);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -282,7 +282,7 @@ public class FX400 extends Thread{
             bot.pressKey(KeyEvent.VK_N);
         }
 
-        bot.pressKey(KeyEvent.VK_ENTER);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , 1);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_DOWN);
     }
