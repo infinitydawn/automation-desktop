@@ -55,10 +55,10 @@ class Zone {
         } else if (Zone.checkTags(tag, new String[] { "smoke", "duct" })) {
             type = "Photo Detector";
             this.isSensor = true;
-        } else if (Zone.checkTags(tag, new String[] { "relay", "door", "damper", "shutdown", "Recall", "fsd",
+        } else if (Zone.checkTags(tag, new String[] { "relay", "door", "damper", "shutdown", "shut down", "Recall", "fsd",
                 "fan", "shunt", })) {
             type = "Relay";
-            if(Zone.checkTags(tag, new String[] {"shutdown"})){
+            if(Zone.checkTags(tag, new String[] {"shutdown", "shut down",})){
                 this.isAR = true;
             }
         } else if (Zone.checkTags(tag, new String[] { "heat" })) {
