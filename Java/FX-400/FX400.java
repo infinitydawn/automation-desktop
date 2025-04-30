@@ -287,7 +287,7 @@ public class FX400 extends Thread{
         }
 
         bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
-
+        
         if(zone.isAR()){
             bot.pressKey(KeyEvent.VK_A);
             bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
@@ -316,7 +316,7 @@ public class FX400 extends Thread{
 
     public void enterZoneList(ZoneList zoneList){
         try {
-            bot.pressKey(KeyEvent.VK_HOME); 
+            bot.pressKey(KeyEvent.VK_HOME, 1, 1); 
             for(Zone zone : zoneList.zones){
                 if(!zone.getType().equals("Blank Device")){
                     updateZone(zone);
