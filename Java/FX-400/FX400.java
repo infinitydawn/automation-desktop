@@ -3,14 +3,18 @@ import java.awt.event.KeyEvent;
 
 public class FX400 extends Thread{
 
-    private DataEntryBot bot;
-    private int skip_count = 19;
-    private int delay = 200;
-    private boolean is_running = false; //used to stop the bot from running without closing process
+    protected DataEntryBot bot;
+    protected int skip_count = 19;
+    protected boolean is_running = false; //used to stop the bot from running without closing process
+
+    protected int DELAY = 200; //Default 200. Delay time for everything. Multiply by delay strength to change length
+    protected double TAG_DELAY_STRENGTH = 0; //Default 0. Delay when entering tag letters
+    protected double ENTER_DELAY_STRENGTH = 1; // Default 1. Delay after pressing Enter (Writes to database. Larger databases may want this higher)
+    //protected double DROPDOWN_DELAY_STRENGTH = 0; // Default 0. Delay when scrolling through dropdown menus. UNUSED
 
     public FX400(){
         try {
-            bot = new DataEntryBot();
+            bot = new DataEntryBot(DELAY);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -119,15 +123,15 @@ public class FX400 extends Thread{
 
     public void open(){
         try {
-            Thread.sleep(delay);
+            Thread.sleep(DELAY);
             bot.keyPress(KeyEvent.VK_SHIFT);
             bot.keyPress(KeyEvent.VK_F10);
             bot.keyRelease(KeyEvent.VK_SHIFT);
             bot.keyRelease(KeyEvent.VK_F10);
-            bot.delay(delay);
+            bot.delay(DELAY);
 
             bot.pressKey(KeyEvent.VK_DOWN);
-            bot.pressKey(KeyEvent.VK_ENTER, 1 , 1);
+            bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
             
         } catch (Exception e) {
             System.err.println(e);
@@ -138,7 +142,7 @@ public class FX400 extends Thread{
         open();
         bot.pressKey(KeyEvent.VK_TAB, 3);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , 1);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -148,7 +152,7 @@ public class FX400 extends Thread{
         bot.pressKey(KeyEvent.VK_D, 2);
         bot.pressKey(KeyEvent.VK_TAB, 3);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , 1);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -160,7 +164,7 @@ public class FX400 extends Thread{
         bot.pressKey(KeyEvent.VK_N);
         bot.pressKey(KeyEvent.VK_TAB);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , 1);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -172,7 +176,7 @@ public class FX400 extends Thread{
         bot.pressKey(KeyEvent.VK_L);
         bot.pressKey(KeyEvent.VK_TAB);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , 1);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -182,7 +186,7 @@ public class FX400 extends Thread{
         bot.pressKey(KeyEvent.VK_H,3);
         bot.pressKey(KeyEvent.VK_TAB,3);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , 1);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -194,7 +198,7 @@ public class FX400 extends Thread{
         bot.pressKey(KeyEvent.VK_C, 1);
         bot.pressKey(KeyEvent.VK_TAB, 2);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , 1);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -204,21 +208,21 @@ public class FX400 extends Thread{
         bot.pressKey(KeyEvent.VK_D);
         bot.pressKey(KeyEvent.VK_TAB, 2);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , 1);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
 
     private void enterTag(String tag){
         try {
-            Thread.sleep(delay);
+            Thread.sleep(DELAY);
             for(int i = 0; i < tag.length(); i++){
                 char c = tag.charAt(i);
                 int keyCode = KeyEvent.getExtendedKeyCodeForChar(c);
                 if (keyCode == KeyEvent.VK_UNDEFINED) {
                     System.err.println("Key code not found for character: " + c);
                 } else {
-                    bot.pressKey(keyCode);
+                    bot.pressKey(keyCode, 1, TAG_DELAY_STRENGTH);
                 }
             }
         } catch (Exception e) {
@@ -226,14 +230,14 @@ public class FX400 extends Thread{
         }
     }
 
-    private void updateTags(Zone zone){
+    public void updateTags(Zone zone){
         try {
-            Thread.sleep(delay);
-            bot.pressKey(KeyEvent.VK_ENTER, 1, 1);
+            Thread.sleep(DELAY);
+            bot.pressKey(KeyEvent.VK_ENTER, 1, ENTER_DELAY_STRENGTH);
             enterTag(zone.getTag1());
-            bot.pressKey(KeyEvent.VK_ENTER, 1, 1);
+            bot.pressKey(KeyEvent.VK_ENTER, 1, ENTER_DELAY_STRENGTH);
             enterTag(zone.getTag2());
-            bot.pressKey(KeyEvent.VK_ENTER, 1, 1);
+            bot.pressKey(KeyEvent.VK_ENTER, 1, ENTER_DELAY_STRENGTH);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -241,7 +245,7 @@ public class FX400 extends Thread{
 
     private void updateType(Zone zone){
         try {
-            Thread.sleep(delay);
+            Thread.sleep(DELAY);
             switch(zone.getType()){
                 case "Photo Detector":
                     bot.pressKey(KeyEvent.VK_A);
@@ -268,13 +272,13 @@ public class FX400 extends Thread{
                     bot.pressKey(KeyEvent.VK_R);
                     break;
             }
-            bot.keyPress(KeyEvent.VK_ENTER); bot.keyRelease(KeyEvent.VK_ENTER); bot.delay(delay);
+            bot.pressKey(KeyEvent.VK_ENTER, 1, ENTER_DELAY_STRENGTH);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private void updateRow(Zone zone){
+    public void updateRow(Zone zone){
         updateTags(zone);
         updateType(zone);
         
@@ -282,13 +286,13 @@ public class FX400 extends Thread{
             bot.pressKey(KeyEvent.VK_N);
         }
 
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , 1);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_DOWN);
     }
 
 
-    private void updateZone(Zone zone){
+    public void updateZone(Zone zone){
         try {
             updateRow(zone);
 
