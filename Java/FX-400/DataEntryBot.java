@@ -3,7 +3,7 @@ import java.awt.Robot;
 public class DataEntryBot extends Robot{
 
     private int delay; //default 200
-    private int DELAY_STRENGTH = 0; //multiple delay by this to determine final delay time
+    private int DELAY_STRENGTH = 0; //multiply delay by this to determine final delay time
 
     public DataEntryBot(int delay) throws Exception{
         this.delay = delay;
