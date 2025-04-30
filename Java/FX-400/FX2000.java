@@ -78,24 +78,6 @@ public class FX2000 extends FX400{
             e.printStackTrace();
         }
     }
-
-    public void open(){
-        try {
-            Thread.sleep(delay);
-            bot.keyPress(KeyEvent.VK_SHIFT);
-            bot.keyPress(KeyEvent.VK_F10);
-            bot.keyRelease(KeyEvent.VK_SHIFT);
-            bot.keyRelease(KeyEvent.VK_F10);
-            bot.delay(delay);
-
-            bot.pressKey(KeyEvent.VK_DOWN);
-            bot.pressKey(KeyEvent.VK_ENTER, 1 , 1);
-            
-        } catch (Exception e) {
-            System.err.println(e);
-        }
-    }
-    
     
     public void addPhotoDetector(){
         open();
