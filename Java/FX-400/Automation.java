@@ -8,6 +8,7 @@ public class Automation implements NativeKeyListener{
     private int START_DELAY = 0;
 
     private FX400 fx400;
+    private FX2000 fx2000;
 
     public static void main(String[] args){
         //Register escape button
@@ -51,6 +52,7 @@ public class Automation implements NativeKeyListener{
             */
         }
 
+        
         if (e.getKeyCode() == NativeKeyEvent.VC_F2) {
             try {
                 //Start a new thread only if it doesn't exist or is no longer alive
@@ -68,5 +70,26 @@ public class Automation implements NativeKeyListener{
                 except.printStackTrace();
             }
         }
+        
+        /*
+         if (e.getKeyCode() == NativeKeyEvent.VC_F2) {
+            try {
+                //Start a new thread only if it doesn't exist or is no longer alive
+                if(fx2000 == null || (fx2000 != null && !fx2000.isAlive())){
+                    fx2000 = new FX2000();
+                }
+
+                if(!fx2000.isAlive()){
+                    Thread.sleep(START_DELAY);
+
+                    System.out.println("Starting FX2000 Data Entry");      
+                    fx2000.start();
+                }
+            } catch (Exception except) {
+                except.printStackTrace();
+            }
+        }
+        */
+        
 	}
 }
