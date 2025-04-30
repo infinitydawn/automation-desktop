@@ -3,6 +3,7 @@ class Zone {
     private subZone subAddress = null;
     private String type = "";
     private boolean isNS = false;
+    private boolean isAR = false;
     private boolean isPullSttn = false;
     private boolean isSensor = false;
     private boolean isDualInput = false;
@@ -48,7 +49,7 @@ class Zone {
             type = "Latched Supervisory";
             this.isDualInput = true;
         } else if (Zone.checkTags(tag, new String[] { "valve", "tamper", "stat", "pump", "intake", "discharge",
-                "jockey", "jocky", "bypass" })) {
+                "jockey", "jocky", "bypass, radio trouble" })) {
             type = "Non-latched Supervisory";
             this.isDualInput = true;
         } else if (Zone.checkTags(tag, new String[] { "smoke", "duct" })) {
@@ -57,6 +58,9 @@ class Zone {
         } else if (Zone.checkTags(tag, new String[] { "relay", "door", "damper", "shutdown", "Recall", "fsd",
                 "fan", "shunt", })) {
             type = "Relay";
+            if(Zone.checkTags(tag, new String[] {"shutdown"})){
+                this.isAR = true;
+            }
         } else if (Zone.checkTags(tag, new String[] { "heat" })) {
             type = "Heat Detector";
             this.isSensor = true;
@@ -84,6 +88,10 @@ class Zone {
 
     public boolean isNS() {
         return isNS;
+    }
+
+    public boolean isAR() {
+        return isAR;
     }
 
     public boolean isPullSttn() {

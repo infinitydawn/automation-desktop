@@ -25,7 +25,7 @@ public class FX400 extends Thread{
             is_running = true;
 
             ReadTempArray reader = new ReadTempArray();
-            String[][] zoneParts = reader.readFile();
+            String[][] zoneParts = reader.readFile(); //SHOW A MESSAGE WHEN AR TAG DISCOVERED
             ZoneList zoneList = new ZoneList();
 
             String[] addresses = zoneParts[0];
@@ -287,6 +287,12 @@ public class FX400 extends Thread{
         }
 
         bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+
+        if(zone.isAR()){
+            bot.pressKey(KeyEvent.VK_A);
+            bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        }
+
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_DOWN);
     }
