@@ -49,6 +49,7 @@ public class FX2000 extends FX400{
                         addPhotoDetector();
                         break;
                     case "Alarm Input":
+                    case "Alarm Input Class A":
                         addAlarmInputMod();
                         break;
                     case "Non-latched Supervisory":
@@ -59,9 +60,6 @@ public class FX2000 extends FX400{
                         break;
                     case "Heat Detector":
                         addHeatDetector();
-                        break;
-                    case "Alarm Input Class A":
-                        addAlarmInputClassA();
                         break;
                     case "Relay":
                         addRelay();
@@ -111,7 +109,7 @@ public class FX2000 extends FX400{
     public void addAlarmInputMod(){
         open();
         bot.pressKey(KeyEvent.VK_I);
-        bot.pressKey(KeyEvent.VK_TAB, 3);
+        bot.pressKey(KeyEvent.VK_TAB, 2);
         skipDevices();
         bot.pressKey(KeyEvent.VK_ENTER, 1 , 1);
         bot.pressKey(KeyEvent.VK_ESCAPE);
@@ -176,38 +174,23 @@ public class FX2000 extends FX400{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    private void updateType(Zone zone){
+    public void updateRow(Zone zone){
+        updateTags(zone);
+        
+        if(zone.isNS()){
+            bot.pressKey(KeyEvent.VK_N);
+        }
+
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , 1);
+        bot.pressKey(KeyEvent.VK_ESCAPE);
+        bot.pressKey(KeyEvent.VK_DOWN);
+    }
+
+    public void updateZone(Zone zone){
         try {
-            Thread.sleep(delay);
-            switch(zone.getType()){
-                case "Photo Detector":
-                    bot.pressKey(KeyEvent.VK_A);
-                    break;
-                case "Alarm Input":
-                    bot.pressKey(KeyEvent.VK_M);
-                    bot.pressKey(KeyEvent.VK_A, 3);
-                    break;
-                case "Non-latched Supervisory":
-                    bot.pressKey(KeyEvent.VK_N);
-                    break;
-                case "Latched Supervisory":
-                    bot.pressKey(KeyEvent.VK_L);
-                    break;
-                case "Heat Detector":
-                    bot.pressKey(KeyEvent.VK_M);
-                    bot.pressKey(KeyEvent.VK_A, 3);
-                    break;
-                case "Blank Device":
-                    bot.pressKey(KeyEvent.VK_N);
-                    bot.pressKey(KeyEvent.VK_B, 2);
-                    break;
-                case "Relay":
-                    bot.pressKey(KeyEvent.VK_R);
-                    break;
-            }
-            bot.keyPress(KeyEvent.VK_ENTER); bot.keyRelease(KeyEvent.VK_ENTER); bot.delay(delay);
+            updateRow(zone);
         } catch (Exception e) {
             e.printStackTrace();
-        }
+        }    
     }
 }
