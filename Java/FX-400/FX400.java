@@ -218,7 +218,7 @@ public class FX400 extends Thread{
                 if (keyCode == KeyEvent.VK_UNDEFINED) {
                     System.err.println("Key code not found for character: " + c);
                 } else {
-                    bot.keyPress(keyCode); bot.keyRelease(keyCode);
+                    bot.pressKey(keyCode);
                 }
             }
         } catch (Exception e) {
