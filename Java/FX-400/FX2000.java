@@ -35,8 +35,13 @@ public class FX2000 extends FX400{
             zoneList.displayZoneList();
 
             if(is_AR_paused){
-                System.out.println("AR related device discovered, please enable then press F2 to continue.");
+                if(BYPASS_AR_PAUSE){
+                    is_AR_paused = false;
+                }else{
+                    System.out.println("AR related device discovered, please enable then press F2 to continue.");
+                }
             }
+            
             while(is_AR_paused){
                 Thread.sleep(DELAY); //Wait until start button pressed again
             }
