@@ -303,7 +303,7 @@ public class FX400 extends Thread{
         updateType(zone);
         
         if(zone.isNS()){
-            bot.pressKey(KeyEvent.VK_N);
+            bot.pressKey(KeyEvent.VK_N, 1, ENTER_DELAY_STRENGTH);
         }
 
         bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
