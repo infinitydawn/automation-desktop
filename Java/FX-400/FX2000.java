@@ -3,11 +3,6 @@ import java.awt.event.KeyEvent;
 
 public class FX2000 extends FX400{
 
-    private DataEntryBot bot;
-    private int skip_count = 19;
-    private int delay = 200;
-    private boolean is_running = false; //used to stop the bot from running without closing process
-
     public FX2000(){
         try {
             bot = new DataEntryBot();
@@ -77,34 +72,7 @@ public class FX2000 extends FX400{
             if(is_running){
                 enterZoneList(zoneList);
             }
-            // zoneList.addZone(1.1, "Waterflow ");
-            // zoneList.addZone(2.1, "valve ");
-            // zoneList.addZone(2.2, "discharge ");
-            // zoneList.addZone(3.1, "Damper ");
-            // zoneList.addZone(4.1, "jocky ");
-            // zoneList.addZone(5.1, "duct ");
-            // zoneList.addZone(5.2, "bypass ");
-            // zoneList.addZone(20, "waterflow");
-            // zoneList.addZone(21, "smoke");
 
-            // if (Zone.classify("smoke").equals("Photo Detector")) {
-            // bot.addPhotoDetector();
-            // }
-
-            // System.out.println(Zone.classify("Waterflow "));
-            // System.out.println(Zone.classify("valve "));
-            // System.out.println(Zone.classify("smoke "));
-            // System.out.println(Zone.classify("Damper "));
-            // System.out.println(Zone.classify("jocky "));
-            // System.out.println(Zone.classify("duct "));
-            // System.out.println(Zone.classify("bypass "));
-
-            // //Simulate typing "Hello, World!"
-            // bot.keyPress(KeyEvent.VK_H);
-            // bot.keyRelease(KeyEvent.VK_H);
-            // bot.keyPress(KeyEvent.VK_E);
-            // bot.keyRelease(KeyEvent.VK_E);
-            // // ... (and so on)
             System.out.println("FX2000 Entry Complete");
             is_running = false;
         }
@@ -130,9 +98,10 @@ public class FX2000 extends FX400{
         }
     }
     
+    
     public void addPhotoDetector(){
         open();
-        bot.pressKey(KeyEvent.VK_TAB, 3);
+        bot.pressKey(KeyEvent.VK_TAB, 2);
         skipDevices();
         bot.pressKey(KeyEvent.VK_ENTER, 1 , 1);
         bot.pressKey(KeyEvent.VK_ESCAPE);
@@ -141,7 +110,7 @@ public class FX2000 extends FX400{
 
     public void addAlarmInputMod(){
         open();
-        bot.pressKey(KeyEvent.VK_D, 2);
+        bot.pressKey(KeyEvent.VK_I);
         bot.pressKey(KeyEvent.VK_TAB, 3);
         skipDevices();
         bot.pressKey(KeyEvent.VK_ENTER, 1 , 1);
@@ -151,9 +120,9 @@ public class FX2000 extends FX400{
 
     public void addNonLatchedSupv(){
         open();
-        bot.pressKey(KeyEvent.VK_D, 2);
-        bot.pressKey(KeyEvent.VK_TAB, 2);
-        bot.pressKey(KeyEvent.VK_N);
+        bot.pressKey(KeyEvent.VK_I);
+        bot.pressKey(KeyEvent.VK_TAB);
+        bot.pressKey(KeyEvent.VK_N, 2);
         bot.pressKey(KeyEvent.VK_TAB);
         skipDevices();
         bot.pressKey(KeyEvent.VK_ENTER, 1 , 1);
@@ -163,8 +132,8 @@ public class FX2000 extends FX400{
 
     public void addLatchedSupv(){
         open();
-        bot.pressKey(KeyEvent.VK_D,2);
-        bot.pressKey(KeyEvent.VK_TAB,2);
+        bot.pressKey(KeyEvent.VK_I);
+        bot.pressKey(KeyEvent.VK_TAB);
         bot.pressKey(KeyEvent.VK_L);
         bot.pressKey(KeyEvent.VK_TAB);
         skipDevices();
@@ -175,14 +144,15 @@ public class FX2000 extends FX400{
 
     public void addHeatDetector(){
         open();
-        bot.pressKey(KeyEvent.VK_H,3);
-        bot.pressKey(KeyEvent.VK_TAB,3);
+        bot.pressKey(KeyEvent.VK_H);
+        bot.pressKey(KeyEvent.VK_TAB,2);
         skipDevices();
         bot.pressKey(KeyEvent.VK_ENTER, 1 , 1);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
 
+    /*
     public void addAlarmInputClassA(){
         open();
         bot.pressKey(KeyEvent.VK_D, 2);
@@ -194,10 +164,11 @@ public class FX2000 extends FX400{
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
+    */
 
     public void addRelay(){
         open();
-        bot.pressKey(KeyEvent.VK_D);
+        bot.pressKey(KeyEvent.VK_R);
         bot.pressKey(KeyEvent.VK_TAB, 2);
         skipDevices();
         bot.pressKey(KeyEvent.VK_ENTER, 1 , 1);
