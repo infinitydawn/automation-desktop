@@ -176,6 +176,8 @@ public class FX2000 extends FX400{
 
     public void updateRow(Zone zone){
         updateTags(zone);
+
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , 1); //make up for not updating Type
         
         if(zone.isNS()){
             bot.pressKey(KeyEvent.VK_N);
