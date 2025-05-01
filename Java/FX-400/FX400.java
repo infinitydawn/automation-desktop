@@ -23,6 +23,7 @@ public class FX400 extends Thread{
     }
 
     public void run() {
+        System.out.println("Starting FX400 Data Entry");
         try{
             is_running = true;
 
