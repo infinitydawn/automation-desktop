@@ -7,7 +7,7 @@ public class Automation implements NativeKeyListener{
 
     private int START_DELAY = 0;
 
-    private FX400 fx400;
+    private FX400 fx400 = new FX400();
     private FX2000 fx2000;
 
     public static void main(String[] args){
@@ -65,8 +65,8 @@ public class Automation implements NativeKeyListener{
 
                     System.out.println("Starting FX400 Data Entry");      
                     fx400.start();
-                }else if(fx400.isAlive() && fx400.getIsARPaused()){
-                    fx400.setIsARPaused(false);
+                }else if(fx400.isAlive() && fx400.getIsPaused()){
+                    fx400.setIsPaused(false);
                 }
             } catch (Exception except) {
                 except.printStackTrace();
@@ -86,8 +86,8 @@ public class Automation implements NativeKeyListener{
 
                     System.out.println("Starting FX2000 Data Entry");      
                     fx2000.start();
-                }else if(fx2000.isAlive() && fx2000.getIsARPaused()){
-                    fx2000.setIsARPaused(false);
+                }else if(fx2000.isAlive() && fx2000.getIsPaused()){
+                    fx2000.setIsPaused(false);
                 }
             } catch (Exception except) {
                 except.printStackTrace();
