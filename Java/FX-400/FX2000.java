@@ -3,15 +3,8 @@ import java.awt.event.KeyEvent;
 
 public class FX2000 extends FX400{
 
-    public FX2000(){
-        try {
-            bot = new DataEntryBot(DELAY);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
     public void run() {
+        System.out.println("Starting FX2000 Data Entry");
         try{
             is_running = true;
 
