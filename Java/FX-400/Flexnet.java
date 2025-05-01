@@ -89,7 +89,7 @@ public class Flexnet extends FX400{
     
     protected void addPhotoDetector(){
         open();
-        bot.pressKey(KeyEvent.VK_TAB, 2);
+        bot.pressKey(KeyEvent.VK_TAB, 4);
         skipDevices();
         bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
@@ -98,7 +98,9 @@ public class Flexnet extends FX400{
 
     protected void addAlarmInputMod(){
         open();
-        bot.pressKey(KeyEvent.VK_I);
+        bot.pressKey(KeyEvent.VK_M, 2);
+        bot.pressKey(KeyEvent.VK_TAB, 2);
+        bot.pressKey(KeyEvent.VK_N);
         bot.pressKey(KeyEvent.VK_TAB, 2);
         skipDevices();
         bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
@@ -108,10 +110,11 @@ public class Flexnet extends FX400{
 
     protected void addNonLatchedSupv(){
         open();
-        bot.pressKey(KeyEvent.VK_I);
+        bot.pressKey(KeyEvent.VK_M);
         bot.pressKey(KeyEvent.VK_TAB);
-        bot.pressKey(KeyEvent.VK_N, 2);
+        bot.pressKey(KeyEvent.VK_N);
         bot.pressKey(KeyEvent.VK_TAB);
+        bot.pressKey(KeyEvent.VK_N);
         skipDevices();
         bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
@@ -168,8 +171,7 @@ public class Flexnet extends FX400{
                     bot.pressKey(KeyEvent.VK_L);
                     break;
                 case "Heat Detector":
-                    bot.pressKey(KeyEvent.VK_M);
-                    bot.pressKey(KeyEvent.VK_A, 3);
+                    bot.pressKey(KeyEvent.VK_A);
                     break;
                 case "Blank Device":
                     bot.pressKey(KeyEvent.VK_N);
