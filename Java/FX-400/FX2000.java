@@ -5,6 +5,7 @@ public class FX2000 extends FX400{
 
     public FX2000(){
         try {
+            readSettings();
             bot = new DataEntryBot(DELAY);
         } catch (Exception e) {
             e.printStackTrace();
