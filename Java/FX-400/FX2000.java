@@ -3,16 +3,8 @@ import java.awt.event.KeyEvent;
 
 public class FX2000 extends FX400{
 
-    public FX2000(){
-        try {
-            readSettings();
-            bot = new DataEntryBot(DELAY);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
     public void run() {
+        System.out.println("Starting FX2000 Data Entry");
         try{
             is_running = true;
 
@@ -96,7 +88,7 @@ public class FX2000 extends FX400{
         }
     }
     
-    public void addPhotoDetector(){
+    protected void addPhotoDetector(){
         open();
         bot.pressKey(KeyEvent.VK_TAB, 2);
         skipDevices();
@@ -105,7 +97,7 @@ public class FX2000 extends FX400{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    public void addAlarmInputMod(){
+    protected void addAlarmInputMod(){
         open();
         bot.pressKey(KeyEvent.VK_I);
         bot.pressKey(KeyEvent.VK_TAB, 2);
@@ -115,7 +107,7 @@ public class FX2000 extends FX400{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    public void addNonLatchedSupv(){
+    protected void addNonLatchedSupv(){
         open();
         bot.pressKey(KeyEvent.VK_I);
         bot.pressKey(KeyEvent.VK_TAB);
@@ -127,7 +119,7 @@ public class FX2000 extends FX400{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    public void addLatchedSupv(){
+    protected void addLatchedSupv(){
         open();
         bot.pressKey(KeyEvent.VK_I);
         bot.pressKey(KeyEvent.VK_TAB);
@@ -139,7 +131,7 @@ public class FX2000 extends FX400{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    public void addHeatDetector(){
+    protected void addHeatDetector(){
         open();
         bot.pressKey(KeyEvent.VK_H);
         bot.pressKey(KeyEvent.VK_TAB,2);
@@ -149,7 +141,7 @@ public class FX2000 extends FX400{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    public void addRelay(){
+    protected void addRelay(){
         open();
         bot.pressKey(KeyEvent.VK_R);
         bot.pressKey(KeyEvent.VK_TAB, 2);
@@ -159,7 +151,7 @@ public class FX2000 extends FX400{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    public void updateRow(Zone zone){
+    protected void updateRow(Zone zone){
         updateTags(zone);
 
         bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH); //make up for not updating Type
@@ -178,7 +170,7 @@ public class FX2000 extends FX400{
         bot.pressKey(KeyEvent.VK_DOWN);
     }
 
-    public void updateZone(Zone zone){
+    protected void updateZone(Zone zone){
         try {
             updateRow(zone);
         } catch (Exception e) {
