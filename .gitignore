@@ -2,3 +2,4 @@
 #dependencies/
 **/dependencies/*.dll
 **/\.vscode
+settings.ini
