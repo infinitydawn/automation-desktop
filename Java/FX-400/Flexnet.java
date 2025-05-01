@@ -123,10 +123,12 @@ public class Flexnet extends FX400{
 
     protected void addLatchedSupv(){
         open();
-        bot.pressKey(KeyEvent.VK_I);
+        bot.pressKey(KeyEvent.VK_M, 2);
         bot.pressKey(KeyEvent.VK_TAB);
         bot.pressKey(KeyEvent.VK_L);
         bot.pressKey(KeyEvent.VK_TAB);
+        bot.pressKey(KeyEvent.VK_N);
+        bot.pressKey(KeyEvent.VK_TAB, 2);
         skipDevices();
         bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
@@ -135,8 +137,8 @@ public class Flexnet extends FX400{
 
     protected void addHeatDetector(){
         open();
-        bot.pressKey(KeyEvent.VK_H);
-        bot.pressKey(KeyEvent.VK_TAB,2);
+        bot.pressKey(KeyEvent.VK_H, 2);
+        bot.pressKey(KeyEvent.VK_TAB, 5);
         skipDevices();
         bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
@@ -145,8 +147,8 @@ public class Flexnet extends FX400{
 
     protected void addRelay(){
         open();
-        bot.pressKey(KeyEvent.VK_R);
-        bot.pressKey(KeyEvent.VK_TAB, 2);
+        bot.pressKey(KeyEvent.VK_R, 2);
+        bot.pressKey(KeyEvent.VK_TAB, 4);
         skipDevices();
         bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
