@@ -7,7 +7,7 @@ public class Automation implements NativeKeyListener{
 
     private int START_DELAY = 0;
 
-    private FX400 fx400 = new FX400();
+    private FX400 fx400;
     private FX2000 fx2000;
 
     public static void main(String[] args){
