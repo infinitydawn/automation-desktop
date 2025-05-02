@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.awt.RenderingHints.Key;
 import java.awt.event.KeyEvent;
 import java.io.File;
 
@@ -249,7 +250,11 @@ public class FX400 extends Thread{
                 if (keyCode == KeyEvent.VK_UNDEFINED) {
                     System.err.println("Key code not found for character: " + c);
                 } else {
+                    if(Character.isUpperCase(c)) {
+                        bot.keyPress(KeyEvent.VK_SHIFT);
+                    }
                     bot.pressKey(keyCode, 1, TAG_DELAY_STRENGTH);
+                    bot.keyRelease(KeyEvent.VK_SHIFT);
                 }
             }
         } catch (Exception e) {
