@@ -21,21 +21,21 @@ public class FX2000 extends FX400{
                 zoneList.addZone(Double.parseDouble(addresses[i]), tags1[i], tags2[i]);
 
                 if(Zone.checkTags(tags1[i], new String[] {"shutdown", "shut down"})){
-                    is_AR_paused = true;
+                    is_paused = true;
                 }
             }
 
             zoneList.displayZoneList();
 
-            if(is_AR_paused){
-                if(BYPASS_AR_PAUSE){
-                    is_AR_paused = false;
+            if(is_paused){
+                if(BYPASS_PAUSE){
+                    is_paused = false;
                 }else{
                     System.out.println("AR related device discovered, please enable then press F2 to continue.");
                 }
             }
 
-            while(is_AR_paused){
+            while(is_paused){
                 Thread.sleep(DELAY); //Wait until start button pressed again
             }
 
@@ -88,7 +88,7 @@ public class FX2000 extends FX400{
         }
     }
     
-    public void addPhotoDetector(){
+    protected void addPhotoDetector(){
         open();
         bot.pressKey(KeyEvent.VK_TAB, 2);
         skipDevices();
@@ -97,7 +97,7 @@ public class FX2000 extends FX400{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    public void addAlarmInputMod(){
+    protected void addAlarmInputMod(){
         open();
         bot.pressKey(KeyEvent.VK_I);
         bot.pressKey(KeyEvent.VK_TAB, 2);
@@ -107,7 +107,7 @@ public class FX2000 extends FX400{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    public void addNonLatchedSupv(){
+    protected void addNonLatchedSupv(){
         open();
         bot.pressKey(KeyEvent.VK_I);
         bot.pressKey(KeyEvent.VK_TAB);
@@ -119,7 +119,7 @@ public class FX2000 extends FX400{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    public void addLatchedSupv(){
+    protected void addLatchedSupv(){
         open();
         bot.pressKey(KeyEvent.VK_I);
         bot.pressKey(KeyEvent.VK_TAB);
@@ -131,7 +131,7 @@ public class FX2000 extends FX400{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    public void addHeatDetector(){
+    protected void addHeatDetector(){
         open();
         bot.pressKey(KeyEvent.VK_H);
         bot.pressKey(KeyEvent.VK_TAB,2);
@@ -141,7 +141,7 @@ public class FX2000 extends FX400{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    public void addRelay(){
+    protected void addRelay(){
         open();
         bot.pressKey(KeyEvent.VK_R);
         bot.pressKey(KeyEvent.VK_TAB, 2);
@@ -151,7 +151,7 @@ public class FX2000 extends FX400{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    public void updateRow(Zone zone){
+    protected void updateRow(Zone zone){
         updateTags(zone);
 
         bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH); //make up for not updating Type
@@ -170,7 +170,7 @@ public class FX2000 extends FX400{
         bot.pressKey(KeyEvent.VK_DOWN);
     }
 
-    public void updateZone(Zone zone){
+    protected void updateZone(Zone zone){
         try {
             updateRow(zone);
         } catch (Exception e) {

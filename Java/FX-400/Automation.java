@@ -63,8 +63,8 @@ public class Automation implements NativeKeyListener{
                 if(!fx400.isAlive()){
                     Thread.sleep(START_DELAY);  
                     fx400.start();
-                }else if(fx400.isAlive() && fx400.getIsARPaused()){
-                    fx400.setIsARPaused(false);
+                }else if(fx400.isAlive() && fx400.getIsPaused()){
+                    fx400.setIsPaused(false);
                 }
             } catch (Exception except) {
                 except.printStackTrace();
@@ -82,8 +82,8 @@ public class Automation implements NativeKeyListener{
                 if(!fx2000.isAlive()){
                     Thread.sleep(START_DELAY);   
                     fx2000.start();
-                }else if(fx2000.isAlive() && fx2000.getIsARPaused()){
-                    fx2000.setIsARPaused(false);
+                }else if(fx2000.isAlive() && fx2000.getIsPaused()){
+                    fx2000.setIsPaused(false);
                 }
             } catch (Exception except) {
                 except.printStackTrace();
