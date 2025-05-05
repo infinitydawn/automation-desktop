@@ -58,7 +58,7 @@ class Zone {
         } else if (Zone.checkTags(tag, new String[] { "relay", "door", "damper", "shutdown", "shut down", "Recall", "fsd",
                 "fan", "shunt", })) {
             type = "Relay";
-            if(Zone.checkTags(tag, new String[] {"shutdown", "shut down",})){
+            if(Zone.checkTags(tag, new String[] {"ac shutdown", "ac shut down", "fan shutdown","fan shut down",})){
                 this.isAR = true;
             }
         } else if (Zone.checkTags(tag, new String[] { "heat" })) {
