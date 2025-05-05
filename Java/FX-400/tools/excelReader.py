@@ -73,7 +73,7 @@ check_zone_format(zoneColumn)
 check_subaddresses(zoneColumn)
 
 
-df.to_csv('./assets/temp_zones.csv', index=False)
+df.to_csv('./assets/temp_zones.csv', lineterminator=',\n', index=False)
 
 
 
