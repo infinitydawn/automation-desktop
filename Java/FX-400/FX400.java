@@ -47,7 +47,7 @@ public class FX400 extends Thread{
                 System.out.println(" - - - - -  + " + tags1[i]);
                 zoneList.addZone(Double.parseDouble(addresses[i]), tags1[i], tags2[i]);
 
-                if(Zone.checkTags(tags1[i], new String[] {"shutdown", "shut down"})){
+                if(Zone.checkTags(tags1[i], new String[] {"ac shutdown", "ac shut down", "fan shutdown","fan shut down"})){
                     is_paused = true;
                 }
             }
