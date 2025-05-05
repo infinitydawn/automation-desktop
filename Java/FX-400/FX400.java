@@ -1,5 +1,9 @@
 import java.util.ArrayList;
 import java.awt.event.KeyEvent;
+import java.io.File;
+
+import org.ini4j.Ini;
+
 
 public class FX400 extends Thread{
 
@@ -7,16 +11,18 @@ public class FX400 extends Thread{
     protected double TAG_DELAY_STRENGTH = 0; //Default 0. Delay when entering tag letters
     protected double ENTER_DELAY_STRENGTH = 1; // Default 1. Delay after pressing Enter (Writes to database. Larger databases may want this higher)
     //protected double DROPDOWN_DELAY_STRENGTH = 0; // Default 0. Delay when scrolling through dropdown menus. UNUSED
-    protected boolean BYPASS_AR_PAUSE = false; //Prevents the AR prompt from showing
+    protected boolean BYPASS_PAUSE = false; //Prevents the AR prompt from showing
+    protected String SETTINGS_FILE = "settings.ini";
 
     protected DataEntryBot bot;
     protected int skip_count = 19;
     protected boolean is_running = false; //used to stop the bot from running without closing process
-    protected boolean is_AR_paused = false; //used to prompt user to enable AR related settings -- MAKE USE OF THIS IF PAUSING GUI
+    protected boolean is_paused = false; //used to prompt user to enable AR related settings -- MAKE USE OF THIS IF PAUSING GUI
 
     public FX400(){
         try {
-            bot = new DataEntryBot(DELAY);
+            readSettings();
+            bot = new DataEntryBot(DELAY);           
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -36,27 +42,27 @@ public class FX400 extends Thread{
             String[] tags1 = zoneParts[1];
             String[] tags2 = zoneParts[2];
 
-            is_AR_paused = false;
+            is_paused = false;
             for (int i = 0; i < addresses.length; i++) {
                 System.out.println(" - - - - -  + " + tags1[i]);
                 zoneList.addZone(Double.parseDouble(addresses[i]), tags1[i], tags2[i]);
 
                 if(Zone.checkTags(tags1[i], new String[] {"shutdown", "shut down"})){
-                    is_AR_paused = true;
+                    is_paused = true;
                 }
             }
             
             zoneList.displayZoneList();
 
-            if(is_AR_paused){
-                if(BYPASS_AR_PAUSE){
-                    is_AR_paused = false;
+            if(is_paused){
+                if(BYPASS_PAUSE){
+                    is_paused = false;
                 }else{
                     System.out.println("AR related device discovered, please enable then press F2 to continue.");
                 }
             }
 
-            while(is_AR_paused){
+            while(is_paused){
                 Thread.sleep(Math.max(100,DELAY)); //Wait until start button pressed again
             }
 
@@ -138,11 +144,11 @@ public class FX400 extends Thread{
         }
     }
 
-    public void skipDevices(){
+    protected void skipDevices(){
         bot.pressKey(KeyEvent.VK_RIGHT, skip_count);
     }
 
-    public void open(){
+    protected void open(){
         try {
             Thread.sleep(DELAY);
             bot.keyPress(KeyEvent.VK_SHIFT);
@@ -159,7 +165,7 @@ public class FX400 extends Thread{
         }
     }
     
-    public void addPhotoDetector(){
+    protected void addPhotoDetector(){
         open();
         bot.pressKey(KeyEvent.VK_TAB, 3);
         skipDevices();
@@ -168,7 +174,7 @@ public class FX400 extends Thread{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    public void addAlarmInputMod(){
+    protected void addAlarmInputMod(){
         open();
         bot.pressKey(KeyEvent.VK_D, 2);
         bot.pressKey(KeyEvent.VK_TAB, 3);
@@ -178,7 +184,7 @@ public class FX400 extends Thread{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    public void addNonLatchedSupv(){
+    protected void addNonLatchedSupv(){
         open();
         bot.pressKey(KeyEvent.VK_D, 2);
         bot.pressKey(KeyEvent.VK_TAB, 2);
@@ -190,7 +196,7 @@ public class FX400 extends Thread{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    public void addLatchedSupv(){
+    protected void addLatchedSupv(){
         open();
         bot.pressKey(KeyEvent.VK_D,2);
         bot.pressKey(KeyEvent.VK_TAB,2);
@@ -202,7 +208,7 @@ public class FX400 extends Thread{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    public void addHeatDetector(){
+    protected void addHeatDetector(){
         open();
         bot.pressKey(KeyEvent.VK_H,3);
         bot.pressKey(KeyEvent.VK_TAB,3);
@@ -212,7 +218,7 @@ public class FX400 extends Thread{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    public void addAlarmInputClassA(){
+    protected void addAlarmInputClassA(){
         open();
         bot.pressKey(KeyEvent.VK_D, 2);
         bot.pressKey(KeyEvent.VK_TAB, 1);
@@ -224,7 +230,7 @@ public class FX400 extends Thread{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    public void addRelay(){
+    protected void addRelay(){
         open();
         bot.pressKey(KeyEvent.VK_D);
         bot.pressKey(KeyEvent.VK_TAB, 2);
@@ -234,7 +240,7 @@ public class FX400 extends Thread{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    private void enterTag(String tag){
+    protected void enterTag(String tag){
         try {
             Thread.sleep(DELAY);
             for(int i = 0; i < tag.length(); i++){
@@ -243,7 +249,11 @@ public class FX400 extends Thread{
                 if (keyCode == KeyEvent.VK_UNDEFINED) {
                     System.err.println("Key code not found for character: " + c);
                 } else {
+                    if(Character.isUpperCase(c)) {
+                        bot.keyPress(KeyEvent.VK_SHIFT);
+                    }
                     bot.pressKey(keyCode, 1, TAG_DELAY_STRENGTH);
+                    bot.keyRelease(KeyEvent.VK_SHIFT);
                 }
             }
         } catch (Exception e) {
@@ -251,7 +261,7 @@ public class FX400 extends Thread{
         }
     }
 
-    public void updateTags(Zone zone){
+    protected void updateTags(Zone zone){
         try {
             Thread.sleep(DELAY);
             bot.pressKey(KeyEvent.VK_ENTER, 1, ENTER_DELAY_STRENGTH);
@@ -264,7 +274,7 @@ public class FX400 extends Thread{
         }
     }
 
-    private void updateType(Zone zone){
+    protected void updateType(Zone zone){
         try {
             Thread.sleep(DELAY);
             switch(zone.getType()){
@@ -299,7 +309,7 @@ public class FX400 extends Thread{
         }
     }
 
-    public void updateRow(Zone zone){
+    protected void updateRow(Zone zone){
         updateTags(zone);
         updateType(zone);
         
@@ -318,8 +328,7 @@ public class FX400 extends Thread{
         bot.pressKey(KeyEvent.VK_DOWN);
     }
 
-
-    public void updateZone(Zone zone){
+    protected void updateZone(Zone zone){
         try {
             updateRow(zone);
 
@@ -335,7 +344,7 @@ public class FX400 extends Thread{
         
     }
 
-    public void enterZoneList(ZoneList zoneList){
+    protected void enterZoneList(ZoneList zoneList){
         try {
             bot.pressKey(KeyEvent.VK_HOME, 1, 1); 
             for(Zone zone : zoneList.zones){
@@ -349,6 +358,44 @@ public class FX400 extends Thread{
         }
     }
 
+    protected void readSettings() {
+        try{
+            Ini ini;
+            File ini_file = new File(SETTINGS_FILE);
+
+            //Create settings file if doesn't exist
+            if(!ini_file.exists()) {
+                ini_file.createNewFile();
+            }
+
+            ini = new Ini(ini_file);
+
+            //Add settings if doesn't exist - only checks if ini section exists, not keys
+            if(!ini.containsKey("Key Delay")) {
+                ini.add("Key Delay");
+                ini.put("Key Delay", "delayTime", DELAY);
+                ini.put("Key Delay", "tagDelayStrength", TAG_DELAY_STRENGTH);
+                ini.put("Key Delay", "enterDelayStrength", ENTER_DELAY_STRENGTH);
+            }
+
+            if(!ini.containsKey("Options")) {
+                ini.add("Options");
+                ini.put("Options", "bypassPause", BYPASS_PAUSE);
+            }
+
+            ini.store(ini_file);
+
+            //Read settings
+            DELAY = ini.get("Key Delay", "delayTime", int.class);
+            TAG_DELAY_STRENGTH = ini.get("Key Delay", "tagDelayStrength", double.class);
+            ENTER_DELAY_STRENGTH = ini.get("Key Delay", "enterDelayStrength", double.class);
+            BYPASS_PAUSE = ini.get("Options", "bypassPause", boolean.class);
+            
+        }catch(Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     public void setIsRunning(boolean status){
         is_running = status;
 
@@ -358,11 +405,11 @@ public class FX400 extends Thread{
         }
     }
 
-    public void setIsARPaused(boolean status) {
-        is_AR_paused = status;
+    public void setIsPaused(boolean status) {
+        is_paused = status;
     }
 
-    public boolean getIsARPaused() {
-        return is_AR_paused;
+    public boolean getIsPaused() {
+        return is_paused;
     }
 }
