@@ -16,6 +16,7 @@ elif file_path.endswith('.csv'):
 
 
 df = raw_df.sort_values(by = 'Zone', ascending=True)
+df = df[df['Zone'].notna()] #remove empty rows
 
 zoneColumn = df['Zone']
 typeColumn = df['Type']
