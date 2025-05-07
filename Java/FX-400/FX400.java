@@ -54,90 +54,104 @@ public class FX400 extends Thread{
             
             zoneList.displayZoneList();
 
-            if(is_paused){
-                if(BYPASS_PAUSE){
-                    is_paused = false;
-                }else{
-                    System.out.println("AR related device discovered, please enable then press F2 to continue.");
-                }
+            System.out.println("----------------------------------------------------------------");
+            if (validateZones(zoneList)) {
+                is_running = false;
+                System.out.println("----------------------------------------------------------------");
+                System.out.println("Errors found in zone list, please correct them and run again.");
+                System.out.println("----------------------------------------------------------------");
             }
 
-            while(is_paused){
-                Thread.sleep(Math.max(100,DELAY)); //Wait until start button pressed again
-            }
+            if(is_running) {
 
-            ArrayList<Zone> zones = zoneList.zones;
-            Zone zone = zones.get(0);
-            skip_count = (int) zone.getAddress() - 1;
-
-            for(int current_zone = 0; current_zone < zones.size() && is_running; current_zone++) {
-
-                zone = zones.get(current_zone);
-                //Get difference of current and previous address, then -1
-                if(current_zone > 0){
-                    skip_count += (int) zone.getAddress() - (int) zones.get(current_zone - 1).getAddress() - 1;
+                if(is_paused){
+                    if(BYPASS_PAUSE){
+                        is_paused = false;
+                    }else{
+                        System.out.println("AR related device discovered, please enable then press F2 to continue.");
+                    }
                 }
 
-                System.out.println("Inserting: " + zone.getZoneinfo());
-
-                switch (zone.getType()) {
-                    case "Photo Detector":
-                        addPhotoDetector();
-                        break;
-                    case "Alarm Input":
-                        addAlarmInputMod();
-                        break;
-                    case "Non-latched Supervisory":
-                        addNonLatchedSupv();
-                        break;
-                    case "Latched Supervisory":
-                        addLatchedSupv();
-                        break;
-                    case "Heat Detector":
-                        addHeatDetector();
-                        break;
-                    case "Alarm Input Class A":
-                        addAlarmInputClassA();
-                        break;
-                    case "Relay":
-                        addRelay();
-                        break;
+                while(is_paused){
+                    Thread.sleep(Math.max(100,DELAY)); //Wait until start button pressed again
                 }
+
+                ArrayList<Zone> zones = zoneList.zones;
+                Zone zone = zones.get(0);
+                skip_count = (int) zone.getAddress() - 1;
+
+                for(int current_zone = 0; current_zone < zones.size() && is_running; current_zone++) {
+
+                    zone = zones.get(current_zone);
+                    //Get difference of current and previous address, then -1
+                    if(current_zone > 0){
+                        skip_count += (int) zone.getAddress() - (int) zones.get(current_zone - 1).getAddress() - 1;
+                    }
+
+                    System.out.println("Inserting: " + zone.getZoneinfo());
+
+                    switch (zone.getType()) {
+                        case "Photo Detector":
+                            addPhotoDetector();
+                            break;
+                        case "Alarm Input":
+                            addAlarmInputMod();
+                            break;
+                        case "Non-latched Supervisory":
+                            addNonLatchedSupv();
+                            break;
+                        case "Latched Supervisory":
+                            addLatchedSupv();
+                            break;
+                        case "Heat Detector":
+                            addHeatDetector();
+                            break;
+                        case "Alarm Input Class A":
+                            addAlarmInputClassA();
+                            break;
+                        case "Relay":
+                            addRelay();
+                            break;
+                    }
+                }
+
+                if(is_running){
+                    enterZoneList(zoneList);
+                }
+                // zoneList.addZone(1.1, "Waterflow ");
+                // zoneList.addZone(2.1, "valve ");
+                // zoneList.addZone(2.2, "discharge ");
+                // zoneList.addZone(3.1, "Damper ");
+                // zoneList.addZone(4.1, "jocky ");
+                // zoneList.addZone(5.1, "duct ");
+                // zoneList.addZone(5.2, "bypass ");
+                // zoneList.addZone(20, "waterflow");
+                // zoneList.addZone(21, "smoke");
+
+                // if (Zone.classify("smoke").equals("Photo Detector")) {
+                // bot.addPhotoDetector();
+                // }
+
+                // System.out.println(Zone.classify("Waterflow "));
+                // System.out.println(Zone.classify("valve "));
+                // System.out.println(Zone.classify("smoke "));
+                // System.out.println(Zone.classify("Damper "));
+                // System.out.println(Zone.classify("jocky "));
+                // System.out.println(Zone.classify("duct "));
+                // System.out.println(Zone.classify("bypass "));
+
+                // //Simulate typing "Hello, World!"
+                // bot.keyPress(KeyEvent.VK_H);
+                // bot.keyRelease(KeyEvent.VK_H);
+                // bot.keyPress(KeyEvent.VK_E);
+                // bot.keyRelease(KeyEvent.VK_E);
+                // // ... (and so on)
+                System.out.println("FX400 Entry Complete");
+                is_running = false;
             }
-
-            if(is_running){
-                enterZoneList(zoneList);
+            else {
+                System.out.println("FX400 Entry did not run");
             }
-            // zoneList.addZone(1.1, "Waterflow ");
-            // zoneList.addZone(2.1, "valve ");
-            // zoneList.addZone(2.2, "discharge ");
-            // zoneList.addZone(3.1, "Damper ");
-            // zoneList.addZone(4.1, "jocky ");
-            // zoneList.addZone(5.1, "duct ");
-            // zoneList.addZone(5.2, "bypass ");
-            // zoneList.addZone(20, "waterflow");
-            // zoneList.addZone(21, "smoke");
-
-            // if (Zone.classify("smoke").equals("Photo Detector")) {
-            // bot.addPhotoDetector();
-            // }
-
-            // System.out.println(Zone.classify("Waterflow "));
-            // System.out.println(Zone.classify("valve "));
-            // System.out.println(Zone.classify("smoke "));
-            // System.out.println(Zone.classify("Damper "));
-            // System.out.println(Zone.classify("jocky "));
-            // System.out.println(Zone.classify("duct "));
-            // System.out.println(Zone.classify("bypass "));
-
-            // //Simulate typing "Hello, World!"
-            // bot.keyPress(KeyEvent.VK_H);
-            // bot.keyRelease(KeyEvent.VK_H);
-            // bot.keyPress(KeyEvent.VK_E);
-            // bot.keyRelease(KeyEvent.VK_E);
-            // // ... (and so on)
-            System.out.println("FX400 Entry Complete");
-            is_running = false;
         }
         catch(Exception e){
             e.printStackTrace();
@@ -395,6 +409,84 @@ public class FX400 extends Thread{
         }catch(Exception e) {
             e.printStackTrace();
         }
+    }
+
+    //Check each zone to see if it meets the panel's requirements. Returns True if one incorrect device found
+    protected boolean validateZones(ZoneList zoneList) {
+        boolean invalid_found = false;
+        boolean current_zone_valid;
+        String zone_errors;
+        ArrayList<Integer> usedZones = new ArrayList<>();
+
+        for(Zone zone : zoneList.zones) {
+            current_zone_valid = true;
+            zone_errors = zone.getAddress() + " " + zone.getTag1() + " errors: ";
+
+            //Check if zone already used, add it to a list otherwise
+            if(!usedZones.contains((int) zone.getAddress())) {
+                usedZones.add((int) zone.getAddress());
+            }
+            else {
+                current_zone_valid = false;
+                invalid_found = true;
+                zone_errors += "duplicate address, ";
+            }
+
+            //Check if .1 contains "Spare"
+            if(Zone.checkTags(zone.getTag1(), new String[] { "spare", "blank", "unknown" })) {
+                current_zone_valid = false;
+                invalid_found = true;
+                zone_errors += "invalid tag for .1, ";
+            }
+
+            //Check .1 tag lengths
+            if(zone.getTag1().length() > 20) {
+                current_zone_valid = false;
+                invalid_found = true;
+                zone_errors += ".1 tag 1 length > 20, ";
+            }
+
+            if(zone.getTag2().length() > 20) {
+                current_zone_valid = false;
+                invalid_found = true;
+                zone_errors += ".1 tag 2 length > 20, ";
+            }
+
+              
+            if(zone.getSubAddress() != null) {
+            //Check if subzone is spare, valve, or waterflow only
+            if(!Zone.checkTags(zone.getSubAddress().getTag1(), new String[] { "spare", "valve", "waterfl" })){
+                current_zone_valid = false;
+                invalid_found = true;
+                zone_errors += "invalid tag 1 name for .2, ";
+            }
+            
+            //Subzone tag 2 lengths
+            if(zone.getSubAddress().getTag1().length() > 20) {
+                current_zone_valid = false;
+                invalid_found = true;
+                zone_errors += ".2 tag 1 length > 20, ";
+            }
+
+            if(zone.getSubAddress().getTag2().length() > 20) {
+                current_zone_valid = false;
+                invalid_found = true;
+                zone_errors += ".2 tag 2 length > 20, ";
+            }
+
+            //Check zone type if it is unknown or blank
+            if(Zone.checkTags(zone.getType(), new String[] { "unknown", "blank"})){
+                current_zone_valid = false;
+                invalid_found = true;
+                zone_errors += "unknown zone type, ";
+            }
+        }
+
+            if (!current_zone_valid) {
+                System.out.println(zone_errors);
+            }
+        }
+        return invalid_found;
     }
 
     public void setIsRunning(boolean status){
