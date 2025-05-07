@@ -9,12 +9,12 @@ public class DataEntryBot extends Robot{
         this.delay = delay;
     }
 
-    //Give key and distance, press and release key distance times, and multiply delay if provided
-    public void pressKey(int key, int target_distance, double delay_strength)
+    //Give key and press count, press and release key press count times, and multiply delay if provided
+    public void pressKey(int key, int press_count, double delay_strength)
     {
         try {
 
-            for(int i = 0; i < target_distance; i++){
+            for(int i = 0; i < press_count; i++){
 
                 this.keyPress(key); 
                 this.keyRelease(key);
@@ -26,8 +26,8 @@ public class DataEntryBot extends Robot{
         }
     }  
 
-    public void pressKey(int key, int target_distance){
-        pressKey(key, target_distance, DELAY_STRENGTH);
+    public void pressKey(int key, int press_count){
+        pressKey(key, press_count, DELAY_STRENGTH);
     }
 
     public void pressKey(int key){
