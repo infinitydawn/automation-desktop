@@ -422,7 +422,7 @@ public class FX400 extends Thread{
             current_zone_valid = true;
             zone_errors = zone.getAddress() + " " + zone.getTag1() + " errors: ";
 
-            //Check if zone already used, add it to a list otherwise
+            //Check for duplicate addresses
             if(!usedZones.contains((int) zone.getAddress())) {
                 usedZones.add((int) zone.getAddress());
             }
@@ -432,7 +432,7 @@ public class FX400 extends Thread{
                 zone_errors += "duplicate address, ";
             }
 
-            //Check if .1 contains "Spare"
+            //Check if .1 is named correctly
             if(Zone.checkTags(zone.getTag1(), new String[] { "spare", "blank", "unknown" })) {
                 current_zone_valid = false;
                 invalid_found = true;
