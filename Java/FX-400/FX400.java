@@ -78,7 +78,7 @@ public class FX400 extends Thread{
                     skip_count += (int) zone.getAddress() - (int) zones.get(current_zone - 1).getAddress() - 1;
                 }
 
-                System.out.println("Checking: " + zone.getZoneinfo());
+                System.out.println("Inserting: " + zone.getZoneinfo());
 
                 switch (zone.getType()) {
                     case "Photo Detector":
@@ -348,6 +348,7 @@ public class FX400 extends Thread{
         try {
             bot.pressKey(KeyEvent.VK_HOME, 1, 1); 
             for(Zone zone : zoneList.zones){
+                System.out.println("Updating info for: " + zone.getZoneinfo());
                 if(!zone.getType().equals("Blank Device")){
                     updateZone(zone);
                 }
