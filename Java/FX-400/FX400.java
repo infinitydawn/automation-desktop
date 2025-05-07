@@ -454,33 +454,33 @@ public class FX400 extends Thread{
 
               
             if(zone.getSubAddress() != null) {
-            //Check if subzone is spare, valve, or waterflow only
-            if(!Zone.checkTags(zone.getSubAddress().getTag1(), new String[] { "spare", "valve", "waterfl" })){
-                current_zone_valid = false;
-                invalid_found = true;
-                zone_errors += "invalid tag 1 name for .2, ";
-            }
-            
-            //Subzone tag 2 lengths
-            if(zone.getSubAddress().getTag1().length() > 20) {
-                current_zone_valid = false;
-                invalid_found = true;
-                zone_errors += ".2 tag 1 length > 20, ";
-            }
+                //Check if subzone is spare, valve, or waterflow only
+                if(!Zone.checkTags(zone.getSubAddress().getTag1(), new String[] { "spare", "valve", "waterfl" })) {
+                    current_zone_valid = false;
+                    invalid_found = true;
+                    zone_errors += "invalid tag 1 name for .2, ";
+                }
+                
+                //Subzone tag 2 lengths
+                if(zone.getSubAddress().getTag1().length() > 20) {
+                    current_zone_valid = false;
+                    invalid_found = true;
+                    zone_errors += ".2 tag 1 length > 20, ";
+                }
 
-            if(zone.getSubAddress().getTag2().length() > 20) {
-                current_zone_valid = false;
-                invalid_found = true;
-                zone_errors += ".2 tag 2 length > 20, ";
-            }
+                if(zone.getSubAddress().getTag2().length() > 20) {
+                    current_zone_valid = false;
+                    invalid_found = true;
+                    zone_errors += ".2 tag 2 length > 20, ";
+                }
 
-            //Check zone type if it is unknown or blank
-            if(Zone.checkTags(zone.getType(), new String[] { "unknown", "blank"})){
-                current_zone_valid = false;
-                invalid_found = true;
-                zone_errors += "unknown zone type, ";
+                //Check zone type if it is unknown or blank
+                if(Zone.checkTags(zone.getType(), new String[] { "unknown", "blank"})) {
+                    current_zone_valid = false;
+                    invalid_found = true;
+                    zone_errors += "unknown zone type, ";
+                }
             }
-        }
 
             if (!current_zone_valid) {
                 System.out.println(zone_errors);
