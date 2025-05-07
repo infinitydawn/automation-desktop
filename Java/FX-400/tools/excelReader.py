@@ -17,6 +17,7 @@ elif file_path.endswith('.csv'):
 
 df = raw_df.sort_values(by = 'Zone', ascending=True)
 df = df[df['Zone'].notna()] #remove empty rows
+df = df[['Zone', 'Type', 'Location']] #keep only the main columns
 
 zoneColumn = df['Zone']
 typeColumn = df['Type']
@@ -73,11 +74,4 @@ check_zone_format(zoneColumn)
 # check if every .2 zone has a .1 zone
 check_subaddresses(zoneColumn)
 
-
 df.to_csv('./assets/temp_zones.csv', lineterminator=',\n', index=False)
-
-
-
-
-
-
