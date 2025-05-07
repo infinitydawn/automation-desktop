@@ -279,7 +279,7 @@ public class FX400 extends Thread{
             Thread.sleep(DELAY);
             switch(zone.getType()){
                 case "Photo Detector":
-                    bot.pressKey(KeyEvent.VK_A);
+                    //bot.pressKey(KeyEvent.VK_A);
                     break;
                 case "Alarm Input":
                     bot.pressKey(KeyEvent.VK_M);
@@ -348,7 +348,7 @@ public class FX400 extends Thread{
         try {
             bot.pressKey(KeyEvent.VK_HOME, 1, 1); 
             for(Zone zone : zoneList.zones){
-                System.out.println("Updating info for: " + zone.getZoneinfo());
+                System.out.println("Updating: " + zone.getZoneinfo());
                 if(!zone.getType().equals("Blank Device")){
                     updateZone(zone);
                 }
