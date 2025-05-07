@@ -279,7 +279,7 @@ public class FX400 extends Thread{
             Thread.sleep(DELAY);
             switch(zone.getType()){
                 case "Photo Detector":
-                    //bot.pressKey(KeyEvent.VK_A);
+                    bot.pressKey(KeyEvent.VK_A);
                     break;
                 case "Alarm Input":
                     bot.pressKey(KeyEvent.VK_M);
