@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Collections;
 import java.awt.event.KeyEvent;
 import java.io.File;
 
@@ -417,16 +418,18 @@ public class FX400 extends Thread{
         boolean current_zone_valid;
         String zone_errors;
         ArrayList<Integer> usedZones = new ArrayList<>();
+        
+        //Add all addresses to check for duplicates later
+        for(Zone zone :zoneList.zones) {
+            usedZones.add((int) zone.getAddress());
+        }
 
         for(Zone zone : zoneList.zones) {
             current_zone_valid = true;
             zone_errors = zone.getAddress() + " " + zone.getTag1() + " errors: ";
 
             //Check for duplicate addresses
-            if(!usedZones.contains((int) zone.getAddress())) {
-                usedZones.add((int) zone.getAddress());
-            }
-            else {
+            if(usedZones.size() > 0 && Collections.frequency(usedZones, (int) zone.getAddress()) > 1) {
                 current_zone_valid = false;
                 invalid_found = true;
                 zone_errors += "duplicate address, ";
