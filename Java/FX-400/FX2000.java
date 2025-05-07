@@ -51,7 +51,7 @@ public class FX2000 extends FX400{
                     skip_count += (int) zone.getAddress() - (int) zones.get(current_zone - 1).getAddress() - 1;
                 }
 
-                System.out.println("Checking: " + zone.getZoneinfo());
+                System.out.println("Inserting: " + zone.getZoneinfo());
 
                 switch (zone.getType()) {
                     case "Photo Detector":
