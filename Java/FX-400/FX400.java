@@ -459,11 +459,12 @@ public class FX400 extends Thread{
                     zone_errors += "unknown zone type, ";
                 }
 
+                /*
                 //Check if zone address matches with sub address
                 if((int) zone.getAddress() != (int) zone.getSubAddress().getAddress()) {
                     current_zone_valid = false;
                     zone_errors += "address and subaddress do not match, ";
-                }
+                }*/
             }
 
             if (!current_zone_valid) {
