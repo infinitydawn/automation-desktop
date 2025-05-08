@@ -42,7 +42,9 @@ class Zone {
             type = "Alarm Input";
             this.isNS = true;
             this.isDualInput = true;
-        } else if (Zone.checkTags(tag, new String[] { "pull"})) {
+        } else if(Zone.checkTags(tag, new String[] { "ansul" })) {
+            type = "Alarm Input";
+        } else if (Zone.checkTags(tag, new String[] { "pull" })) {
             type = "Alarm Input Class A";
             this.isPullSttn = true;
         } else if (Zone.checkTags(tag, new String[] { "co", "carb" })) {
@@ -55,12 +57,12 @@ class Zone {
         } else if (Zone.checkTags(tag, new String[] { "smoke", "duct" })) {
             type = "Photo Detector";
             this.isSensor = true;
+        } else if(Zone.checkTags(tag, new String[] {"fan shut", "ac shut", "rtu shut"})){
+            this.isAR = true;
+            type = "Relay";
         } else if (Zone.checkTags(tag, new String[] { "relay", "door", "damper", "shutdown", "shut down", "Recall", "fsd",
                 "fan", "shunt", })) {
             type = "Relay";
-            if(Zone.checkTags(tag, new String[] {"ac shutdown", "ac shut down", "fan shutdown","fan shut down",})){
-                this.isAR = true;
-            }
         } else if (Zone.checkTags(tag, new String[] { "heat" })) {
             type = "Heat Detector";
             this.isSensor = true;
