@@ -54,6 +54,11 @@ public class FX2000 extends FX400{
                 Zone zone = zones.get(0);
                 skip_count = (int) zone.getAddress() - 1;
 
+                //Reduce skip count if first address in zone list is ipt/relay
+                if(!isSmokeHeat(zone)) {
+                    skip_count -= 100;
+                }
+
                 for(int current_zone = 0; current_zone < zones.size() && is_running; current_zone++) {
 
                     zone = zones.get(current_zone);
@@ -65,7 +70,7 @@ public class FX2000 extends FX400{
                         }
                         else {  
                             //Assuming zone list is sorted, reset skip count once ipt/relay devices are reached
-                            if(current_zone > 0 && isSmokeHeat(zones.get(current_zone - 1)) && !isSmokeHeat(zone)) {
+                            if(isSmokeHeat(zones.get(current_zone - 1)) && !isSmokeHeat(zone)) {
                                 skip_count = 0;
                             } 
                             else {                         
