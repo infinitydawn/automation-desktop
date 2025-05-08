@@ -9,9 +9,7 @@ import org.ini4j.Ini;
 public class FX400 extends Thread{
 
     protected int DELAY = 200; //Default 200. Delay time for everything. Multiply by delay strength to change length
-    protected double TAG_DELAY_STRENGTH = 0; //Default 0. Delay when entering tag letters
     protected double ENTER_DELAY_STRENGTH = 1; // Default 1. Delay after pressing Enter (Writes to database. Larger databases may want this higher)
-    //protected double DROPDOWN_DELAY_STRENGTH = 0; // Default 0. Delay when scrolling through dropdown menus. UNUSED
     protected boolean BYPASS_PAUSE = false; //Prevents the AR prompt from showing
     protected boolean IGNORE_TAG_LENGTH = false; //Omits tag length requirement from errors
     protected String SETTINGS_FILE = "settings.ini";
@@ -256,34 +254,13 @@ public class FX400 extends Thread{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    protected void enterTag(String tag){
-        try {
-            Thread.sleep(DELAY);
-            for(int i = 0; i < tag.length(); i++){
-                char c = tag.charAt(i);
-                int keyCode = KeyEvent.getExtendedKeyCodeForChar(c);
-                if (keyCode == KeyEvent.VK_UNDEFINED) {
-                    System.err.println("Key code not found for character: " + c);
-                } else {
-                    if(Character.isUpperCase(c)) {
-                        bot.keyPress(KeyEvent.VK_SHIFT);
-                    }
-                    bot.pressKey(keyCode, 1, TAG_DELAY_STRENGTH);
-                    bot.keyRelease(KeyEvent.VK_SHIFT);
-                }
-            }
-        } catch (Exception e) {
-            System.err.println(e);
-        }
-    }
-
     protected void updateTags(Zone zone){
         try {
             Thread.sleep(DELAY);
             bot.pressKey(KeyEvent.VK_ENTER, 1, ENTER_DELAY_STRENGTH);
-            enterTag(zone.getTag1());
+            bot.pasteText(zone.getTag1());
             bot.pressKey(KeyEvent.VK_ENTER, 1, ENTER_DELAY_STRENGTH);
-            enterTag(zone.getTag2());
+            bot.pasteText(zone.getTag2());
             bot.pressKey(KeyEvent.VK_ENTER, 1, ENTER_DELAY_STRENGTH);
         } catch (Exception e) {
             e.printStackTrace();
@@ -391,7 +368,6 @@ public class FX400 extends Thread{
             if(!ini.containsKey("Key Delay")) {
                 ini.add("Key Delay");
                 ini.put("Key Delay", "delayTime", DELAY);
-                ini.put("Key Delay", "tagDelayStrength", TAG_DELAY_STRENGTH);
                 ini.put("Key Delay", "enterDelayStrength", ENTER_DELAY_STRENGTH);
             }
 
@@ -405,7 +381,6 @@ public class FX400 extends Thread{
 
             //Read settings
             DELAY = ini.get("Key Delay", "delayTime", int.class);
-            TAG_DELAY_STRENGTH = ini.get("Key Delay", "tagDelayStrength", double.class);
             ENTER_DELAY_STRENGTH = ini.get("Key Delay", "enterDelayStrength", double.class);
             BYPASS_PAUSE = ini.get("Options", "bypassPause", boolean.class);
             IGNORE_TAG_LENGTH = ini.get("Options", "ignoreTagLength", boolean.class);
