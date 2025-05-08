@@ -13,6 +13,7 @@ public class FX400 extends Thread{
     protected double ENTER_DELAY_STRENGTH = 1; // Default 1. Delay after pressing Enter (Writes to database. Larger databases may want this higher)
     //protected double DROPDOWN_DELAY_STRENGTH = 0; // Default 0. Delay when scrolling through dropdown menus. UNUSED
     protected boolean BYPASS_PAUSE = false; //Prevents the AR prompt from showing
+    protected boolean IGNORE_TAG_LENGTH = false; //Omits tag length requirement from errors
     protected String SETTINGS_FILE = "settings.ini";
 
     protected DataEntryBot bot;
@@ -397,6 +398,7 @@ public class FX400 extends Thread{
             if(!ini.containsKey("Options")) {
                 ini.add("Options");
                 ini.put("Options", "bypassPause", BYPASS_PAUSE);
+                ini.put("Options", "ignoreTagLength", IGNORE_TAG_LENGTH);
             }
 
             ini.store(ini_file);
@@ -406,6 +408,7 @@ public class FX400 extends Thread{
             TAG_DELAY_STRENGTH = ini.get("Key Delay", "tagDelayStrength", double.class);
             ENTER_DELAY_STRENGTH = ini.get("Key Delay", "enterDelayStrength", double.class);
             BYPASS_PAUSE = ini.get("Options", "bypassPause", boolean.class);
+            IGNORE_TAG_LENGTH = ini.get("Options", "ignoreTagLength", boolean.class);
             
         }catch(Exception e) {
             e.printStackTrace();
@@ -429,64 +432,62 @@ public class FX400 extends Thread{
             zone_errors = zone.getAddress() + " " + zone.getTag1() + " errors: ";
 
             //Check for duplicate addresses
-            if(usedZones.size() > 0 && Collections.frequency(usedZones, (int) zone.getAddress()) > 1) {
+            if(Collections.frequency(usedZones, (int) zone.getAddress()) > 1) {
                 current_zone_valid = false;
-                invalid_found = true;
                 zone_errors += "duplicate address, ";
+            }
+
+            //Check address in valid range
+            if ((int) zone.getAddress() < 1 || (int) zone.getAddress() > 240) {
+                current_zone_valid = false;
+                zone_errors += "address out of range, ";
             }
 
             //Check if .1 is named correctly
             if(Zone.checkTags(zone.getTag1(), new String[] { "spare", "blank", "unknown" })) {
                 current_zone_valid = false;
-                invalid_found = true;
                 zone_errors += "invalid tag for .1, ";
             }
 
             //Check .1 tag lengths
-            if(zone.getTag1().length() > 20) {
+            if(zone.getTag1().length() > 20 && !IGNORE_TAG_LENGTH) {
                 current_zone_valid = false;
-                invalid_found = true;
                 zone_errors += ".1 tag 1 length > 20, ";
             }
 
-            if(zone.getTag2().length() > 20) {
+            if(zone.getTag2().length() > 20 && !IGNORE_TAG_LENGTH) {
                 current_zone_valid = false;
-                invalid_found = true;
                 zone_errors += ".1 tag 2 length > 20, ";
             }
-
-              
+           
             if(zone.getSubAddress() != null) {
                 //Check if subzone is spare, valve, or waterflow only
                 if(!Zone.checkTags(zone.getSubAddress().getTag1(), new String[] { "spare", "valve", "waterfl" })) {
                     current_zone_valid = false;
-                    invalid_found = true;
                     zone_errors += "invalid tag 1 name for .2, ";
                 }
                 
                 //Subzone tag 2 lengths
-                if(zone.getSubAddress().getTag1().length() > 20) {
+                if(zone.getSubAddress().getTag1().length() > 20 && !IGNORE_TAG_LENGTH) {
                     current_zone_valid = false;
-                    invalid_found = true;
                     zone_errors += ".2 tag 1 length > 20, ";
                 }
 
-                if(zone.getSubAddress().getTag2().length() > 20) {
+                if(zone.getSubAddress().getTag2().length() > 20 && !IGNORE_TAG_LENGTH) {
                     current_zone_valid = false;
-                    invalid_found = true;
                     zone_errors += ".2 tag 2 length > 20, ";
                 }
 
                 //Check zone type if it is unknown or blank
                 if(Zone.checkTags(zone.getType(), new String[] { "unknown", "blank"})) {
                     current_zone_valid = false;
-                    invalid_found = true;
                     zone_errors += "unknown zone type, ";
                 }
             }
 
             if (!current_zone_valid) {
                 System.out.println(zone_errors);
+                invalid_found = true;
             }
         }
         return invalid_found;
