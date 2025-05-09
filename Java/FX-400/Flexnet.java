@@ -1,9 +1,10 @@
 import java.util.ArrayList;
+import java.util.Collections;
 import java.awt.event.KeyEvent;
 
 public class Flexnet extends FX400{
     public void run() {
-        System.out.println("Starting FX2000 Data Entry");
+        System.out.println("Starting Flexnet Data Entry");
         try{
             is_running = true;
 
@@ -19,68 +20,82 @@ public class Flexnet extends FX400{
                 System.out.println(" - - - - -  + " + tags1[i]);
                 zoneList.addZone(Double.parseDouble(addresses[i]), tags1[i], tags2[i]);
 
-                if(Zone.checkTags(tags1[i], new String[] {"ac shutdown", "ac shut down", "fan shutdown","fan shut down"})){
+                if(Zone.checkTags(tags1[i], new String[] {"fan shut", "ac shut"})){
                     is_paused = true;
                 }
             }
 
             zoneList.displayZoneList();
 
-            if(is_paused){
-                if(BYPASS_PAUSE){
-                    is_paused = false;
-                }else{
-                    System.out.println("AR related device discovered, please enable then press F2 to continue.");
-                }
+            System.out.println("----------------------------------------------------------------");
+            if (validateZones(zoneList)) {
+                is_running = false;
+                System.out.println("----------------------------------------------------------------");
+                System.out.println("Errors found in zone list, please correct them and run again.");
+                System.out.println("----------------------------------------------------------------");
             }
 
-            while(is_paused){
-                Thread.sleep(DELAY); //Wait until start button pressed again
-            }
-
-            ArrayList<Zone> zones = zoneList.zones;
-            Zone zone = zones.get(0);
-            skip_count = (int) zone.getAddress() - 1;
-
-            for(int current_zone = 0; current_zone < zones.size() && is_running; current_zone++) {
-
-                zone = zones.get(current_zone);
-                //Get difference of current and previous address, then -1
-                if(current_zone > 0){
-                    skip_count += (int) zone.getAddress() - (int) zones.get(current_zone - 1).getAddress() - 1;
+            if(is_running) {
+                if(is_paused){
+                    if(BYPASS_PAUSE){
+                        is_paused = false;
+                    }else{
+                        System.out.println("AR related device discovered, please enable then press F2 to continue.");
+                    }
                 }
 
-                System.out.println("Inserting: " + zone.getZoneinfo());
-
-                switch (zone.getType()) {
-                    case "Photo Detector":
-                        addPhotoDetector();
-                        break;
-                    case "Alarm Input":
-                    case "Alarm Input Class A":
-                        addAlarmInputMod();
-                        break;
-                    case "Non-latched Supervisory":
-                        addNonLatchedSupv();
-                        break;
-                    case "Latched Supervisory":
-                        addLatchedSupv();
-                        break;
-                    case "Heat Detector":
-                        addHeatDetector();
-                        break;
-                    case "Relay":
-                        addRelay();
-                        break;
+                while(is_paused){
+                    Thread.sleep(DELAY); //Wait until start button pressed again
                 }
-            }
 
-            if(is_running){
-                enterZoneList(zoneList);
-            }
+                ArrayList<Zone> zones = zoneList.zones;
+                Zone zone = zones.get(0);
+                skip_count = (int) zone.getAddress() - 1;
 
-            System.out.println("FX2000 Entry Complete");
-            is_running = false;
+                for(int current_zone = 0; current_zone < zones.size() && is_running; current_zone++) {
+
+                    zone = zones.get(current_zone);
+                    //Get difference of current and previous address, then -1
+                    if(current_zone > 0){
+                        skip_count += (int) zone.getAddress() - (int) zones.get(current_zone - 1).getAddress() - 1;
+                    }
+
+                    System.out.println("Inserting: " + zone.getZoneinfo());
+
+                    switch (zone.getType()) {
+                        case "Photo Detector":
+                            addPhotoDetector();
+                            break;
+                        case "Alarm Input":
+                        case "Alarm Input Class A":
+                            addAlarmInputMod();
+                            break;
+                        case "Non-latched Supervisory":
+                            addNonLatchedSupv();
+                            break;
+                        case "Latched Supervisory":
+                            addLatchedSupv();
+                            break;
+                        case "Dual Heat":
+                        case "Heat Detector":
+                            addHeatDetector();
+                            break;
+                        case "Relay":
+                            addRelay();
+                            break;
+                    }
+                }
+
+                if(is_running){
+                    enterZoneList(zoneList);
+                }
+
+                System.out.println("Flexnet Entry Complete");
+                is_running = false;
+            }
+            else {
+                System.out.println("Flexnet Entry did not run");
+            }
         }
         catch(Exception e){
             e.printStackTrace();
@@ -210,7 +225,11 @@ public class Flexnet extends FX400{
     protected void updateZone(Zone zone){
         try {
             updateRow(zone);
-            /* //can get 2 subzones
+            //can have up to 3 sub zones, but only waterflow/valves are tracked
+            //has the 1-159 smokeheat and (100 + 1-159) convention from fx2000
+            //also has to consider ap start but it doesnt matter for entry
+            
+            /*
              if (zone.getSubAddress() != null){
                 updateRow(zone.getSubAddress());
             } else if(zone.isDualInput() || zone.getType().equals("Relay")) {
@@ -222,8 +241,28 @@ public class Flexnet extends FX400{
             e.printStackTrace();
         }    
     }
-}
 
-//need to set AP in order to get some types, like Input Mod
-//dual heat photos:  3 addresses, but a preset order
-//dual smoke/fire
+    //Check each zone to see if it meets the panel's requirements. Returns True if one incorrect device found
+    protected boolean validateZones(ZoneList zoneList) {
+        boolean invalid_found = false;
+        boolean current_zone_valid;
+        String zone_errors;
+        ArrayList<Integer> usedZones = new ArrayList<>();
+        
+        //Add all addresses to check for duplicates later
+        for(Zone zone :zoneList.zones) {
+            usedZones.add((int) zone.getAddress());
+        }
+
+        /*
+        for(Zone zone : zoneList.zones) {
+            
+            if (!current_zone_valid) {
+                System.out.println(zone_errors);
+                invalid_found = true;
+            }
+        }
+        */
+        return invalid_found;
+    }
+}
