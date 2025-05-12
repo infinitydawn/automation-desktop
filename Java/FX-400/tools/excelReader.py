@@ -43,13 +43,14 @@ def check_column_headers(df):
             errorMessage = f"Missing required column: {column}"
             raise ValueError(errorMessage)
 
-#check if all zones are decimals (0.1 or 0.2)
+#If the first zone has a decimal, check if all zones are decimals (0.1 or 0.2)
 def check_zone_format(zoneColumn):
     print(" * Checking if the zone column is in the correct format...")
-    for index, value in enumerate(zoneColumn):
-        if(check_decimal(value) == False):
-            errorMessage = f"Zone: {value}, row {index+1} is not in correct format, make sure it ends with .1 or .2"
-            raise ValueError(errorMessage)
+    if(check_decimal(zoneColumn[0])):          
+        for index, value in enumerate(zoneColumn):
+            if(check_decimal(value) == False):
+                errorMessage = f"Zone: {value}, row {index+1} is not in correct format, make sure it ends with .1 or .2"
+                raise ValueError(errorMessage)
 
 # check if every .2 zone has a .1 zone
 def check_subaddresses(zoneColumn):
