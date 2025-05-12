@@ -437,7 +437,8 @@ public class FX400 extends Thread{
            
             if(zone.getSubAddress() != null) {
                 //Check if subzone is spare, valve, or waterflow only
-                if(!Zone.checkTags(zone.getSubAddress().getTag1(), new String[] { "spare", "valve", "waterfl" })) {
+                if(!Zone.checkTags(zone.getSubAddress().getTag1(), new String[] { "spare", "valve", "waterfl", "valve", "tamper", "stat", "pump", "intake", "discharge",
+                "jockey", "jocky", "bypass", })) {
                     current_zone_valid = false;
                     zone_errors += "invalid tag 1 name for .2, ";
                 }
