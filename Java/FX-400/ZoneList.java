@@ -42,6 +42,7 @@ class ZoneList {
 
         //Get AP Start from headers if it exists
         int ap_start_index = headers.toLowerCase().indexOf("ap start");
+
         if(ap_start_index > 0) {
             String nums = "";
             for (char c : headers.substring(ap_start_index, headers.length()).toCharArray()) {
@@ -49,6 +50,7 @@ class ZoneList {
                     nums += c;
                 }
             }
+            
             AP_START = Integer.parseInt(nums);
         }
 

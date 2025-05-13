@@ -18,11 +18,13 @@ elif file_path.endswith('.csv'):
 df = raw_df.sort_values(by = 'Zone', ascending=True)
 df = df[df['Zone'].notna()] #remove empty rows
 
+"""
 #Use options if in sheet
 if 'Options' in df.columns:
     df = df[['Zone', 'Type', 'Location', 'Options']]
 else:
     df = df[['Zone', 'Type', 'Location']]
+"""
 
 zoneColumn = df['Zone']
 typeColumn = df['Type']
