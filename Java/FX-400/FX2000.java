@@ -36,7 +36,7 @@ public class FX2000 extends FX400{
                         if(zoneList.CONTAINS_AR) {
                             System.out.println("Auxiliary Reset in Base Control/Annun. Idx 3");
                         }
-                        System.out.println("Please make necessary changes and press F2 to continue.");
+                        System.out.println("Please make necessary changes and press F3 to continue.");
                         System.out.println("----------------------------------------------------------------");
                     }
                 }
