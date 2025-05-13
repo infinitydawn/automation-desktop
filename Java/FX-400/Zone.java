@@ -84,6 +84,10 @@ class Zone {
         return false;
     }
 
+    public void setDualInput(boolean in){
+        isDualInput = in;
+    }
+
     public String getType(){
         return type;
     }
