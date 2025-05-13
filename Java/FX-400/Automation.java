@@ -9,6 +9,7 @@ public class Automation implements NativeKeyListener{
 
     private FX400 fx400;
     private FX2000 fx2000;
+    private Flexnet flexnet;
 
     public static void main(String[] args){
         //Register key presses
@@ -24,7 +25,7 @@ public class Automation implements NativeKeyListener{
 
         GlobalScreen.addNativeKeyListener(new Automation());
 
-        System.out.println("Program ready. Press F2 to start, ` to Exit.");
+        System.out.println("Program ready. Press F2 to start FX400, F3 to start FX2000, F4 to start Flexnet, ` to Exit anytime.");
     }
 
     public void nativeKeyPressed(NativeKeyEvent e) {
@@ -52,7 +53,7 @@ public class Automation implements NativeKeyListener{
             */
         }
 
-        
+        //NEED TO PREVENT PRESSING OTHER PROGRAMS WHILE RUNNING
         if (e.getKeyCode() == NativeKeyEvent.VC_F2) {
             try {
                 //Start a new thread only if it doesn't exist or is no longer alive
@@ -84,6 +85,24 @@ public class Automation implements NativeKeyListener{
                     fx2000.start();
                 }else if(fx2000.isAlive() && fx2000.getIsPaused()){
                     fx2000.setIsPaused(false);
+                }
+            } catch (Exception except) {
+                except.printStackTrace();
+            }
+        }
+
+        if (e.getKeyCode() == NativeKeyEvent.VC_F4) {
+            try {
+                //Start a new thread only if it doesn't exist or is no longer alive
+                if(flexnet == null || (flexnet != null && !flexnet.isAlive())){
+                    flexnet = new Flexnet();
+                }
+
+                if(!flexnet.isAlive()){
+                    Thread.sleep(START_DELAY);   
+                    flexnet.start();
+                }else if(flexnet.isAlive() && flexnet.getIsPaused()){
+                    flexnet.setIsPaused(false);
                 }
             } catch (Exception except) {
                 except.printStackTrace();

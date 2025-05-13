@@ -1,5 +1,4 @@
 import java.util.ArrayList;
-import java.util.Collections;
 import java.awt.event.KeyEvent;
 
 public class Flexnet extends FX400{
@@ -7,25 +6,15 @@ public class Flexnet extends FX400{
         System.out.println("Starting Flexnet Data Entry");
         try{
             is_running = true;
+            is_paused = false;
 
-            ReadTempArray reader = new ReadTempArray();
-            String[][] zoneParts = reader.readFile();
             ZoneList zoneList = new ZoneList();
-
-            String[] addresses = zoneParts[0];
-            String[] tags1 = zoneParts[1];
-            String[] tags2 = zoneParts[2];
-
-            for (int i = 0; i < addresses.length; i++) {
-                System.out.println(" - - - - -  + " + tags1[i]);
-                zoneList.addZone(Double.parseDouble(addresses[i]), tags1[i], tags2[i]);
-
-                if(zoneList.zones.get(zoneList.zones.size() - 1).isAR()){
-                    is_paused = true;
-                }
-            }
-
+            zoneList.readFile();
             zoneList.displayZoneList();
+
+            if(zoneList.CONTAINS_AR || zoneList.AP_START > 0) {
+                is_paused = true;
+            }
 
             System.out.println("----------------------------------------------------------------");
             if (validateZones(zoneList)) {
@@ -36,11 +25,22 @@ public class Flexnet extends FX400{
             }
 
             if(is_running) {
+
                 if(is_paused){
                     if(BYPASS_PAUSE){
                         is_paused = false;
                     }else{
-                        System.out.println("AR related device discovered, please enable then press F2 to continue.");
+                        System.out.println("The following settings need to be enabled for data entry:");
+                        if(zoneList.CONTAINS_AR) {
+                            System.out.println("Auxiliary Reset in Base Control/Annun. Idx 3");
+                        }
+
+                        if (zoneList.AP_START > 0) {
+                            System.out.println("AP Start to " + zoneList.AP_START);
+                        }
+
+                        System.out.println("Please make necessary changes and press F4 to continue.");
+                        System.out.println("----------------------------------------------------------------");
                     }
                 }
 
