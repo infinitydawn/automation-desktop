@@ -76,9 +76,13 @@ public class Flexnet extends FX400{
                         case "Latched Supervisory":
                             addLatchedSupv();
                             break;
-                        case "Dual Heat":
-                        case "Heat Detector":
-                            addHeatDetector();
+                        case "Heat": 
+                            if(zone.isDualInput()) {
+                                addDualHeatSmokeDetector();
+                            }
+                            else {
+                                addHeatDetector();
+                            }
                             break;
                         case "Relay":
                             addRelay();
@@ -159,6 +163,17 @@ public class Flexnet extends FX400{
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
+
+    protected void addDualHeatSmokeDetector(){
+        open();
+        bot.pressKey(KeyEvent.VK_D, 6);
+        bot.pressKey(KeyEvent.VK_TAB, 5);
+        skipDevices();
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ESCAPE);
+        bot.pressKey(KeyEvent.VK_END);
+    }
+
 
     protected void addRelay(){
         open();
