@@ -32,27 +32,15 @@ public class FX400 extends Thread{
         System.out.println("Starting FX400 Data Entry");
         try{
             is_running = true;
-
-            ReadTempArray reader = new ReadTempArray();
-            String[][] zoneParts = reader.readFile(); 
+            is_paused = false;
 
             ZoneList zoneList = new ZoneList();
-
-            String[] addresses = zoneParts[0];
-            String[] tags1 = zoneParts[1];
-            String[] tags2 = zoneParts[2];
-
-            is_paused = false;
-            for (int i = 0; i < addresses.length; i++) {
-                System.out.println(" - - - - -  + " + tags1[i]);
-                zoneList.addZone(Double.parseDouble(addresses[i]), tags1[i], tags2[i]);
-
-                if(zoneList.zones.get(zoneList.zones.size() - 1).isAR()){
-                    is_paused = true;
-                }
-            }
-            
+            zoneList.readFile();
             zoneList.displayZoneList();
+
+            if(zoneList.CONTAINS_AR) {
+                is_paused = true;
+            }
 
             System.out.println("----------------------------------------------------------------");
             if (validateZones(zoneList)) {
@@ -63,12 +51,16 @@ public class FX400 extends Thread{
             }
 
             if(is_running) {
-
                 if(is_paused){
                     if(BYPASS_PAUSE){
                         is_paused = false;
                     }else{
-                        System.out.println("AR related device discovered, please enable then press F2 to continue.");
+                        System.out.println("The following settings need to be enabled for data entry:");
+                        if(zoneList.CONTAINS_AR) {
+                            System.out.println("AR/Buzzer Silence");
+                        }
+                        System.out.println("Please make necessary changes and press F2 to continue.");
+                        System.out.println("----------------------------------------------------------------");
                     }
                 }
 
@@ -123,7 +115,7 @@ public class FX400 extends Thread{
                 is_running = false;
             }
             else {
-                System.out.println("FX400 Entry did not run");
+                System.out.println("FX400 entry did not run");
             }
         }
         catch(Exception e){
