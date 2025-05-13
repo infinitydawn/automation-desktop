@@ -3,6 +3,8 @@ import java.util.ArrayList;
 import java.util.Scanner;
 
 class ZoneList {
+    private String FILENAME = "assets/temp_zones.csv";
+
     ArrayList<Zone> zones = new ArrayList<Zone>();
     boolean CONTAINS_AR = false;
     int AP_START = 0;
@@ -35,7 +37,7 @@ class ZoneList {
     }
 
     public void readFile() throws Exception {
-        File temp_file = new File("assets/temp_zones.csv");
+        File temp_file = new File(FILENAME);
         Scanner temp_scan = new Scanner(temp_file);
 
         String headers = temp_scan.nextLine();
