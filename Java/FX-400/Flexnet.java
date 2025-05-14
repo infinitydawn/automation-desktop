@@ -98,12 +98,12 @@ public class Flexnet extends FX2000{
                             break;
                         case "Non-latched Supervisory":
                         //Check for radio, single monitor and dual monitor
-                            if(Zone.checkTags(zone.getTag1(), new String[] { "radio"})) {
+                            if(Zone.checkTags(zone.getTag1(), new String[] { "radio" })) {
                                 addNonLatchedSupvMini();
                             } else {
-                                if(zone.getSubAddress() != null) {
+                                if(zone.getSubAddress() != null || Zone.checkTags(zone.getTag1(), new String[] { "generator", "air dry" })) {
                                     addDualNonLatchedSupv();
-                                }
+                                } 
                                 else {
                                     addNonLatchedSupv();
                                 }    
@@ -123,6 +123,9 @@ public class Flexnet extends FX2000{
                             break;
                         case "Relay":
                             addRelay();
+                            break;
+                        case "Telephone Module":
+                            addTelephoneModule();
                             break;
                     }
                 }
@@ -234,7 +237,6 @@ public class Flexnet extends FX2000{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-
     protected void addLatchedSupv(){
         open();
         bot.pressKey(KeyEvent.VK_M, 2);
@@ -279,22 +281,28 @@ public class Flexnet extends FX2000{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    /*
-    protected void addDualSmokeFireCODetector(){
+    public void addTelephoneModule() {
         open();
-Math.max(ENTER_DELAY_STRENGTH, 2)
+        bot.pressKey(KeyEvent.VK_F);
+        bot.pressKey(KeyEvent.VK_TAB, 3);
+        skipDevices();
+        bot.pressKey(KeyEvent.VK_ENTER, 1, ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ESCAPE);
+        bot.pressKey(KeyEvent.VK_END);
     }
-     
-    protected void addFirephone(){
+
+    protected void addSmokeCODetector(){
         open();
-
+        bot.pressKey(KeyEvent.VK_F, 2);
+        bot.pressKey(KeyEvent.VK_TAB);
+        bot.pressKey(KeyEvent.VK_A);
+        bot.pressKey(KeyEvent.VK_TAB, 4);
+        skipDevices();
+        bot.pressKey(KeyEvent.VK_ENTER, 1, Math.max(ENTER_DELAY_STRENGTH, 2));
+        bot.pressKey(KeyEvent.VK_ESCAPE);
+        bot.pressKey(KeyEvent.VK_END);
+        
     }
-     
-    
-    protected void addSounder(){
-
-    }
-     */
 
     protected void updateType(Zone zone){
         try {
@@ -437,12 +445,14 @@ Math.max(ENTER_DELAY_STRENGTH, 2)
 
             if(zone.getSubAddress() != null) {
 
-                //Check if subzone is valve or waterflow only
+                /*
+                //Check if subzone is valve or waterflow only -- needs to be able to check for high/low air dry sys
                 if(!Zone.checkTags(zone.getSubAddress().getTag1(), new String[] { "valve", "waterfl", "valve", "tamper", "stat", "pump", "intake", "discharge",
                 "jockey", "jocky", "bypass", "recall"})) {
                     current_zone_valid = false;
                     zone_errors += "invalid tag 1 name for subzone, ";
                 }
+                */
 
                 //Subzone tag 2 lengths
                 if(zone.getSubAddress().getTag1().length() > 20 && !IGNORE_TAG_LENGTH) {
