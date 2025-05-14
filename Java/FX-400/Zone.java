@@ -64,6 +64,9 @@ class Zone {
                 "fan", "shunt", })) {
             type = "Relay";
         } else if (Zone.checkTags(tag, new String[] { "heat" })) {
+             if (Zone.checkTags(tag, new String[] { "dual" })) {
+                this.isDualInput = true;
+             }
             type = "Heat Detector";
             this.isSensor = true;
         } else if (Zone.checkTags(tag, new String[] { "blank" , "spare" })) {
