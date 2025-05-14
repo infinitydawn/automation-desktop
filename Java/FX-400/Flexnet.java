@@ -50,7 +50,7 @@ public class Flexnet extends FX2000{
 
                 ArrayList<Zone> zones = zoneList.zones;
                 Zone zone = zones.get(0);
-                skip_count = (int) zone.getAddress() - 1;
+                skip_count = (int) zone.getAddress() - zoneList.AP_START;
 
                 for(int current_zone = 0; current_zone < zones.size() && is_running; current_zone++) {
 
@@ -59,7 +59,7 @@ public class Flexnet extends FX2000{
                     //Get difference of current and previous address, then -1
                     if(current_zone > 0){
                         if(isSmokeHeat(zone)) {
-                            skip_count += (int) zone.getAddress() - (int) zones.get(current_zone - 1).getAddress() - 1 - zoneList.AP_START;
+                            skip_count += (int) zone.getAddress() - (int) zones.get(current_zone - 1).getAddress() - 1;
                         }
                         else {  
                             //Assuming zone list is sorted, reset skip count once ipt/relay devices are reached
@@ -70,6 +70,7 @@ public class Flexnet extends FX2000{
                                 skip_count += ((int) zone.getAddress() - 100) - ((int) zones.get(current_zone - 1).getAddress() - 100) - (2 * zoneList.AP_START) - 1;
                             }
                         }
+
                     }
 
                     System.out.println("Inserting: " + zone.getZoneinfo());
@@ -94,9 +95,10 @@ public class Flexnet extends FX2000{
                         case "Latched Supervisory":
                             addLatchedSupv();
                             break;
-                        case "Heat": 
+                        case "Heat Detector": 
                             if(zone.isDualInput()) {
                                 addDualHeatSmokeDetector();
+                                zone.setTag1("Smoke Detector"); //Rename Dual Heat to Smoke Detector
                             }
                             else {
                                 addHeatDetector();
@@ -126,7 +128,10 @@ public class Flexnet extends FX2000{
     
     protected void addPhotoDetector(){
         open();
-        bot.pressKey(KeyEvent.VK_TAB, 4);
+        bot.pressKey(KeyEvent.VK_P);
+        bot.pressKey(KeyEvent.VK_TAB, 3);
+        bot.pressKey(KeyEvent.VK_N);
+        bot.pressKey(KeyEvent.VK_TAB, 2);
         skipDevices();
         bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
@@ -227,7 +232,7 @@ public class Flexnet extends FX2000{
         bot.pressKey(KeyEvent.VK_D, 6);
         bot.pressKey(KeyEvent.VK_TAB, 5);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , Math.max(ENTER_DELAY_STRENGTH, 2)); //needs extra time three address devices
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -315,12 +320,14 @@ public class Flexnet extends FX2000{
         try {
             updateRow(zone);
             if(zone.isDualInput()) { 
-                if(zone.getType().equals("Heat")) {
+                if(zone.getType().equals("Heat Detector")) {
                     updateRow(new subZone(zone.getAddress()+0.1, "Low Heat Detector", zone.getTag2()));
                     updateRow(new subZone(zone.getAddress()+0.2, "Heat Detector 135°F", zone.getTag2()));
                 }
                 else {
-                    updateRow(zone.getSubAddress());
+                    if(zone.getSubAddress() != null) {
+                        updateRow(zone.getSubAddress());
+                    }   
                 }
                 /*
                  if is FIRE+CO
