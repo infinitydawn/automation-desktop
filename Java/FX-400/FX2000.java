@@ -279,7 +279,7 @@ public class FX2000 extends FX400{
         return invalid_found;
     }
 
-    private boolean isSmokeHeat(Zone zone) {
+    protected boolean isSmokeHeat(Zone zone) {
         return Zone.checkTags(zone.getType(), new String[] { "photo", "heat"});
     }
 }
