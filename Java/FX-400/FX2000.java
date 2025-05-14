@@ -178,18 +178,18 @@ public class FX2000 extends FX400{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    protected void updateRow(Zone zone){
+    protected void updateRow(Zone zone) {
         updateTags(zone);
 
         bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH); //make up for not updating Type
         
-        if(zone.isNS()){
+        if(zone.isNS()) {
             bot.pressKey(KeyEvent.VK_N, 1, ENTER_DELAY_STRENGTH);
         }
 
         bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
 
-        if(zone.isAR()){
+        if(zone.isAR()) {
             bot.pressKey(KeyEvent.VK_A);
             bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
         }
@@ -197,7 +197,7 @@ public class FX2000 extends FX400{
         bot.pressKey(KeyEvent.VK_DOWN);
     }
 
-    protected void updateZone(Zone zone){
+    protected void updateZone(Zone zone) {
         try {
             updateRow(zone);
         } catch (Exception e) {

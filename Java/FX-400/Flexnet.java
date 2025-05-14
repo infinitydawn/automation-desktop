@@ -1,7 +1,7 @@
 import java.util.ArrayList;
 import java.awt.event.KeyEvent;
 
-public class Flexnet extends FX400{
+public class Flexnet extends FX2000{
     public void run() {
         System.out.println("Starting Flexnet Data Entry");
         try{
@@ -67,7 +67,7 @@ public class Flexnet extends FX400{
                                 skip_count = 0;
                             } 
                             else {                         
-                                skip_count += ((int) zone.getAddress() - 100) - zoneList.AP_START - ((int) zones.get(current_zone - 1).getAddress() - 100) - zoneList.AP_START - 1;
+                                skip_count += ((int) zone.getAddress() - 100) - ((int) zones.get(current_zone - 1).getAddress() - 100) - (2 * zoneList.AP_START) - 1;
                             }
                         }
                     }
@@ -316,12 +316,15 @@ public class Flexnet extends FX400{
             updateRow(zone);
             if(zone.isDualInput()) { 
                 if(zone.getType().equals("Heat")) {
-                    updateRow(zone.getSubAddress());
-                    updateRow(zone.getSubAddress());
+                    updateRow(new subZone(zone.getAddress()+0.1, "Low Heat Detector", zone.getTag2()));
+                    updateRow(new subZone(zone.getAddress()+0.2, "Heat Detector 135°F", zone.getTag2()));
                 }
                 else {
                     updateRow(zone.getSubAddress());
                 }
+                /*
+                 if is FIRE+CO
+                 */
             }
 
             //can have up to 3 sub zones, but only waterflow/valves are tracked
@@ -364,9 +367,5 @@ public class Flexnet extends FX400{
         }
         */
         return invalid_found;
-    }
-
-    private boolean isSmokeHeat(Zone zone) {
-        return Zone.checkTags(zone.getType(), new String[] { "photo", "heat"});
     }
 }
