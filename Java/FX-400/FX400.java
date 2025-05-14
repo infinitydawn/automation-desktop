@@ -424,7 +424,7 @@ public class FX400 extends Thread{
                 //Check zone type if it is unknown or blank
                 if(Zone.checkTags(zone.getType(), new String[] { "unknown", "blank"})) {
                     current_zone_valid = false;
-                    zone_errors += "unknown zone type, ";
+                    zone_errors += "subzone unknown zone type, ";
                 }
 
                 /*

@@ -91,6 +91,7 @@ public class Automation implements NativeKeyListener{
             }
         }
 
+        //Flexnet will want higher (2+ enter delay strength)
         if (e.getKeyCode() == NativeKeyEvent.VC_F4) {
             try {
                 //Start a new thread only if it doesn't exist or is no longer alive
