@@ -47,7 +47,8 @@ class ZoneList {
 
         if(ap_start_index > 0) {
             String nums = "";
-            for (char c : headers.substring(ap_start_index, headers.length()).toCharArray()) {
+            int next_comma = Math.min(headers.indexOf(",", ap_start_index), headers.length());
+            for (char c : headers.substring(ap_start_index, next_comma).toCharArray()) {
                 if (Character.isDigit(c)) {
                     nums += c;
                 }
