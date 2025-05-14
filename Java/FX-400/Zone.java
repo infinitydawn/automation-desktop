@@ -73,6 +73,9 @@ class Zone {
         else if (Zone.checkTags(tag, new String[] { "phone mod" })) {
             type = "Telephone Module";
         }
+        else if (Zone.checkTags(tag, new String[] { "speakers" })) {
+            type = "Speakers";
+        }
         else if (Zone.checkTags(tag, new String[] { "blank" , "spare" })) {
             type = "Blank Device";
         } else {

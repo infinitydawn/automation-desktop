@@ -127,6 +127,9 @@ public class Flexnet extends FX2000{
                         case "Telephone Module":
                             addTelephoneModule();
                             break;
+                        case "Speakers":
+                            addSpeakers();
+                            break;
                     }
                 }
 
@@ -285,6 +288,16 @@ public class Flexnet extends FX2000{
         open();
         bot.pressKey(KeyEvent.VK_F);
         bot.pressKey(KeyEvent.VK_TAB, 3);
+        skipDevices();
+        bot.pressKey(KeyEvent.VK_ENTER, 1, ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ESCAPE);
+        bot.pressKey(KeyEvent.VK_END);
+    }
+
+    public void addSpeakers() {
+        open();
+        bot.pressKey(KeyEvent.VK_C, 2);
+        bot.pressKey(KeyEvent.VK_TAB, 4);
         skipDevices();
         bot.pressKey(KeyEvent.VK_ENTER, 1, ENTER_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
