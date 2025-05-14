@@ -80,16 +80,27 @@ public class Flexnet extends FX2000{
                             addPhotoDetector();
                             break;
                         case "Alarm Input":
-                            addAlarmInputMod(); 
+                            if(zone.getSubAddress() != null) {
+                                addDualAlarmInputMod();
+                            }
+                            else {
+                                addAlarmInputMod(); 
+                            }                          
                             break;
                         case "Alarm Input Class A":
                             addAlarmInputMiniMod();                         
                             break;
                         case "Non-latched Supervisory":
+                        //Check for radio, single monitor and dual monitor
                             if(Zone.checkTags(zone.getTag1(), new String[] { "radio"})) {
                                 addNonLatchedSupvMini();
                             } else {
-                                addNonLatchedSupv();
+                                if(zone.getSubAddress() != null) {
+                                    addDualNonLatchedSupv();
+                                }
+                                else {
+                                    addNonLatchedSupv();
+                                }    
                             }
                             break;
                         case "Latched Supervisory":
@@ -158,7 +169,7 @@ public class Flexnet extends FX2000{
         bot.pressKey(KeyEvent.VK_N);
         bot.pressKey(KeyEvent.VK_TAB, 2);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , Math.max(ENTER_DELAY_STRENGTH, 1.5));
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -189,7 +200,7 @@ public class Flexnet extends FX2000{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-        protected void addNonLatchedSupvMini(){
+    protected void addNonLatchedSupvMini(){
         open();
         bot.pressKey(KeyEvent.VK_M, 2);
         bot.pressKey(KeyEvent.VK_TAB);
@@ -202,6 +213,21 @@ public class Flexnet extends FX2000{
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
+
+    protected void addDualNonLatchedSupv(){
+        open();
+        bot.pressKey(KeyEvent.VK_D, 5);
+        bot.pressKey(KeyEvent.VK_TAB);
+        bot.pressKey(KeyEvent.VK_N);
+        bot.pressKey(KeyEvent.VK_TAB);
+        bot.pressKey(KeyEvent.VK_N);
+        bot.pressKey(KeyEvent.VK_TAB, 2);
+        skipDevices();
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , Math.max(ENTER_DELAY_STRENGTH, 1.5));
+        bot.pressKey(KeyEvent.VK_ESCAPE);
+        bot.pressKey(KeyEvent.VK_END);
+    }
+
 
     protected void addLatchedSupv(){
         open();
@@ -250,7 +276,7 @@ public class Flexnet extends FX2000{
     /*
     protected void addDualSmokeFireCODetector(){
         open();
-
+Math.max(ENTER_DELAY_STRENGTH, 2)
     }
      
     protected void addFirephone(){
@@ -272,8 +298,7 @@ public class Flexnet extends FX2000{
                     bot.pressKey(KeyEvent.VK_A);
                     break;
                 case "Alarm Input":
-                    bot.pressKey(KeyEvent.VK_M);
-                    bot.pressKey(KeyEvent.VK_A, 3);
+                    bot.pressKey(KeyEvent.VK_A, 8);
                     break;
                 case "Non-latched Supervisory":
                     bot.pressKey(KeyEvent.VK_N);
@@ -327,6 +352,7 @@ public class Flexnet extends FX2000{
                 else {
                     if(zone.getSubAddress() != null) {
                         updateRow(zone.getSubAddress());
+                        System.out.println("subbed");
                     }   
                 }
                 /*
