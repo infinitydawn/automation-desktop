@@ -65,7 +65,7 @@ class ZoneList {
             parts = content.split("\\,");
 
             this.addZone(Double.parseDouble(parts[0]), parts[1], parts[2]);
-
+            /*
             //Load options if they exist
             if(parts.length > 4 && parts[4] != null && !parts[4].isEmpty()) {
 
@@ -74,7 +74,7 @@ class ZoneList {
                     zones.getLast().setDualInput(false);
                 }
             }
-
+            */
             if (zones.getLast().isAR()) {
                 CONTAINS_AR = true;
             }
