@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Collections;
 import java.awt.event.KeyEvent;
 
 public class Flexnet extends FX2000{
@@ -52,6 +53,11 @@ public class Flexnet extends FX2000{
                 Zone zone = zones.get(0);
                 skip_count = (int) zone.getAddress() - zoneList.AP_START;
 
+                //Reduce skip count if first address in zone list is ap mod
+                if(!isSmokeHeat(zone)) {
+                    skip_count -= 100;
+                }
+
                 for(int current_zone = 0; current_zone < zones.size() && is_running; current_zone++) {
 
                     zone = zones.get(current_zone);
@@ -62,7 +68,7 @@ public class Flexnet extends FX2000{
                             skip_count += (int) zone.getAddress() - (int) zones.get(current_zone - 1).getAddress() - 1;
                         }
                         else {  
-                            //Assuming zone list is sorted, reset skip count once ipt/relay devices are reached
+                            //Assuming zone list is sorted, reset skip count once ap devices are reached
                             if(isSmokeHeat(zones.get(current_zone - 1)) && !isSmokeHeat(zone)) {
                                 skip_count = (int) zone.getAddress() - zoneList.AP_START - 100;
                             } 
@@ -268,7 +274,7 @@ public class Flexnet extends FX2000{
         bot.pressKey(KeyEvent.VK_R, 2);
         bot.pressKey(KeyEvent.VK_TAB, 4);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , Math.max(ENTER_DELAY_STRENGTH, 1.5));
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -352,27 +358,12 @@ Math.max(ENTER_DELAY_STRENGTH, 2)
                 else {
                     if(zone.getSubAddress() != null) {
                         updateRow(zone.getSubAddress());
-                        System.out.println("subbed");
                     }   
                 }
                 /*
                  if is FIRE+CO
                  */
             }
-
-            //can have up to 3 sub zones, but only waterflow/valves are tracked
-            //has the 1-159 smokeheat and (100 + 1-159) convention from fx2000
-            //also has to consider ap start but it doesnt matter for entry
-            
-            /*
-             if (zone.getSubAddress() != null){
-                updateRow(zone.getSubAddress());
-            } else if(zone.isDualInput() || zone.getType().equals("Relay")) {
-                // add empty
-                updateRow(new subZone(zone.getAddress()+0.1, "    Spare", zone.getTag2()));
-                
-            }
-             */
         } catch (Exception e) {
             e.printStackTrace();
         }    
@@ -383,22 +374,99 @@ Math.max(ENTER_DELAY_STRENGTH, 2)
         boolean invalid_found = false;
         boolean current_zone_valid;
         String zone_errors;
-        ArrayList<Integer> usedZones = new ArrayList<>();
+        ArrayList<Integer> usedZones = new ArrayList<>(); //smoke/heat addresses
+        ArrayList<Integer> used100Zones = new ArrayList<>(); //ap mod addresses
         
         //Add all addresses to check for duplicates later
-        for(Zone zone :zoneList.zones) {
-            usedZones.add((int) zone.getAddress());
+        for(Zone zone :zoneList.zones) {     
+            if(isSmokeHeat(zone)) {
+                usedZones.add((int) zone.getAddress());
+            } 
+            else {
+                used100Zones.add((int) zone.getAddress());
+            }
         }
 
-        /*
         for(Zone zone : zoneList.zones) {
-            
+            current_zone_valid = true;
+            zone_errors = zone.getAddress() + " " + zone.getTag1() + " errors: ";
+
+            //Check zone type if it is unknown or blank
+            //Check address in valid range
+            //Smoke, heat: AP_START - 159
+            //AP mod: 100 + AP_START - 259
+            if(Zone.checkTags(zone.getType(), new String[] { "unknown", "blank"})) {
+                current_zone_valid = false;
+                zone_errors += "unknown zone type, ";
+            }
+            else if(isSmokeHeat(zone)) {
+                if((zone.getAddress() < zoneList.AP_START || zone.getAddress() > 159 )) {
+                    current_zone_valid = false;
+                    zone_errors += "address out of range for smoke/heat, ";
+                }
+
+                //Check for duplicate addresses 
+                if(Collections.frequency(usedZones, (int) zone.getAddress()) > 1) {
+                    current_zone_valid = false;
+                    zone_errors += "duplicate smoke/heat address, ";
+                }
+            } 
+            else {
+                if((int) zone.getAddress() < 100 + zoneList.AP_START || (int) zone.getAddress() > 259) {
+                    current_zone_valid = false;
+                    zone_errors += "address out of range for ap module, ";
+                }
+
+                //Check for duplicate addresses 
+                if(Collections.frequency(used100Zones, (int) zone.getAddress()) > 1) {
+                    current_zone_valid = false;
+                    zone_errors += "duplicate ap module address, ";
+                }
+            }
+
+            //Check tag lengths
+            if(zone.getTag1().length() > 20 && !IGNORE_TAG_LENGTH) {
+                current_zone_valid = false;
+                zone_errors += "tag 1 length > 20, ";
+            }
+
+            if(zone.getTag2().length() > 20 && !IGNORE_TAG_LENGTH) {
+                current_zone_valid = false;
+                zone_errors += "tag 2 length > 20, ";
+            }
+
+            if(zone.getSubAddress() != null) {
+
+                //Check if subzone is valve or waterflow only
+                if(!Zone.checkTags(zone.getSubAddress().getTag1(), new String[] { "valve", "waterfl", "valve", "tamper", "stat", "pump", "intake", "discharge",
+                "jockey", "jocky", "bypass", "recall"})) {
+                    current_zone_valid = false;
+                    zone_errors += "invalid tag 1 name for subzone, ";
+                }
+
+                //Subzone tag 2 lengths
+                if(zone.getSubAddress().getTag1().length() > 20 && !IGNORE_TAG_LENGTH) {
+                    current_zone_valid = false;
+                    zone_errors += "subzone tag 1 length > 20, ";
+                }
+
+                if(zone.getSubAddress().getTag2().length() > 20 && !IGNORE_TAG_LENGTH) {
+                    current_zone_valid = false;
+                    zone_errors += "subzone tag 2 length > 20, ";
+                }
+
+                //Check zone type if it is unknown or blank
+                if(Zone.checkTags(zone.getType(), new String[] { "unknown", "blank"})) {
+                    current_zone_valid = false;
+                    zone_errors += "subzone unknown zone type, ";
+                }
+            }
+
             if (!current_zone_valid) {
                 System.out.println(zone_errors);
                 invalid_found = true;
             }
         }
-        */
         return invalid_found;
     }
 }

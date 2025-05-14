@@ -245,7 +245,6 @@ public class FX2000 extends FX400{
                     current_zone_valid = false;
                     zone_errors += "duplicate smoke/heat address, ";
                 }
-
             } 
             else {
                 if((int) zone.getAddress() < 101 || (int) zone.getAddress() > 199) {
