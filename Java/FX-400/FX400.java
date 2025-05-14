@@ -385,21 +385,21 @@ public class FX400 extends Thread{
                 zone_errors += "address out of range, ";
             }
 
-            //Check if .1 is named correctly
+            //Check if tag1 is named correctly
             if(Zone.checkTags(zone.getTag1(), new String[] { "spare", "blank", "unknown" })) {
                 current_zone_valid = false;
-                zone_errors += "invalid tag for .1, ";
+                zone_errors += "invalid tag 1, ";
             }
 
-            //Check .1 tag lengths
+            //Check zone tag lengths
             if(zone.getTag1().length() > 20 && !IGNORE_TAG_LENGTH) {
                 current_zone_valid = false;
-                zone_errors += ".1 tag 1 length > 20, ";
+                zone_errors += "tag 1 length > 20, ";
             }
 
             if(zone.getTag2().length() > 20 && !IGNORE_TAG_LENGTH) {
                 current_zone_valid = false;
-                zone_errors += ".1 tag 2 length > 20, ";
+                zone_errors += "tag 2 length > 20, ";
             }
            
             if(zone.getSubAddress() != null) {
@@ -407,18 +407,18 @@ public class FX400 extends Thread{
                 if(!Zone.checkTags(zone.getSubAddress().getTag1(), new String[] { "spare", "valve", "waterfl", "valve", "tamper", "stat", "pump", "intake", "discharge",
                 "jockey", "jocky", "bypass", "recall"})) {
                     current_zone_valid = false;
-                    zone_errors += "invalid tag 1 name for .2, ";
+                    zone_errors += "invalid tag 1 name for subzone, ";
                 }
                 
                 //Subzone tag 2 lengths
                 if(zone.getSubAddress().getTag1().length() > 20 && !IGNORE_TAG_LENGTH) {
                     current_zone_valid = false;
-                    zone_errors += ".2 tag 1 length > 20, ";
+                    zone_errors += "subzone tag 1 length > 20, ";
                 }
 
                 if(zone.getSubAddress().getTag2().length() > 20 && !IGNORE_TAG_LENGTH) {
                     current_zone_valid = false;
-                    zone_errors += ".2 tag 2 length > 20, ";
+                    zone_errors += "subzone tag 2 length > 20, ";
                 }
 
                 //Check zone type if it is unknown or blank
