@@ -91,6 +91,10 @@ class Zone {
         isDualInput = in;
     }
 
+    public void setTag1(String tag){
+        tag1 = tag;
+    }
+
     public String getType(){
         return type;
     }
