@@ -105,6 +105,7 @@ public class FX400 extends Thread{
                             addRelay();
                             break;
                         default:
+                            break;
                     }
                 }
 
