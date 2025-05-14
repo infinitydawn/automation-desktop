@@ -55,9 +55,21 @@ public class Flexnet extends FX400{
                 for(int current_zone = 0; current_zone < zones.size() && is_running; current_zone++) {
 
                     zone = zones.get(current_zone);
+
                     //Get difference of current and previous address, then -1
                     if(current_zone > 0){
-                        skip_count += (int) zone.getAddress() - (int) zones.get(current_zone - 1).getAddress() - 1;
+                        if(isSmokeHeat(zone)) {
+                            skip_count += (int) zone.getAddress() - (int) zones.get(current_zone - 1).getAddress() - 1 - zoneList.AP_START;
+                        }
+                        else {  
+                            //Assuming zone list is sorted, reset skip count once ipt/relay devices are reached
+                            if(isSmokeHeat(zones.get(current_zone - 1)) && !isSmokeHeat(zone)) {
+                                skip_count = 0;
+                            } 
+                            else {                         
+                                skip_count += ((int) zone.getAddress() - 100) - zoneList.AP_START - ((int) zones.get(current_zone - 1).getAddress() - 100) - zoneList.AP_START - 1;
+                            }
+                        }
                     }
 
                     System.out.println("Inserting: " + zone.getZoneinfo());
@@ -67,11 +79,17 @@ public class Flexnet extends FX400{
                             addPhotoDetector();
                             break;
                         case "Alarm Input":
+                            addAlarmInputMod(); 
+                            break;
                         case "Alarm Input Class A":
-                            addAlarmInputMod();
+                            addAlarmInputMiniMod();                         
                             break;
                         case "Non-latched Supervisory":
-                            addNonLatchedSupv();
+                            if(Zone.checkTags(zone.getTag1(), new String[] { "radio"})) {
+                                addNonLatchedSupvMini();
+                            } else {
+                                addNonLatchedSupv();
+                            }
                             break;
                         case "Latched Supervisory":
                             addLatchedSupv();
@@ -98,7 +116,7 @@ public class Flexnet extends FX400{
                 is_running = false;
             }
             else {
-                System.out.println("Flexnet Entry did not run");
+                System.out.println("Flexnet entry did not run");
             }
         }
         catch(Exception e){
@@ -115,7 +133,32 @@ public class Flexnet extends FX400{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    protected void addAlarmInputMod(){
+    protected void addAlarmInputMod() {
+        open();
+        bot.pressKey(KeyEvent.VK_M);
+        bot.pressKey(KeyEvent.VK_TAB, 2);
+        bot.pressKey(KeyEvent.VK_N);
+        bot.pressKey(KeyEvent.VK_TAB, 2);
+        skipDevices();
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ESCAPE);
+        bot.pressKey(KeyEvent.VK_END);
+    }
+
+    //Meant for Monitor only waterflow/valve
+    protected void addDualAlarmInputMod() {
+        open();
+        bot.pressKey(KeyEvent.VK_D, 5);
+        bot.pressKey(KeyEvent.VK_TAB, 2);
+        bot.pressKey(KeyEvent.VK_N);
+        bot.pressKey(KeyEvent.VK_TAB, 2);
+        skipDevices();
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ESCAPE);
+        bot.pressKey(KeyEvent.VK_END);
+    }
+
+    protected void addAlarmInputMiniMod() {
         open();
         bot.pressKey(KeyEvent.VK_M, 2);
         bot.pressKey(KeyEvent.VK_TAB, 2);
@@ -134,6 +177,21 @@ public class Flexnet extends FX400{
         bot.pressKey(KeyEvent.VK_N);
         bot.pressKey(KeyEvent.VK_TAB);
         bot.pressKey(KeyEvent.VK_N);
+        bot.pressKey(KeyEvent.VK_TAB, 2);
+        skipDevices();
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ESCAPE);
+        bot.pressKey(KeyEvent.VK_END);
+    }
+
+        protected void addNonLatchedSupvMini(){
+        open();
+        bot.pressKey(KeyEvent.VK_M, 2);
+        bot.pressKey(KeyEvent.VK_TAB);
+        bot.pressKey(KeyEvent.VK_N);
+        bot.pressKey(KeyEvent.VK_TAB);
+        bot.pressKey(KeyEvent.VK_N);
+        bot.pressKey(KeyEvent.VK_TAB, 2);
         skipDevices();
         bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
@@ -174,7 +232,6 @@ public class Flexnet extends FX400{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-
     protected void addRelay(){
         open();
         bot.pressKey(KeyEvent.VK_R, 2);
@@ -184,6 +241,23 @@ public class Flexnet extends FX400{
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
+
+    /*
+    protected void addDualSmokeFireCODetector(){
+        open();
+
+    }
+     
+    protected void addFirephone(){
+        open();
+
+    }
+     
+    
+    protected void addSounder(){
+
+    }
+     */
 
     protected void updateType(Zone zone){
         try {
@@ -240,6 +314,16 @@ public class Flexnet extends FX400{
     protected void updateZone(Zone zone){
         try {
             updateRow(zone);
+            if(zone.isDualInput()) { 
+                if(zone.getType().equals("Heat")) {
+                    updateRow(zone.getSubAddress());
+                    updateRow(zone.getSubAddress());
+                }
+                else {
+                    updateRow(zone.getSubAddress());
+                }
+            }
+
             //can have up to 3 sub zones, but only waterflow/valves are tracked
             //has the 1-159 smokeheat and (100 + 1-159) convention from fx2000
             //also has to consider ap start but it doesnt matter for entry
@@ -250,6 +334,7 @@ public class Flexnet extends FX400{
             } else if(zone.isDualInput() || zone.getType().equals("Relay")) {
                 // add empty
                 updateRow(new subZone(zone.getAddress()+0.1, "    Spare", zone.getTag2()));
+                
             }
              */
         } catch (Exception e) {
@@ -279,5 +364,9 @@ public class Flexnet extends FX400{
         }
         */
         return invalid_found;
+    }
+
+    private boolean isSmokeHeat(Zone zone) {
+        return Zone.checkTags(zone.getType(), new String[] { "photo", "heat"});
     }
 }
