@@ -64,10 +64,10 @@ public class Flexnet extends FX2000{
                         else {  
                             //Assuming zone list is sorted, reset skip count once ipt/relay devices are reached
                             if(isSmokeHeat(zones.get(current_zone - 1)) && !isSmokeHeat(zone)) {
-                                skip_count = 0;
+                                skip_count = (int) zone.getAddress() - zoneList.AP_START - 100;
                             } 
-                            else {                         
-                                skip_count += ((int) zone.getAddress() - 100) - ((int) zones.get(current_zone - 1).getAddress() - 100) - (2 * zoneList.AP_START) - 1;
+                            else {
+                                skip_count += ((int) zone.getAddress() - 100) - ((int) zones.get(current_zone - 1).getAddress() - 100) - 1;
                             }
                         }
 
@@ -232,7 +232,7 @@ public class Flexnet extends FX2000{
         bot.pressKey(KeyEvent.VK_D, 6);
         bot.pressKey(KeyEvent.VK_TAB, 5);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , Math.max(ENTER_DELAY_STRENGTH, 2)); //needs extra time three address devices
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , Math.max(ENTER_DELAY_STRENGTH, 2)); //needs extra time for three address devices
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
