@@ -7,9 +7,7 @@ public class Automation implements NativeKeyListener{
 
     private int START_DELAY = 0;
 
-    private FX400 fx400;
-    private FX400 fx2000;
-    private FX400 flexnet;
+    private FX400 bot;
 
     public static void main(String[] args){
         //Register key presses
@@ -53,20 +51,19 @@ public class Automation implements NativeKeyListener{
             */
         }
 
-        //NEED TO PREVENT PRESSING OTHER PROGRAMS WHILE RUNNING
- 
+
         if (e.getKeyCode() == NativeKeyEvent.VC_F2) {
             try {
                 //Start a new thread only if it doesn't exist or is no longer alive
-                if(isRunning(fx400)) {
-                    fx400 = new FX400();
+                if(isRunning()) {
+                    bot = new FX400();
                 }
 
-                if(!fx400.isAlive()) {
+                if(!bot.isAlive()) {
                     Thread.sleep(START_DELAY);  
-                    fx400.start();
-                }else if(fx400.isAlive() && fx400.getIsPaused()) {
-                    fx400.setIsPaused(false);
+                    bot.start();
+                }else if(bot.isAlive() && bot.getIsPaused()) {
+                    bot.setIsPaused(false);
                 }
             } catch (Exception except) {
                 except.printStackTrace();
@@ -76,15 +73,15 @@ public class Automation implements NativeKeyListener{
          if (e.getKeyCode() == NativeKeyEvent.VC_F3) {
             try {
                 //Start a new thread only if it doesn't exist or is no longer alive
-                if(isRunning(fx2000)) {
-                    fx2000 = new FX2000();
+                if(isRunning()) {
+                    bot = new FX2000();
                 }
 
-                if(!fx2000.isAlive()) {
+                if(!bot.isAlive()) {
                     Thread.sleep(START_DELAY);   
-                    fx2000.start();
-                }else if(fx2000.isAlive() && fx2000.getIsPaused()) {
-                    fx2000.setIsPaused(false);
+                    bot.start();
+                }else if(bot.isAlive() && bot.getIsPaused()) {
+                    bot.setIsPaused(false);
                 }
             } catch (Exception except) {
                 except.printStackTrace();
@@ -95,15 +92,15 @@ public class Automation implements NativeKeyListener{
         if (e.getKeyCode() == NativeKeyEvent.VC_F4) {
             try {
                 //Start a new thread only if it doesn't exist or is no longer alive
-                if(isRunning(flexnet)) {
-                    flexnet = new Flexnet();
+                if(isRunning()) {
+                    bot = new Flexnet();
                 }
 
-                if(!flexnet.isAlive()) {
+                if(!bot.isAlive()) {
                     Thread.sleep(START_DELAY);   
-                    flexnet.start();
-                }else if(flexnet.isAlive() && flexnet.getIsPaused()) {
-                    flexnet.setIsPaused(false);
+                    bot.start();
+                }else if(bot.isAlive() && bot.getIsPaused()) {
+                    bot.setIsPaused(false);
                 }
             } catch (Exception except) {
                 except.printStackTrace();
@@ -112,7 +109,7 @@ public class Automation implements NativeKeyListener{
         
 	}
 
-    public boolean isRunning(FX400 panel) {
-        return ((panel == null || (panel != null && !panel.isAlive())));
+    public boolean isRunning() {
+        return ((bot == null || (bot != null && !bot.isAlive())));
     }
 }
