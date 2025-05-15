@@ -51,7 +51,7 @@ class Zone {
             type = "Latched Supervisory";
             this.isDualInput = true;
         } else if (Zone.checkTags(tag, new String[] { "valve", "tamper", "stat", "pump", "intake", "discharge",
-                "jockey", "jocky", "bypass", "radio trouble", "low heat", "generator", "dry sys" })) {
+                "jockey", "jocky", "bypass", "radio trouble", "low heat", "generator", "dry sys", "elev pwr" })) {
             type = "Non-latched Supervisory";
             this.isDualInput = true;
         } else if (Zone.checkTags(tag, new String[] { "smoke", "duct" })) {
