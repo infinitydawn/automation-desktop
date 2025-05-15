@@ -3,6 +3,9 @@ import java.util.Collections;
 import java.awt.event.KeyEvent;
 
 public class Flexnet extends FX2000{
+
+    private ArrayList<Zone> phones = new ArrayList<>();
+
     public void run() {
         System.out.println("Starting Flexnet Data Entry");
         try{
@@ -49,8 +52,23 @@ public class Flexnet extends FX2000{
                     Thread.sleep(DELAY); //Wait until start button pressed again
                 }
 
+                Zone zone;
+
+                if(!phones.isEmpty()) {
+                    zone = phones.get(0);
+                    skip_count = (int) zone.getAddress() - 100 - 1;
+
+                    for (int current_zone = 0; current_zone < phones.size() && is_running; current_zone++) {
+                        if(current_zone > 0) {
+                            skip_count += (int) zone.getAddress() - (int) phones.get(current_zone - 1).getAddress() - 1;
+                        }
+                        System.out.println("Inserting: " + zone.getZoneinfo());
+                        addTelephoneModule(); 
+                    }
+                }
+
                 ArrayList<Zone> zones = zoneList.zones;
-                Zone zone = zones.get(0);
+                zone = zones.get(0);
                 skip_count = (int) zone.getAddress() - zoneList.AP_START;
 
                 //Reduce skip count if first address in zone list is ap mod
@@ -62,8 +80,8 @@ public class Flexnet extends FX2000{
 
                     zone = zones.get(current_zone);
 
-                    //Get difference of current and previous address, then -1
-                    if(current_zone > 0){
+                    //Get difference of current and previous address, then -1. Skip telephone mods
+                    if(current_zone > 0 && !zone.getType().equals("Telephone Module")) {
                         if(isSmokeHeat(zone)) {
                             skip_count += (int) zone.getAddress() - (int) zones.get(current_zone - 1).getAddress() - 1;
                         }
@@ -131,7 +149,7 @@ public class Flexnet extends FX2000{
                             addRelay();
                             break;
                         case "Telephone Module":
-                            addTelephoneModule();
+                            //addTelephoneModule();
                             break;
                         case "Speakers":
                             addSpeakers();
@@ -322,6 +340,27 @@ public class Flexnet extends FX2000{
         bot.pressKey(KeyEvent.VK_END);
     }
 
+    protected void enterZoneList(ZoneList zoneList){
+        try {
+            bot.pressKey(KeyEvent.VK_HOME, 1, 1); 
+
+            //Update phones first since they go at the very top
+            for(Zone zone : phones){
+                System.out.println("Updating: " + zone.getZoneinfo());
+                updateZone(zone);
+            }
+
+            for(Zone zone : zoneList.zones){
+                if(!zone.getType().equals("Blank Device") && !zone.getType().equals("Telephone Module")){
+                    System.out.println("Updating: " + zone.getZoneinfo());
+                    updateZone(zone);
+                }
+            }
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
     protected void updateType(Zone zone){
         try {
             Thread.sleep(DELAY);
@@ -407,14 +446,19 @@ public class Flexnet extends FX2000{
         boolean invalid_found = false;
         boolean current_zone_valid;
         String zone_errors;
+        ArrayList<Integer> used_Phone_Zones = new ArrayList<>(); //phone addresses
         ArrayList<Integer> usedZones = new ArrayList<>(); //smoke/heat addresses
         ArrayList<Integer> used100Zones = new ArrayList<>(); //ap mod addresses
         
-        //Add all addresses to check for duplicates later
+        //Add to respective arrays for organized inserting and duplication checking
         for(Zone zone :zoneList.zones) {     
             if(isSmokeHeat(zone)) {
                 usedZones.add((int) zone.getAddress());
             } 
+            else if(zone.getType().equals("Telephone Module")) {
+                used_Phone_Zones.add((int) zone.getAddress());
+                phones.add(zone);
+            }
             else {
                 used100Zones.add((int) zone.getAddress());
             }
@@ -444,6 +488,17 @@ public class Flexnet extends FX2000{
                     zone_errors += "duplicate smoke/heat address, ";
                 }
             } 
+            else if(zone.getType().equals("Telephone Module")) {
+                if ((int) zone.getAddress() < 101 && (int) zone.getAddress() > 99 + zoneList.AP_START) {
+                    current_zone_valid = false;
+                    zone_errors += "address out of range for telephone mod, ";
+                }
+
+                if(Collections.frequency(used_Phone_Zones, (int) zone.getAddress()) > 1) {
+                    current_zone_valid = false;
+                    zone_errors += "duplicate telephone address, ";
+                }
+            }
             else {
                 if((int) zone.getAddress() < 100 + zoneList.AP_START || (int) zone.getAddress() > 259) {
                     current_zone_valid = false;
