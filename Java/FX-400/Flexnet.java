@@ -83,7 +83,13 @@ public class Flexnet extends FX2000{
 
                     switch (zone.getType()) {
                         case "Photo Detector":
-                            addPhotoDetector();
+                            if (zone.isDualInput()) {
+                                zone.setTag1("Smoke Detector");
+                                addSmokeCODetector();
+                            }
+                            else {
+                                addPhotoDetector();
+                            }
                             break;
                         case "Alarm Input":
                             if(zone.getSubAddress() != null) {
@@ -101,7 +107,7 @@ public class Flexnet extends FX2000{
                             if(Zone.checkTags(zone.getTag1(), new String[] { "radio" })) {
                                 addNonLatchedSupvMini();
                             } else {
-                                if(zone.getSubAddress() != null || Zone.checkTags(zone.getTag1(), new String[] { "generator", "air dry" })) {
+                                if(zone.getSubAddress() != null || Zone.checkTags(zone.getTag1(), new String[] { "generator", "dry sys" })) {
                                     addDualNonLatchedSupv();
                                 } 
                                 else {
@@ -314,7 +320,6 @@ public class Flexnet extends FX2000{
         bot.pressKey(KeyEvent.VK_ENTER, 1, Math.max(ENTER_DELAY_STRENGTH, 2));
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
-        
     }
 
     protected void updateType(Zone zone){
@@ -342,6 +347,9 @@ public class Flexnet extends FX2000{
                     break;
                 case "Relay":
                     bot.pressKey(KeyEvent.VK_R);
+                    break;
+                case "Telephone Module":
+                case "Speakers":
                     break;
             }
             bot.pressKey(KeyEvent.VK_ENTER, 1, ENTER_DELAY_STRENGTH);
@@ -372,18 +380,22 @@ public class Flexnet extends FX2000{
         try {
             updateRow(zone);
             if(zone.isDualInput()) { 
+                //Dual heat/smoke
                 if(zone.getType().equals("Heat Detector")) {
                     updateRow(new subZone(zone.getAddress()+0.1, "Low Heat Detector", zone.getTag2()));
                     updateRow(new subZone(zone.getAddress()+0.2, "Heat Detector 135°F", zone.getTag2()));
+                }
+
+                //Dual smoke/co
+                if(zone.getType().equals("Photo Detector")) {
+                    updateRow(new subZone(zone.getAddress()+0.1, "CO Detector", zone.getTag2()));
+                    updateRow(new subZone(zone.getAddress()+0.2, "Sounder Base", zone.getTag2()));
                 }
                 else {
                     if(zone.getSubAddress() != null) {
                         updateRow(zone.getSubAddress());
                     }   
                 }
-                /*
-                 if is FIRE+CO
-                 */
             }
         } catch (Exception e) {
             e.printStackTrace();

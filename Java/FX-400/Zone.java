@@ -47,11 +47,11 @@ class Zone {
         } else if (Zone.checkTags(tag, new String[] { "pull" })) {
             type = "Alarm Input Class A";
             this.isPullSttn = true;
-        } else if (Zone.checkTags(tag, new String[] { "co", "carb" })) {
+        } else if (Zone.checkTags(tag, new String[] { "co", "carb" }) && !Zone.checkTags(tag, new String[] { "smoke" })) {
             type = "Latched Supervisory";
             this.isDualInput = true;
         } else if (Zone.checkTags(tag, new String[] { "valve", "tamper", "stat", "pump", "intake", "discharge",
-                "jockey", "jocky", "bypass", "radio trouble", "low heat", "generator", "air dry" })) {
+                "jockey", "jocky", "bypass", "radio trouble", "low heat", "generator", "dry sys" })) {
             type = "Non-latched Supervisory";
             this.isDualInput = true;
         } else if (Zone.checkTags(tag, new String[] { "smoke", "duct" })) {
@@ -100,6 +100,10 @@ class Zone {
 
     public void setTag1(String tag){
         tag1 = tag;
+    }
+
+    public void setType(String new_type){
+        type = new_type;
     }
 
     public String getType(){
