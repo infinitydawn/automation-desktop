@@ -425,7 +425,7 @@ public class Flexnet extends FX2000{
                     updateRow(new subZone(zone.getAddress()+0.2, "Heat Detector 135°F", zone.getTag2()));
                 }
 
-                //Dual smoke/co
+                //Smoke/co combo + sounder
                 if(zone.getType().equals("Photo Detector")) {
                     updateRow(new subZone(zone.getAddress()+0.1, "CO Detector", zone.getTag2()));
                     updateRow(new subZone(zone.getAddress()+0.2, "Sounder Base", zone.getTag2()));

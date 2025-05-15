@@ -55,7 +55,7 @@ class Zone {
             type = "Non-latched Supervisory";
             this.isDualInput = true;
         } else if (Zone.checkTags(tag, new String[] { "smoke", "duct" })) {
-            if (Zone.checkTags(tag, new String[] { "dual" })) {
+            if (Zone.checkTags(tag, new String[] { "dual" , "combo"})) {
                 this.isDualInput = true;
              }
             type = "Photo Detector";
