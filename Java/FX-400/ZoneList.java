@@ -7,7 +7,7 @@ class ZoneList {
 
     ArrayList<Zone> zones = new ArrayList<Zone>();
     boolean CONTAINS_AR = false;
-    int AP_START = 0;
+    int AP_START = 1;
 
     public ZoneList() {
 
