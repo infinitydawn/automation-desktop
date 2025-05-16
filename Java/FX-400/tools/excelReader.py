@@ -17,13 +17,13 @@ elif file_path.endswith('.csv'):
 
 df = raw_df.sort_values(by = 'Zone', ascending=True)
 df = df[df['Zone'].notna()] #remove empty rows
-df = df[['Zone', 'Type', 'Location']] #keep only the main columns
 
 zoneColumn = df['Zone']
 typeColumn = df['Type']
 locationColumn = df['Location']
 
 print(" * Dataframe loaded and sorted by Zone. Starting checks...")
+
 
 def check_decimal(number):
     number_str = str(number)
@@ -43,13 +43,16 @@ def check_column_headers(df):
             errorMessage = f"Missing required column: {column}"
             raise ValueError(errorMessage)
 
-#check if all zones are decimals (0.1 or 0.2)
+"""
+#If the first zone has a decimal, check if all zones are decimals (0.1 or 0.2)
 def check_zone_format(zoneColumn):
     print(" * Checking if the zone column is in the correct format...")
-    for index, value in enumerate(zoneColumn):
-        if(check_decimal(value) == False):
-            errorMessage = f"Zone: {value}, row {index+1} is not in correct format, make sure it ends with .1 or .2"
-            raise ValueError(errorMessage)
+    if(check_decimal(zoneColumn[0])):          
+        for index, value in enumerate(zoneColumn):
+            if(check_decimal(value) == False):
+                errorMessage = f"Zone: {value}, row {index+1} is not in correct format, make sure it ends with .1 or .2"
+                raise ValueError(errorMessage)
+"""
 
 # check if every .2 zone has a .1 zone
 def check_subaddresses(zoneColumn):
@@ -69,7 +72,7 @@ def check_subaddresses(zoneColumn):
     
 # check if the columns are present in the dataframe
 check_column_headers(df)
-check_zone_format(zoneColumn)
+#check_zone_format(zoneColumn)
 
 # check if every .2 zone has a .1 zone
 check_subaddresses(zoneColumn)
