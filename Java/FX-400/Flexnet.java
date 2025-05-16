@@ -16,7 +16,7 @@ public class Flexnet extends FX2000{
             zoneList.readFile();
             zoneList.displayZoneList();
 
-            if(zoneList.CONTAINS_AR || zoneList.AP_START > 0) {
+            if(zoneList.CONTAINS_AR || zoneList.AP_START > 1) {
                 is_paused = true;
             }
 
@@ -39,7 +39,7 @@ public class Flexnet extends FX2000{
                             System.out.println("Auxiliary Reset in Base Control/Annun. Idx 3");
                         }
 
-                        if (zoneList.AP_START > 0) {
+                        if (zoneList.AP_START > 1) {
                             System.out.println("AP Start to " + zoneList.AP_START);
                         }
 
