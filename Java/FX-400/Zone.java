@@ -105,10 +105,6 @@ class Zone {
         tag1 = tag;
     }
 
-    public void setType(String new_type){
-        type = new_type;
-    }
-
     public String getType(){
         return type;
     }
