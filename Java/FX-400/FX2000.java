@@ -50,7 +50,7 @@ public class FX2000 extends FX400{
                 skip_count = (int) zone.getAddress() - 1;
 
                 //Reduce skip count if first address in zone list is ipt/relay
-                if(!isSmokeHeat(zone)) {
+                if(zone.isSensor()) {
                     skip_count -= 100;
                 }
 
@@ -60,12 +60,12 @@ public class FX2000 extends FX400{
                     
                     //Get difference of current and previous address, then -1
                     if(current_zone > 0){
-                        if(isSmokeHeat(zone)) {
+                        if(zone.isSensor()) {
                             skip_count += (int) zone.getAddress() - (int) zones.get(current_zone - 1).getAddress() - 1;
                         }
                         else {  
                             //Assuming zone list is sorted, reset skip count once ipt/relay devices are reached
-                            if(isSmokeHeat(zones.get(current_zone - 1)) && !isSmokeHeat(zone)) {
+                            if(zones.get(current_zone - 1).isSensor() && !zone.isSensor()) {
                                 skip_count = (int) zone.getAddress() - 1 - 100;
                             } 
                             else {
@@ -214,7 +214,7 @@ public class FX2000 extends FX400{
         
         //Add all addresses to check for duplicates later
         for(Zone zone :zoneList.zones) {     
-            if(isSmokeHeat(zone)) {
+            if(zone.isSensor()) {
                 usedZones.add((int) zone.getAddress());
             } 
             else {
@@ -234,7 +234,7 @@ public class FX2000 extends FX400{
                 current_zone_valid = false;
                 zone_errors += "unknown zone type, ";
             }
-            else if(isSmokeHeat(zone)) {
+            else if(zone.isSensor()) {
                 if((zone.getAddress() < 0 || zone.getAddress() > 99)) {
                     current_zone_valid = false;
                     zone_errors += "address out of range for smoke/heat, ";
@@ -276,9 +276,5 @@ public class FX2000 extends FX400{
             }
         }
         return invalid_found;
-    }
-
-    protected boolean isSmokeHeat(Zone zone) {
-        return Zone.checkTags(zone.getType(), new String[] { "photo", "heat"});
     }
 }
