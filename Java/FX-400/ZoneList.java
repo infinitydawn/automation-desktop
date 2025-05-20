@@ -7,6 +7,7 @@ class ZoneList {
 
     ArrayList<Zone> zones = new ArrayList<Zone>();
     boolean CONTAINS_AR = false;
+    boolean CONTAINS_DUAL_HEAT = false;
     int AP_START = 1;
 
     public ZoneList() {
@@ -77,6 +78,10 @@ class ZoneList {
             */
             if (zones.getLast().isAR()) {
                 CONTAINS_AR = true;
+            }
+
+            if (zones.getLast().getType().equals("Heat Detector") && zones.getLast().isDualInput()) {
+                CONTAINS_DUAL_HEAT = true;
             }
         }
 
