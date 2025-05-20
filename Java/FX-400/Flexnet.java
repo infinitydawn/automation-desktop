@@ -77,7 +77,7 @@ public class Flexnet extends FX2000{
                 skip_count = (int) zone.getAddress() - zoneList.AP_START;
 
                 //Reduce skip count if first address in zone list is ap mod
-                if(!isSmokeHeat(zone)) {
+                if(!zone.isSensor()) {
                     skip_count -= 100;
                 }
 
@@ -87,12 +87,12 @@ public class Flexnet extends FX2000{
 
                     //Get difference of current and previous address, then -1. Skip telephone mods
                     if(current_zone > 0 && !zone.getType().equals("Telephone Module")) {
-                        if(isSmokeHeat(zone)) {
+                        if(zone.isSensor()) {
                             skip_count += (int) zone.getAddress() - (int) zones.get(current_zone - 1).getAddress() - 1;
                         }
                         else {  
                             //Assuming zone list is sorted, reset skip count once ap devices are reached
-                            if(isSmokeHeat(zones.get(current_zone - 1)) && !isSmokeHeat(zone)) {
+                            if(zones.get(current_zone - 1).isSensor() && !zone.isSensor()) {
                                 skip_count = (int) zone.getAddress() - zoneList.AP_START - 100;
                             } 
                             else {
@@ -457,7 +457,7 @@ public class Flexnet extends FX2000{
         
         //Add to respective arrays for organized inserting and duplication checking
         for(Zone zone :zoneList.zones) {     
-            if(isSmokeHeat(zone)) {
+            if(zone.isSensor()) {
                 usedZones.add((int) zone.getAddress());
             } 
             else if(zone.getType().equals("Telephone Module")) {
@@ -481,7 +481,7 @@ public class Flexnet extends FX2000{
                 current_zone_valid = false;
                 zone_errors += "unknown zone type, ";
             }
-            else if(isSmokeHeat(zone)) {
+            else if(zone.isSensor()) {
                 if((zone.getAddress() < zoneList.AP_START || zone.getAddress() > 159 )) {
                     current_zone_valid = false;
                     zone_errors += "address out of range for smoke/heat, ";
