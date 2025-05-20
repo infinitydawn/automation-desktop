@@ -16,7 +16,7 @@ public class Flexnet extends FX2000{
             zoneList.readFile();
             zoneList.displayZoneList();
 
-            if(zoneList.CONTAINS_AR || zoneList.AP_START > 1) {
+            if(zoneList.CONTAINS_AR || zoneList.AP_START > 1 || zoneList.CONTAINS_DUAL_HEAT) {
                 is_paused = true;
             }
 
@@ -35,6 +35,11 @@ public class Flexnet extends FX2000{
                         is_paused = false;
                     }else{
                         System.out.println("The following settings need to be enabled for data entry:");
+
+                        if (zoneList.CONTAINS_DUAL_HEAT) {
+                            System.out.println("100F Dual Heat detector enabled");
+                        }
+
                         if(zoneList.CONTAINS_AR) {
                             System.out.println("Auxiliary Reset in Base Control/Annun. Idx 3");
                         }
