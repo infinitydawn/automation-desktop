@@ -32,27 +32,15 @@ public class FX400 extends Thread{
         System.out.println("Starting FX400 Data Entry");
         try{
             is_running = true;
-
-            ReadTempArray reader = new ReadTempArray();
-            String[][] zoneParts = reader.readFile(); 
+            is_paused = false;
 
             ZoneList zoneList = new ZoneList();
-
-            String[] addresses = zoneParts[0];
-            String[] tags1 = zoneParts[1];
-            String[] tags2 = zoneParts[2];
-
-            is_paused = false;
-            for (int i = 0; i < addresses.length; i++) {
-                System.out.println(" - - - - -  + " + tags1[i]);
-                zoneList.addZone(Double.parseDouble(addresses[i]), tags1[i], tags2[i]);
-
-                if(zoneList.zones.get(zoneList.zones.size() - 1).isAR()){
-                    is_paused = true;
-                }
-            }
-            
+            zoneList.readFile();
             zoneList.displayZoneList();
+
+            if(zoneList.CONTAINS_AR) {
+                is_paused = true;
+            }
 
             System.out.println("----------------------------------------------------------------");
             if (validateZones(zoneList)) {
@@ -63,12 +51,16 @@ public class FX400 extends Thread{
             }
 
             if(is_running) {
-
                 if(is_paused){
                     if(BYPASS_PAUSE){
                         is_paused = false;
                     }else{
-                        System.out.println("AR related device discovered, please enable then press F2 to continue.");
+                        System.out.println("The following settings need to be enabled for data entry:");
+                        if(zoneList.CONTAINS_AR) {
+                            System.out.println("AR/Buzzer Silence");
+                        }
+                        System.out.println("Please make necessary changes and press F2 to continue.");
+                        System.out.println("----------------------------------------------------------------");
                     }
                 }
 
@@ -118,39 +110,12 @@ public class FX400 extends Thread{
                 if(is_running){
                     enterZoneList(zoneList);
                 }
-                // zoneList.addZone(1.1, "Waterflow ");
-                // zoneList.addZone(2.1, "valve ");
-                // zoneList.addZone(2.2, "discharge ");
-                // zoneList.addZone(3.1, "Damper ");
-                // zoneList.addZone(4.1, "jocky ");
-                // zoneList.addZone(5.1, "duct ");
-                // zoneList.addZone(5.2, "bypass ");
-                // zoneList.addZone(20, "waterflow");
-                // zoneList.addZone(21, "smoke");
 
-                // if (Zone.classify("smoke").equals("Photo Detector")) {
-                // bot.addPhotoDetector();
-                // }
-
-                // System.out.println(Zone.classify("Waterflow "));
-                // System.out.println(Zone.classify("valve "));
-                // System.out.println(Zone.classify("smoke "));
-                // System.out.println(Zone.classify("Damper "));
-                // System.out.println(Zone.classify("jocky "));
-                // System.out.println(Zone.classify("duct "));
-                // System.out.println(Zone.classify("bypass "));
-
-                // //Simulate typing "Hello, World!"
-                // bot.keyPress(KeyEvent.VK_H);
-                // bot.keyRelease(KeyEvent.VK_H);
-                // bot.keyPress(KeyEvent.VK_E);
-                // bot.keyRelease(KeyEvent.VK_E);
-                // // ... (and so on)
                 System.out.println("FX400 Entry Complete");
                 is_running = false;
             }
             else {
-                System.out.println("FX400 Entry did not run");
+                System.out.println("FX400 entry did not run");
             }
         }
         catch(Exception e){
@@ -418,45 +383,46 @@ public class FX400 extends Thread{
                 zone_errors += "address out of range, ";
             }
 
-            //Check if .1 is named correctly
+            //Check if tag1 is named correctly
             if(Zone.checkTags(zone.getTag1(), new String[] { "spare", "blank", "unknown" })) {
                 current_zone_valid = false;
-                zone_errors += "invalid tag for .1, ";
+                zone_errors += "invalid tag 1, ";
             }
 
-            //Check .1 tag lengths
+            //Check zone tag lengths
             if(zone.getTag1().length() > 20 && !IGNORE_TAG_LENGTH) {
                 current_zone_valid = false;
-                zone_errors += ".1 tag 1 length > 20, ";
+                zone_errors += "tag 1 length > 20, ";
             }
 
             if(zone.getTag2().length() > 20 && !IGNORE_TAG_LENGTH) {
                 current_zone_valid = false;
-                zone_errors += ".1 tag 2 length > 20, ";
+                zone_errors += "tag 2 length > 20, ";
             }
            
             if(zone.getSubAddress() != null) {
                 //Check if subzone is spare, valve, or waterflow only
-                if(!Zone.checkTags(zone.getSubAddress().getTag1(), new String[] { "spare", "valve", "waterfl" })) {
+                if(!Zone.checkTags(zone.getSubAddress().getTag1(), new String[] { "spare", "valve", "waterfl", "valve", "tamper", "stat", "pump", "intake", "discharge",
+                "jockey", "jocky", "bypass", "recall"})) {
                     current_zone_valid = false;
-                    zone_errors += "invalid tag 1 name for .2, ";
+                    zone_errors += "invalid tag 1 name for subzone, ";
                 }
                 
                 //Subzone tag 2 lengths
                 if(zone.getSubAddress().getTag1().length() > 20 && !IGNORE_TAG_LENGTH) {
                     current_zone_valid = false;
-                    zone_errors += ".2 tag 1 length > 20, ";
+                    zone_errors += "subzone tag 1 length > 20, ";
                 }
 
                 if(zone.getSubAddress().getTag2().length() > 20 && !IGNORE_TAG_LENGTH) {
                     current_zone_valid = false;
-                    zone_errors += ".2 tag 2 length > 20, ";
+                    zone_errors += "subzone tag 2 length > 20, ";
                 }
 
                 //Check zone type if it is unknown or blank
                 if(Zone.checkTags(zone.getType(), new String[] { "unknown", "blank"})) {
                     current_zone_valid = false;
-                    zone_errors += "unknown zone type, ";
+                    zone_errors += "subzone unknown zone type, ";
                 }
 
                 /*

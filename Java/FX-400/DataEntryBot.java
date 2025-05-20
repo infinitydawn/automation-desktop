@@ -48,5 +48,7 @@ public class DataEntryBot extends Robot {
         this.keyPress(KeyEvent.VK_V);
         this.keyRelease(KeyEvent.VK_V);
         this.keyRelease(KeyEvent.VK_CONTROL);
+
+        this.delay(delay);
     }
 }
