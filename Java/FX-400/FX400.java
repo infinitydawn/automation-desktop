@@ -10,7 +10,7 @@ public class FX400 extends Thread{
 
     protected int DELAY = 200; //Default 200. Delay time for everything. Multiply by delay strength to change length
     protected double ENTER_DELAY_STRENGTH = 1; // Default 1. Delay after pressing Enter (Writes to database. Larger databases may want this higher)
-    protected boolean BYPASS_PAUSE = false; //Prevents the AR prompt from showing
+    protected boolean BYPASS_PAUSE = false; //Prevents the error prompt from showing
     protected boolean IGNORE_TAG_LENGTH = false; //Omits tag length requirement from errors
     protected String SETTINGS_FILE = "settings.ini";
 
@@ -19,7 +19,7 @@ public class FX400 extends Thread{
     protected boolean is_running = false; //used to stop the bot from running without closing process
     protected boolean is_paused = false; //used to prompt user to enable AR related settings -- MAKE USE OF THIS IF PAUSING GUI
 
-    public FX400(){
+    public FX400() {
         try {
             readSettings();
             bot = new DataEntryBot(DELAY);           
@@ -34,16 +34,16 @@ public class FX400 extends Thread{
             is_running = true;
             is_paused = false;
 
-            ZoneList zoneList = new ZoneList();
-            zoneList.readFile();
-            zoneList.displayZoneList();
+            ZoneList zone_list = new ZoneList();
+            zone_list.readFile();
+            zone_list.displayZoneList();
 
-            if(zoneList.CONTAINS_AR) {
+            if(zone_list.CONTAINS_AR) {
                 is_paused = true;
             }
 
             System.out.println("----------------------------------------------------------------");
-            if (validateZones(zoneList)) {
+            if (validateZones(zone_list)) {
                 is_running = false;
                 System.out.println("----------------------------------------------------------------");
                 System.out.println("Errors found in zone list, please correct them and run again.");
@@ -51,12 +51,12 @@ public class FX400 extends Thread{
             }
 
             if(is_running) {
-                if(is_paused){
-                    if(BYPASS_PAUSE){
+                if(is_paused) {
+                    if(BYPASS_PAUSE) {
                         is_paused = false;
                     }else{
                         System.out.println("The following settings need to be enabled for data entry:");
-                        if(zoneList.CONTAINS_AR) {
+                        if(zone_list.CONTAINS_AR) {
                             System.out.println("AR/Buzzer Silence");
                         }
                         System.out.println("Please make necessary changes and press F2 to continue.");
@@ -64,11 +64,11 @@ public class FX400 extends Thread{
                     }
                 }
 
-                while(is_paused){
+                while(is_paused) {
                     Thread.sleep(Math.max(100,DELAY)); //Wait until start button pressed again
                 }
 
-                ArrayList<Zone> zones = zoneList.zones;
+                ArrayList<Zone> zones = zone_list.zones;
                 Zone zone = zones.get(0);
                 skip_count = (int) zone.getAddress() - 1;
 
@@ -76,7 +76,7 @@ public class FX400 extends Thread{
 
                     zone = zones.get(current_zone);
                     //Get difference of current and previous address, then -1
-                    if(current_zone > 0){
+                    if(current_zone > 0) {
                         skip_count += (int) zone.getAddress() - (int) zones.get(current_zone - 1).getAddress() - 1;
                     }
 
@@ -107,8 +107,8 @@ public class FX400 extends Thread{
                     }
                 }
 
-                if(is_running){
-                    enterZoneList(zoneList);
+                if(is_running) {
+                    enterZoneList(zone_list);
                 }
 
                 System.out.println("FX400 Entry Complete");
@@ -118,16 +118,16 @@ public class FX400 extends Thread{
                 System.out.println("FX400 entry did not run");
             }
         }
-        catch(Exception e){
+        catch(Exception e) {
             e.printStackTrace();
         }
     }
 
-    protected void skipDevices(){
+    protected void skipDevices() {
         bot.pressKey(KeyEvent.VK_RIGHT, skip_count);
     }
 
-    protected void open(){
+    protected void open() {
         try {
             Thread.sleep(DELAY);
             bot.keyPress(KeyEvent.VK_SHIFT);
@@ -144,7 +144,7 @@ public class FX400 extends Thread{
         }
     }
     
-    protected void addPhotoDetector(){
+    protected void addPhotoDetector() {
         open();
         bot.pressKey(KeyEvent.VK_TAB, 3);
         skipDevices();
@@ -153,7 +153,7 @@ public class FX400 extends Thread{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    protected void addAlarmInputMod(){
+    protected void addAlarmInputMod() {
         open();
         bot.pressKey(KeyEvent.VK_D, 2);
         bot.pressKey(KeyEvent.VK_TAB, 3);
@@ -163,7 +163,7 @@ public class FX400 extends Thread{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    protected void addNonLatchedSupv(){
+    protected void addNonLatchedSupv() {
         open();
         bot.pressKey(KeyEvent.VK_D, 2);
         bot.pressKey(KeyEvent.VK_TAB, 2);
@@ -175,7 +175,7 @@ public class FX400 extends Thread{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    protected void addLatchedSupv(){
+    protected void addLatchedSupv() {
         open();
         bot.pressKey(KeyEvent.VK_D,2);
         bot.pressKey(KeyEvent.VK_TAB,2);
@@ -187,7 +187,7 @@ public class FX400 extends Thread{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    protected void addHeatDetector(){
+    protected void addHeatDetector() {
         open();
         bot.pressKey(KeyEvent.VK_H,3);
         bot.pressKey(KeyEvent.VK_TAB,3);
@@ -197,7 +197,7 @@ public class FX400 extends Thread{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    protected void addAlarmInputClassA(){
+    protected void addAlarmInputClassA() {
         open();
         bot.pressKey(KeyEvent.VK_D, 2);
         bot.pressKey(KeyEvent.VK_TAB, 1);
@@ -209,7 +209,7 @@ public class FX400 extends Thread{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    protected void addRelay(){
+    protected void addRelay() {
         open();
         bot.pressKey(KeyEvent.VK_D);
         bot.pressKey(KeyEvent.VK_TAB, 2);
@@ -219,7 +219,7 @@ public class FX400 extends Thread{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    protected void updateTags(Zone zone){
+    protected void updateTags(Zone zone) {
         try {
             Thread.sleep(DELAY);
             bot.pressKey(KeyEvent.VK_ENTER, 1, ENTER_DELAY_STRENGTH);
@@ -232,10 +232,10 @@ public class FX400 extends Thread{
         }
     }
 
-    protected void updateType(Zone zone){
+    protected void updateType(Zone zone) {
         try {
             Thread.sleep(DELAY);
-            switch(zone.getType()){
+            switch(zone.getType()) {
                 case "Photo Detector":
                     bot.pressKey(KeyEvent.VK_A);
                     break;
@@ -267,17 +267,17 @@ public class FX400 extends Thread{
         }
     }
 
-    protected void updateRow(Zone zone){
+    protected void updateRow(Zone zone) {
         updateTags(zone);
         updateType(zone);
         
-        if(zone.isNS()){
+        if(zone.isNS()) {
             bot.pressKey(KeyEvent.VK_N, 1, ENTER_DELAY_STRENGTH);
         }
 
         bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
         
-        if(zone.isAR()){
+        if(zone.isAR()) {
             bot.pressKey(KeyEvent.VK_A);
             bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
         }
@@ -286,11 +286,11 @@ public class FX400 extends Thread{
         bot.pressKey(KeyEvent.VK_DOWN);
     }
 
-    protected void updateZone(Zone zone){
+    protected void updateZone(Zone zone) {
         try {
             updateRow(zone);
 
-            if (zone.getSubAddress() != null){
+            if (zone.getSubAddress() != null) {
                 updateRow(zone.getSubAddress());
             } else if(zone.isDualInput() || zone.getType().equals("Relay")) {
                 // add empty
@@ -302,12 +302,12 @@ public class FX400 extends Thread{
         
     }
 
-    protected void enterZoneList(ZoneList zoneList){
+    protected void enterZoneList(ZoneList zone_list) {
         try {
             bot.pressKey(KeyEvent.VK_HOME, 1, 1); 
-            for(Zone zone : zoneList.zones){
+            for(Zone zone : zone_list.zones) {
                 System.out.println("Updating: " + zone.getZoneinfo());
-                if(!zone.getType().equals("Blank Device")){
+                if(!zone.getType().equals("Blank Device")) {
                     updateZone(zone);
                 }
             }
@@ -356,18 +356,18 @@ public class FX400 extends Thread{
     }
 
     //Check each zone to see if it meets the panel's requirements. Returns True if one incorrect device found
-    protected boolean validateZones(ZoneList zoneList) {
+    protected boolean validateZones(ZoneList zone_list) {
         boolean invalid_found = false;
         boolean current_zone_valid;
         String zone_errors;
         ArrayList<Integer> usedZones = new ArrayList<>();
         
         //Add all addresses to check for duplicates later
-        for(Zone zone :zoneList.zones) {
+        for(Zone zone :zone_list.zones) {
             usedZones.add((int) zone.getAddress());
         }
 
-        for(Zone zone : zoneList.zones) {
+        for(Zone zone : zone_list.zones) {
             current_zone_valid = true;
             zone_errors = zone.getAddress() + " " + zone.getTag1() + " errors: ";
 
@@ -441,11 +441,11 @@ public class FX400 extends Thread{
         return invalid_found;
     }
 
-    public void setIsRunning(boolean status){
+    public void setIsRunning(boolean status) {
         is_running = status;
 
         //Set bot to null to prevent further inputs
-        if(!is_running){
+        if(!is_running) {
             bot = null;
         }
     }
