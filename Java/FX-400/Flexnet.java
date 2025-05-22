@@ -12,16 +12,16 @@ public class Flexnet extends FX2000{
             is_running = true;
             is_paused = false;
 
-            ZoneList zoneList = new ZoneList();
-            zoneList.readFile();
-            zoneList.displayZoneList();
+            ZoneList zone_list = new ZoneList();
+            zone_list.readFile();
+            zone_list.displayZoneList();
 
-            if(zoneList.CONTAINS_AR || zoneList.AP_START > 1 || zoneList.CONTAINS_DUAL_HEAT) {
+            if(zone_list.CONTAINS_AR || zone_list.AP_START > 1 || zone_list.CONTAINS_DUAL_HEAT) {
                 is_paused = true;
             }
 
             System.out.println("----------------------------------------------------------------");
-            if (validateZones(zoneList)) {
+            if (validateZones(zone_list)) {
                 is_running = false;
                 System.out.println("----------------------------------------------------------------");
                 System.out.println("Errors found in zone list, please correct them and run again.");
@@ -30,22 +30,22 @@ public class Flexnet extends FX2000{
 
             if(is_running) {
 
-                if(is_paused){
-                    if(BYPASS_PAUSE){
+                if(is_paused) {
+                    if(BYPASS_PAUSE) {
                         is_paused = false;
                     }else{
                         System.out.println("The following settings need to be enabled for data entry:");
 
-                        if (zoneList.CONTAINS_DUAL_HEAT) {
+                        if (zone_list.CONTAINS_DUAL_HEAT) {
                             System.out.println("100F Dual Heat detector enabled");
                         }
 
-                        if(zoneList.CONTAINS_AR) {
+                        if(zone_list.CONTAINS_AR) {
                             System.out.println("Auxiliary Reset in Base Control/Annun. Idx 3");
                         }
 
-                        if (zoneList.AP_START > 1) {
-                            System.out.println("AP Start to " + zoneList.AP_START);
+                        if (zone_list.AP_START > 1) {
+                            System.out.println("AP Start to " + zone_list.AP_START);
                         }
 
                         System.out.println("Please make necessary changes and press F4 to continue.");
@@ -53,7 +53,7 @@ public class Flexnet extends FX2000{
                     }
                 }
 
-                while(is_paused){
+                while(is_paused) {
                     Thread.sleep(DELAY); //Wait until start button pressed again
                 }
 
@@ -72,9 +72,9 @@ public class Flexnet extends FX2000{
                     }
                 }
 
-                ArrayList<Zone> zones = zoneList.zones;
+                ArrayList<Zone> zones = zone_list.zones;
                 zone = zones.get(0);
-                skip_count = (int) zone.getAddress() - zoneList.AP_START;
+                skip_count = (int) zone.getAddress() - zone_list.AP_START;
 
                 //Reduce skip count if first address in zone list is ap mod
                 if(!zone.isSensor()) {
@@ -93,7 +93,7 @@ public class Flexnet extends FX2000{
                         else {  
                             //Assuming zone list is sorted, reset skip count once ap devices are reached
                             if(zones.get(current_zone - 1).isSensor() && !zone.isSensor()) {
-                                skip_count = (int) zone.getAddress() - zoneList.AP_START - 100;
+                                skip_count = (int) zone.getAddress() - zone_list.AP_START - 100;
                             } 
                             else {
                                 skip_count += ((int) zone.getAddress() - 100) - ((int) zones.get(current_zone - 1).getAddress() - 100) - 1;
@@ -162,8 +162,8 @@ public class Flexnet extends FX2000{
                     }
                 }
 
-                if(is_running){
-                    enterZoneList(zoneList);
+                if(is_running) {
+                    enterZoneList(zone_list);
                 }
 
                 System.out.println("Flexnet Entry Complete");
@@ -173,12 +173,12 @@ public class Flexnet extends FX2000{
                 System.out.println("Flexnet entry did not run");
             }
         }
-        catch(Exception e){
+        catch(Exception e) {
             e.printStackTrace();
         }
     }
     
-    protected void addPhotoDetector(){
+    protected void addPhotoDetector() {
         open();
         bot.pressKey(KeyEvent.VK_P);
         bot.pressKey(KeyEvent.VK_TAB, 3);
@@ -227,7 +227,7 @@ public class Flexnet extends FX2000{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    protected void addNonLatchedSupv(){
+    protected void addNonLatchedSupv() {
         open();
         bot.pressKey(KeyEvent.VK_M);
         bot.pressKey(KeyEvent.VK_TAB);
@@ -241,7 +241,7 @@ public class Flexnet extends FX2000{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    protected void addNonLatchedSupvMini(){
+    protected void addNonLatchedSupvMini() {
         open();
         bot.pressKey(KeyEvent.VK_M, 2);
         bot.pressKey(KeyEvent.VK_TAB);
@@ -255,7 +255,7 @@ public class Flexnet extends FX2000{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    protected void addDualNonLatchedSupv(){
+    protected void addDualNonLatchedSupv() {
         open();
         bot.pressKey(KeyEvent.VK_D, 5);
         bot.pressKey(KeyEvent.VK_TAB);
@@ -269,7 +269,7 @@ public class Flexnet extends FX2000{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    protected void addLatchedSupv(){
+    protected void addLatchedSupv() {
         open();
         bot.pressKey(KeyEvent.VK_M, 2);
         bot.pressKey(KeyEvent.VK_TAB);
@@ -283,7 +283,7 @@ public class Flexnet extends FX2000{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    protected void addHeatDetector(){
+    protected void addHeatDetector() {
         open();
         bot.pressKey(KeyEvent.VK_H, 2);
         bot.pressKey(KeyEvent.VK_TAB, 5);
@@ -293,7 +293,7 @@ public class Flexnet extends FX2000{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    protected void addDualHeatSmokeDetector(){
+    protected void addDualHeatSmokeDetector() {
         open();
         bot.pressKey(KeyEvent.VK_D, 6);
         bot.pressKey(KeyEvent.VK_TAB, 5);
@@ -303,7 +303,7 @@ public class Flexnet extends FX2000{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    protected void addRelay(){
+    protected void addRelay() {
         open();
         bot.pressKey(KeyEvent.VK_R, 2);
         bot.pressKey(KeyEvent.VK_TAB, 4);
@@ -333,7 +333,7 @@ public class Flexnet extends FX2000{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    protected void addSmokeCODetector(){
+    protected void addSmokeCODetector() {
         open();
         bot.pressKey(KeyEvent.VK_F, 2);
         bot.pressKey(KeyEvent.VK_TAB);
@@ -345,18 +345,18 @@ public class Flexnet extends FX2000{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    protected void enterZoneList(ZoneList zoneList){
+    protected void enterZoneList(ZoneList zone_list) {
         try {
             bot.pressKey(KeyEvent.VK_HOME, 1, 1); 
 
             //Update phones first since they go at the very top
-            for(Zone zone : phones){
+            for(Zone zone : phones) {
                 System.out.println("Updating: " + zone.getZoneinfo());
                 updateZone(zone);
             }
 
-            for(Zone zone : zoneList.zones){
-                if(!zone.getType().equals("Blank Device") && !zone.getType().equals("Telephone Module")){
+            for(Zone zone : zone_list.zones) {
+                if(!zone.getType().equals("Blank Device") && !zone.getType().equals("Telephone Module")) {
                     System.out.println("Updating: " + zone.getZoneinfo());
                     updateZone(zone);
                 }
@@ -366,10 +366,10 @@ public class Flexnet extends FX2000{
             e.printStackTrace();
         }
     }
-    protected void updateType(Zone zone){
+    protected void updateType(Zone zone) {
         try {
             Thread.sleep(DELAY);
-            switch(zone.getType()){
+            switch(zone.getType()) {
                 case "Photo Detector":
                     bot.pressKey(KeyEvent.VK_A);
                     break;
@@ -402,17 +402,17 @@ public class Flexnet extends FX2000{
         }
     }
 
-    protected void updateRow(Zone zone){
+    protected void updateRow(Zone zone) {
         updateTags(zone);
         updateType(zone);
         
-        if(zone.isNS()){
+        if(zone.isNS()) {
             bot.pressKey(KeyEvent.VK_N, 1, ENTER_DELAY_STRENGTH);
         }
 
         bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
 
-        if(zone.isAR()){
+        if(zone.isAR()) {
             bot.pressKey(KeyEvent.VK_A);
             bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
         }
@@ -420,7 +420,7 @@ public class Flexnet extends FX2000{
         bot.pressKey(KeyEvent.VK_DOWN);
     }
 
-    protected void updateZone(Zone zone){
+    protected void updateZone(Zone zone) {
         try {
             updateRow(zone);
             if(zone.isDualInput()) { 
@@ -447,7 +447,7 @@ public class Flexnet extends FX2000{
     }
 
     //Check each zone to see if it meets the panel's requirements. Returns True if one incorrect device found
-    protected boolean validateZones(ZoneList zoneList) {
+    protected boolean validateZones(ZoneList zone_list) {
         boolean invalid_found = false;
         boolean current_zone_valid;
         String zone_errors;
@@ -456,7 +456,7 @@ public class Flexnet extends FX2000{
         ArrayList<Integer> used100Zones = new ArrayList<>(); //ap mod addresses
         
         //Add to respective arrays for organized inserting and duplication checking
-        for(Zone zone :zoneList.zones) {     
+        for(Zone zone :zone_list.zones) {     
             if(zone.isSensor()) {
                 usedZones.add((int) zone.getAddress());
             } 
@@ -469,7 +469,7 @@ public class Flexnet extends FX2000{
             }
         }
 
-        for(Zone zone : zoneList.zones) {
+        for(Zone zone : zone_list.zones) {
             current_zone_valid = true;
             zone_errors = zone.getAddress() + " " + zone.getTag1() + " errors: ";
 
@@ -482,7 +482,7 @@ public class Flexnet extends FX2000{
                 zone_errors += "unknown zone type, ";
             }
             else if(zone.isSensor()) {
-                if((zone.getAddress() < zoneList.AP_START || zone.getAddress() > 159 )) {
+                if((zone.getAddress() < zone_list.AP_START || zone.getAddress() > 159 )) {
                     current_zone_valid = false;
                     zone_errors += "address out of range for smoke/heat, ";
                 }
@@ -494,7 +494,7 @@ public class Flexnet extends FX2000{
                 }
             } 
             else if(zone.getType().equals("Telephone Module")) {
-                if ((int) zone.getAddress() < 101 && (int) zone.getAddress() > 99 + zoneList.AP_START) {
+                if ((int) zone.getAddress() < 101 && (int) zone.getAddress() > 99 + zone_list.AP_START) {
                     current_zone_valid = false;
                     zone_errors += "address out of range for telephone mod, ";
                 }
@@ -505,7 +505,7 @@ public class Flexnet extends FX2000{
                 }
             }
             else {
-                if((int) zone.getAddress() < 100 + zoneList.AP_START || (int) zone.getAddress() > 259) {
+                if((int) zone.getAddress() < 100 + zone_list.AP_START || (int) zone.getAddress() > 259) {
                     current_zone_valid = false;
                     zone_errors += "address out of range for ap module, ";
                 }
