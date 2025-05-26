@@ -5,7 +5,6 @@ var USE_RECTANGLES = false; //Count rectangles instead of circles
 
 var annots = this.getAnnots();
 var pages = new Array(this.numPages);
-
 var color_count = {};
 
 //Create empty arrays for each page
