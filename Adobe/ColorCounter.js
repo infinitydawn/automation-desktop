@@ -1,6 +1,8 @@
 var USE_RECTANGLES = false; //Count rectangles instead of circles
 // Press CTRL+J to open debugger, paste everything, CTRL+A to select all, CTRL+Enter to run
 
+//Count all colored circles and print them into debugger
+
 var COLOR_DICT = {
      "RGB,0.898040771484375,0.133331298828125,0.2156829833984375" : "Red",
      "RGB,0.415679931640625,0.850982666015625,0.1568603515625" : "Green",
