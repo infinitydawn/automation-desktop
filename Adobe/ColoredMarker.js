@@ -3,6 +3,8 @@ var MARKER_SIZE = 18; //Text size of the created marking
 var USE_RECTANGLES = false; //Count rectangles instead of circles
 // Press CTRL+J to open debugger, paste everything, CTRL+A to select all, CTRL+Enter to run
 
+//Get all colored circles and assign a number next to each of them
+
 var annots = this.getAnnots();
 var pages = new Array(this.numPages);
 var color_count = {};
