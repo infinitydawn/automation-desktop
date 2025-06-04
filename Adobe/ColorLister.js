@@ -60,7 +60,7 @@ for(var i = 0; i < pages.length; i++) {
 for each(var color in Object.keys(color_list)) {
     console.println(" ------------- " + COLOR_DICT[color] + " -------------");
     for (var i = 0 ; i < color_list[color].length; i++) {
-        console.println((i + 1) + " " + COLOR_DICT[color] + " Page_" + color_list[color][i].page);
+        console.println((i + 1) + " " + COLOR_DICT[color] + " Page_" + color_list[color][i].page + 1);
     }
 }
 
