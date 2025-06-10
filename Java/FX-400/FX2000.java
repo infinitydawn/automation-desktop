@@ -8,28 +8,18 @@ public class FX2000 extends FX400{
         System.out.println("Starting FX2000 Data Entry");
         try{
             is_running = true;
+            is_paused = false;
 
-            ReadTempArray reader = new ReadTempArray();
-            String[][] zoneParts = reader.readFile();
-            ZoneList zoneList = new ZoneList();
+            ZoneList zone_list = new ZoneList();
+            zone_list.readFile();
+            zone_list.displayZoneList();
 
-            String[] addresses = zoneParts[0];
-            String[] tags1 = zoneParts[1];
-            String[] tags2 = zoneParts[2];
-
-            for (int i = 0; i < addresses.length; i++) {
-                System.out.println(" - - - - -  + " + tags1[i]);
-                zoneList.addZone(Double.parseDouble(addresses[i]), tags1[i], tags2[i]);
-
-                if(zoneList.zones.get(zoneList.zones.size() - 1).isAR()){
-                    is_paused = true;
-                }
+            if(zone_list.CONTAINS_AR) {
+                is_paused = true;
             }
 
-            zoneList.displayZoneList();
-
             System.out.println("----------------------------------------------------------------");
-            if (validateZones(zoneList)) {
+            if (validateZones(zone_list)) {
                 is_running = false;
                 System.out.println("----------------------------------------------------------------");
                 System.out.println("Errors found in zone list, please correct them and run again.");
@@ -38,24 +28,29 @@ public class FX2000 extends FX400{
 
             if(is_running) {
 
-                if(is_paused){
-                    if(BYPASS_PAUSE){
+                if(is_paused) {
+                    if(BYPASS_PAUSE) {
                         is_paused = false;
                     }else{
-                        System.out.println("AR related device discovered, please enable then press F2 to continue.");
+                        System.out.println("The following settings need to be enabled for data entry:");
+                        if(zone_list.CONTAINS_AR) {
+                            System.out.println("Auxiliary Reset in Base Control/Annun. Idx 3");
+                        }
+                        System.out.println("Please make necessary changes and press F3 to continue.");
+                        System.out.println("----------------------------------------------------------------");
                     }
                 }
 
-                while(is_paused){
+                while(is_paused) {
                     Thread.sleep(DELAY); //Wait until start button pressed again
                 }
 
-                ArrayList<Zone> zones = zoneList.zones;
+                ArrayList<Zone> zones = zone_list.zones;
                 Zone zone = zones.get(0);
                 skip_count = (int) zone.getAddress() - 1;
 
                 //Reduce skip count if first address in zone list is ipt/relay
-                if(!isSmokeHeat(zone)) {
+                if(zone.isSensor()) {
                     skip_count -= 100;
                 }
 
@@ -64,16 +59,16 @@ public class FX2000 extends FX400{
                     zone = zones.get(current_zone);
                     
                     //Get difference of current and previous address, then -1
-                    if(current_zone > 0){
-                        if(isSmokeHeat(zone)) {
+                    if(current_zone > 0) {
+                        if(zone.isSensor()) {
                             skip_count += (int) zone.getAddress() - (int) zones.get(current_zone - 1).getAddress() - 1;
                         }
                         else {  
                             //Assuming zone list is sorted, reset skip count once ipt/relay devices are reached
-                            if(isSmokeHeat(zones.get(current_zone - 1)) && !isSmokeHeat(zone)) {
-                                skip_count = 0;
+                            if(zones.get(current_zone - 1).isSensor() && !zone.isSensor()) {
+                                skip_count = (int) zone.getAddress() - 1 - 100;
                             } 
-                            else {                         
+                            else {
                                 skip_count += ((int) zone.getAddress() - 100) - ((int) zones.get(current_zone - 1).getAddress() - 100) - 1;
                             }
                         }
@@ -104,8 +99,8 @@ public class FX2000 extends FX400{
                     }
                 }
 
-                if(is_running){
-                    enterZoneList(zoneList);
+                if(is_running) {
+                    enterZoneList(zone_list);
                 }
 
                 System.out.println("FX2000 Entry Complete");
@@ -115,12 +110,12 @@ public class FX2000 extends FX400{
                 System.out.println("FX2000 Entry did not run");
             }
         }
-        catch(Exception e){
+        catch(Exception e) {
             e.printStackTrace();
         }
     }
     
-    protected void addPhotoDetector(){
+    protected void addPhotoDetector() {
         open();
         bot.pressKey(KeyEvent.VK_TAB, 2);
         skipDevices();
@@ -129,7 +124,7 @@ public class FX2000 extends FX400{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    protected void addAlarmInputMod(){
+    protected void addAlarmInputMod() {
         open();
         bot.pressKey(KeyEvent.VK_I);
         bot.pressKey(KeyEvent.VK_TAB, 2);
@@ -139,7 +134,7 @@ public class FX2000 extends FX400{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    protected void addNonLatchedSupv(){
+    protected void addNonLatchedSupv() {
         open();
         bot.pressKey(KeyEvent.VK_I);
         bot.pressKey(KeyEvent.VK_TAB);
@@ -151,7 +146,7 @@ public class FX2000 extends FX400{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    protected void addLatchedSupv(){
+    protected void addLatchedSupv() {
         open();
         bot.pressKey(KeyEvent.VK_I);
         bot.pressKey(KeyEvent.VK_TAB);
@@ -163,7 +158,7 @@ public class FX2000 extends FX400{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    protected void addHeatDetector(){
+    protected void addHeatDetector() {
         open();
         bot.pressKey(KeyEvent.VK_H);
         bot.pressKey(KeyEvent.VK_TAB,2);
@@ -173,7 +168,7 @@ public class FX2000 extends FX400{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    protected void addRelay(){
+    protected void addRelay() {
         open();
         bot.pressKey(KeyEvent.VK_R);
         bot.pressKey(KeyEvent.VK_TAB, 2);
@@ -183,18 +178,18 @@ public class FX2000 extends FX400{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    protected void updateRow(Zone zone){
+    protected void updateRow(Zone zone) {
         updateTags(zone);
 
         bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH); //make up for not updating Type
         
-        if(zone.isNS()){
+        if(zone.isNS()) {
             bot.pressKey(KeyEvent.VK_N, 1, ENTER_DELAY_STRENGTH);
         }
 
         bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
 
-        if(zone.isAR()){
+        if(zone.isAR()) {
             bot.pressKey(KeyEvent.VK_A);
             bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
         }
@@ -202,7 +197,7 @@ public class FX2000 extends FX400{
         bot.pressKey(KeyEvent.VK_DOWN);
     }
 
-    protected void updateZone(Zone zone){
+    protected void updateZone(Zone zone) {
         try {
             updateRow(zone);
         } catch (Exception e) {
@@ -210,7 +205,7 @@ public class FX2000 extends FX400{
         }    
     }
 
-    protected boolean validateZones(ZoneList zoneList) {
+    protected boolean validateZones(ZoneList zone_list) {
         boolean invalid_found = false;
         boolean current_zone_valid;
         String zone_errors;
@@ -218,8 +213,8 @@ public class FX2000 extends FX400{
         ArrayList<Integer> used100Zones = new ArrayList<>(); //ipt/relay addresses
         
         //Add all addresses to check for duplicates later
-        for(Zone zone :zoneList.zones) {     
-            if(isSmokeHeat(zone)) {
+        for(Zone zone :zone_list.zones) {     
+            if(zone.isSensor()) {
                 usedZones.add((int) zone.getAddress());
             } 
             else {
@@ -227,7 +222,7 @@ public class FX2000 extends FX400{
             }
         }
 
-        for(Zone zone : zoneList.zones) {
+        for(Zone zone : zone_list.zones) {
             current_zone_valid = true;
             zone_errors = zone.getAddress() + " " + zone.getTag1() + " errors: ";
 
@@ -239,7 +234,7 @@ public class FX2000 extends FX400{
                 current_zone_valid = false;
                 zone_errors += "unknown zone type, ";
             }
-            else if(isSmokeHeat(zone)) {
+            else if(zone.isSensor()) {
                 if((zone.getAddress() < 0 || zone.getAddress() > 99)) {
                     current_zone_valid = false;
                     zone_errors += "address out of range for smoke/heat, ";
@@ -250,7 +245,6 @@ public class FX2000 extends FX400{
                     current_zone_valid = false;
                     zone_errors += "duplicate smoke/heat address, ";
                 }
-
             } 
             else {
                 if((int) zone.getAddress() < 101 || (int) zone.getAddress() > 199) {
@@ -282,9 +276,5 @@ public class FX2000 extends FX400{
             }
         }
         return invalid_found;
-    }
-
-    private boolean isSmokeHeat(Zone zone) {
-        return Zone.checkTags(zone.getType(), new String[] { "photo", "heat"});
     }
 }
