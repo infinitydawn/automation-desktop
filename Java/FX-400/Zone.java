@@ -47,14 +47,17 @@ class Zone {
         } else if (Zone.checkTags(tag, new String[] { "pull" })) {
             type = "Alarm Input Class A";
             this.isPullSttn = true;
-        } else if (Zone.checkTags(tag, new String[] { "co", "carb" })) {
+        } else if (Zone.checkTags(tag, new String[] { "co", "carb" }) && !Zone.checkTags(tag, new String[] { "smoke" })) {
             type = "Latched Supervisory";
             this.isDualInput = true;
         } else if (Zone.checkTags(tag, new String[] { "valve", "tamper", "stat", "pump", "intake", "discharge",
-                "jockey", "jocky", "bypass", "radio trouble" })) {
+                "jockey", "jocky", "bypass", "radio trouble", "low heat", "generator", "dry sys", "elev pwr" })) {
             type = "Non-latched Supervisory";
             this.isDualInput = true;
         } else if (Zone.checkTags(tag, new String[] { "smoke", "duct" })) {
+            if (Zone.checkTags(tag, new String[] { "dual" , "combo"})) {
+                this.isDualInput = true;
+             }
             type = "Photo Detector";
             this.isSensor = true;
         } else if(Zone.checkTags(tag, new String[] {"fan shut", "ac shut", "rtu shut"})){
@@ -64,9 +67,19 @@ class Zone {
                 "fan", "shunt", })) {
             type = "Relay";
         } else if (Zone.checkTags(tag, new String[] { "heat" })) {
+             if (Zone.checkTags(tag, new String[] { "dual" })) {
+                this.isDualInput = true;
+             }
             type = "Heat Detector";
             this.isSensor = true;
-        } else if (Zone.checkTags(tag, new String[] { "blank" , "spare" })) {
+        } 
+        else if (Zone.checkTags(tag, new String[] { "phone mod" })) {
+            type = "Telephone Module";
+        }
+        else if (Zone.checkTags(tag, new String[] { "speakers" })) {
+            type = "Speakers";
+        }
+        else if (Zone.checkTags(tag, new String[] { "blank" , "spare" })) {
             type = "Blank Device";
         } else {
             type = "Unknown";
@@ -82,6 +95,14 @@ class Zone {
             }
         }
         return false;
+    }
+
+    public void setDualInput(boolean in){
+        isDualInput = in;
+    }
+
+    public void setTag1(String tag){
+        tag1 = tag;
     }
 
     public String getType(){
