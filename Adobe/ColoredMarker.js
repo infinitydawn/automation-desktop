@@ -1,9 +1,13 @@
 var STARTING_NUMBER = 20; //Starting number for each color
 var MARKER_SIZE = 18; //Text size of the created marking
+var USE_RECTANGLES = false; //Count rectangles instead of circles
+// Press CTRL+J to open debugger, paste everything, CTRL+A to select all, CTRL+Enter to run
 
+//Get all colored circles and assign a number next to each of them
 
 var annots = this.getAnnots();
 var pages = new Array(this.numPages);
+var color_count = {};
 
 //Create empty arrays for each page
 for(var i = 0; i < pages.length; i++) {
@@ -20,45 +24,28 @@ for (var i = 0; i < annots.length; i++) {
     pages[annots[i].page].push(annots[i]);
 }
 
-var blue_Count = 0;
-var red_Count = 0;
-var orange_Count = 0;
-
 //Go through each page, then each annotation per page, then add their markings
 for(var i = 0; i < pages.length; i++) {
     pages[i].forEach(function(annot) {
-        if(isBlueCircle(annot)) {
-            addColoredNumber(annot, color.blue, STARTING_NUMBER + blue_Count);
-            blue_Count++;
-        }
+        if(checkAnnotType(annot)) {
+            if(color_count[annot.fillColor.toString()] == null) {
+                color_count[annot.fillColor.toString()] = STARTING_NUMBER;             
+            }
 
-        if(isRedCircle(annot)) {
-            addColoredNumber(annot, color.red, STARTING_NUMBER + red_Count);
-            red_Count++;
-        }
-
-        if (isOrangeCircle(annot)) {          
-            addColoredNumber(annot, ["RGB", 1 , 0.6, 0 ], STARTING_NUMBER + orange_Count);
-            orange_Count++;
+            addColoredNumber(annot, color_count[annot.fillColor.toString()]);
+            color_count[annot.fillColor.toString()]++;
         }
     });
 }
 
-function isBlueCircle(annot) {
-    return annot.type === "Circle" && annot.fillColor.toString() === "RGB,0,0,1" && annot.strokeColor.toString() === "RGB,0,0,1";
+function checkAnnotType(annot) {
+    if(USE_RECTANGLES) {
+        return annot.type === "Square";
+    }
+    return annot.type === "Circle";
 }
 
-function isRedCircle(annot) {
-    return annot.type === "Circle" && annot.fillColor.toString() === "RGB,0.898040771484375,0.133331298828125,0.2156829833984375" &&
-     annot.strokeColor.toString() === "RGB,0.898040771484375,0.133331298828125,0.2156829833984375";
-}
-
-function isOrangeCircle(annot) {
-    return annot.type === "Circle" && annot.fillColor.toString() === "RGB,1,0.439208984375,0.007843017578125" && 
-    annot.strokeColor.toString() === "RGB,1,0.439208984375,0.007843017578125";
-}
-
-function addColoredNumber(annot, annot_color, num) {
+function addColoredNumber(annot, num) {   
     // Get the current position of the annotation (as a rectangle: [x1, y1, x2, y2])
     var rect = annot.rect;
 
@@ -72,18 +59,18 @@ function addColoredNumber(annot, annot_color, num) {
         page: annot.page,               // Same page as the annot
         rect: [xPos, yPos + 30, xPos, yPos + 30], // Text box with appropriate width and height
         contents: num.toString(),       // Just the number
-        author: "Automated Script"      // Optional: Author name
+        author: "Automated Script",      // Optional: Author name
+        fillColor : color.transparent,
+        opacity : 1,
+        strokeColor : annot.fillColor,
     });
 
-    newAnnot.fillColor = color.transparent;
-    newAnnot.opacity = 1;              // Set background opacity to 50%
-    newAnnot.strokeColor = annot_color;
 
     // Modify text color in the rich text content
     if (newAnnot.richContents) {
         var spans = [];
         for each(var span in newAnnot.richContents) {
-            span.textColor = annot_color; // Set text color to white for each span
+            span.textColor = annot.fillColor;
             span.textSize = MARKER_SIZE;
             spans.push(span);
         }
