@@ -38,7 +38,7 @@ class Zone {
     public String classify(String tag) {
         String type = "N/A";
 
-        if (Zone.checkTags(tag, new String[] { "waterf", "ps10", "ps 10" })) {
+        if (Zone.checkTags(tag, new String[] { "waterf", "ps10", "ps 10", "water flow" })) {
             type = "Alarm Input";
             this.isNS = true;
             this.isDualInput = true;
