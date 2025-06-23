@@ -72,8 +72,11 @@ class ZoneList {
             //Load options from column 4 if they exist. Options are separated by ;
             if(parts.length > 3 && parts[3] != null && !parts[3].isEmpty()) {
                 String[] options = parts[3].split(";");
+                boolean toggle;
 
                 for(String opt : options) {
+                    toggle = true;
+
                     //Override Type
                     if(opt.contains("type=")) {
                         String[] new_type = opt.split("type=");
@@ -85,34 +88,23 @@ class ZoneList {
                         }
                     }
 
+                    if(opt.contains("!")) {
+                        toggle = false;
+                    }
+
                     //Set AR
                     if(opt.contains("isAR")) {
-                        if(opt.contains("!")) {
-                            last_zone.setAR(false);
-                        }
-                        else {
-                            last_zone.setAR(true);
-                        }
+                        last_zone.setAR(toggle);
                     }
 
                     //Set Dual
                     if(opt.contains("isDualInput")) {
-                        if(opt.contains("!")) {
-                            last_zone.setDualInput(false);
-                        }
-                        else {
-                            last_zone.setDualInput(true);
-                        }
+                        last_zone.setDualInput(toggle);
                     }
 
                     //Set NS
                     if(opt.contains("isNS")) {
-                        if(opt.contains("!")) {
-                            last_zone.setNS(false);
-                        }
-                        else {
-                            last_zone.setNS(true);
-                        }
+                        last_zone.setNS(toggle);
                     }
                 }
 
