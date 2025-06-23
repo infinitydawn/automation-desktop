@@ -116,11 +116,13 @@ class ZoneList {
                     }
                 }
 
+                /*
                 System.out.println(last_zone.getAddress()
                  +  " type : " + last_zone.getType() 
                  +  ", isAR:" + last_zone.isAR() 
                  + ", isNS: " + last_zone.isNS() 
                  + " , isDual: " + last_zone.isDualInput()); 
+                 */
             }
 
             if (last_zone.isAR()) {
