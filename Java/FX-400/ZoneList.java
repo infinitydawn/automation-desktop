@@ -129,7 +129,7 @@ class ZoneList {
 
             if (last_zone.getType().equals("Heat Detector") && last_zone.isDualInput()) {
                 CONTAINS_DUAL_HEAT = true;
-            }              
+            } 
         }
         temp_scan.close();
     }
