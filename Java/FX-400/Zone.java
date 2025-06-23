@@ -38,7 +38,7 @@ class Zone {
     public String classify(String tag) {
         String type = "N/A";
 
-        if (Zone.checkTags(tag, new String[] { "waterf", "ps10", "ps 10" })) {
+        if (Zone.checkTags(tag, new String[] { "waterf", "ps10", "ps 10", "water flow" })) {
             type = "Alarm Input";
             this.isNS = true;
             this.isDualInput = true;
@@ -51,7 +51,7 @@ class Zone {
             type = "Latched Supervisory";
             this.isDualInput = true;
         } else if (Zone.checkTags(tag, new String[] { "valve", "tamper", "stat", "pump", "intake", "discharge",
-                "jockey", "jocky", "bypass", "radio trouble", "low heat", "generator", "dry sys", "elev pwr" })) {
+                "jockey", "jocky", "bypass", "radio trouble", "low heat", "generator", "dry sys", "elev pwr", "monitor" })) {
             type = "Non-latched Supervisory";
             this.isDualInput = true;
         } else if (Zone.checkTags(tag, new String[] { "smoke", "duct" })) {
@@ -76,7 +76,7 @@ class Zone {
         else if (Zone.checkTags(tag, new String[] { "phone mod" })) {
             type = "Telephone Module";
         }
-        else if (Zone.checkTags(tag, new String[] { "speakers" })) {
+        else if (Zone.checkTags(tag, new String[] { "speaker" })) {
             type = "Speakers";
         }
         else if (Zone.checkTags(tag, new String[] { "blank" , "spare" })) {
