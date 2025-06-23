@@ -401,12 +401,15 @@ public class FX400 extends Thread{
             }
            
             if(zone.getSubAddress() != null) {
+
+                /* //Cannot be reliably used if there are type overrides
                 //Check if subzone is spare, valve, or waterflow only
                 if(!Zone.checkTags(zone.getSubAddress().getTag1(), new String[] { "spare", "valve", "waterfl", "valve", "tamper", "stat", "pump", "intake", "discharge",
                 "jockey", "jocky", "bypass", "recall"})) {
                     current_zone_valid = false;
                     zone_errors += "invalid tag 1 name for subzone, ";
                 }
+                */
                 
                 //Subzone tag 2 lengths
                 if(zone.getSubAddress().getTag1().length() > 20 && !IGNORE_TAG_LENGTH) {

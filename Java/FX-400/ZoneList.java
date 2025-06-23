@@ -15,12 +15,9 @@ class ZoneList {
     } // end constructor
 
     public void addZone(double address, String tag1, String tag2) {
-        String decimal = Double.toString(address);
-        decimal = decimal.substring(decimal.length() - 1, decimal.length());
-
-        if (decimal.equals("1") || decimal.equals("0")) {
+        if (!isSubZone(address)) {
             zones.add(new Zone(address, tag1, tag2));
-        } else if (decimal.equals("2")) {
+        } else {
             Zone last = zones.get(zones.size() - 1);
             last.addSubZone(address, tag1, tag2);
         }
@@ -66,25 +63,87 @@ class ZoneList {
             parts = content.split("\\,");
 
             this.addZone(Double.parseDouble(parts[0]), parts[1], parts[2]);
-            /*
-            //Load options if they exist
-            if(parts.length > 4 && parts[4] != null && !parts[4].isEmpty()) {
 
-                //Turn something like waterflow/valve to single input (for Flexnet)
-                if(parts[4].toLowerCase().contains("single")) {
-                    zones.getLast().setDualInput(false);
-                }
+            Zone last_zone = zones.getLast();
+            if(isSubZone(Double.parseDouble(parts[0]))) {
+                last_zone = last_zone.getSubAddress();
             }
-            */
-            if (zones.getLast().isAR()) {
+
+            //Load options from column 4 if they exist. Options are separated by ;
+            if(parts.length > 3 && parts[3] != null && !parts[3].isEmpty()) {
+                String[] options = parts[3].split(";");
+
+                for(String opt : options) {
+                    //Override Type
+                    if(opt.contains("type=")) {
+                        String[] new_type = opt.split("type=");
+                        if(new_type.length > 0) {
+                            last_zone.setType(new_type[1]);
+                        }
+                        else {
+                            System.out.println(last_zone.getAddress() + " : invalid type provided");
+                        }
+                    }
+
+                    //Set AR
+                    if(opt.contains("isAR")) {
+                        if(opt.contains("!")) {
+                            last_zone.setAR(false);
+                        }
+                        else {
+                            last_zone.setAR(true);
+                        }
+                    }
+
+                    //Set Dual
+                    if(opt.contains("isDualInput")) {
+                        if(opt.contains("!")) {
+                            last_zone.setDualInput(false);
+                        }
+                        else {
+                            last_zone.setDualInput(true);
+                        }
+                    }
+
+                    //Set NS
+                    if(opt.contains("isNS")) {
+                        if(opt.contains("!")) {
+                            last_zone.setNS(false);
+                        }
+                        else {
+                            last_zone.setNS(true);
+                        }
+                    }
+                }
+
+                System.out.println(last_zone.getAddress()
+                 +  " type : " + last_zone.getType() 
+                 +  ", isAR:" + last_zone.isAR() 
+                 + ", isNS: " + last_zone.isNS() 
+                 + " , isDual: " + last_zone.isDualInput()); 
+            }
+
+            if (last_zone.isAR()) {
                 CONTAINS_AR = true;
             }
 
-            if (zones.getLast().getType().equals("Heat Detector") && zones.getLast().isDualInput()) {
+            if (last_zone.getType().equals("Heat Detector") && last_zone.isDualInput()) {
                 CONTAINS_DUAL_HEAT = true;
-            }
+            }              
+        }
+        temp_scan.close();
+    }
+
+    public boolean isSubZone(Double address) {
+        String decimal = Double.toString(address);
+        decimal = decimal.substring(decimal.length() - 1, decimal.length());
+
+        if (decimal.equals("1") || decimal.equals("0")) {
+            return false;
+        } else if (decimal.equals("2")) {
+            return true;
         }
 
-        temp_scan.close();
+        return false;
     }
 }

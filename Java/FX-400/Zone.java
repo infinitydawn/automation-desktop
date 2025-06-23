@@ -97,12 +97,28 @@ class Zone {
         return false;
     }
 
-    public void setDualInput(boolean in){
+    public void setDualInput(boolean in) {
         isDualInput = in;
     }
 
-    public void setTag1(String tag){
+    public void setTag1(String tag) {
         tag1 = tag;
+    }
+
+    public void setType(String newtype) {
+        type = newtype;
+    }
+
+    public void setNS(boolean newns) {
+        isNS = newns;
+    }
+
+    public void setAR(boolean isar) {
+        isAR = isar;
+    }
+
+    public void setSubAddress(subZone newzone) {
+        subAddress = newzone;
     }
 
     public String getType(){
