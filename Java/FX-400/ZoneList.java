@@ -69,17 +69,17 @@ class ZoneList {
                 last_zone = last_zone.getSubAddress();
             }
 
-            //Load options from column 4 if they exist. Options are separated by ;
+            //Load Overrides from column 4 if they exist. Overrides are separated by ;
             if(parts.length > 3 && parts[3] != null && !parts[3].isEmpty()) {
-                String[] options = parts[3].split(";");
+                String[] overrides = parts[3].split(";");
                 boolean toggle;
 
-                for(String opt : options) {
+                for(String over : overrides) {
                     toggle = true;
 
                     //Override Type
-                    if(opt.contains("type=")) {
-                        String[] new_type = opt.split("type=");
+                    if(over.contains("type=")) {
+                        String[] new_type = over.split("type=");
                         if(new_type.length > 0) {
                             last_zone.setType(new_type[1]);
                         }
@@ -88,22 +88,22 @@ class ZoneList {
                         }
                     }
 
-                    if(opt.contains("!")) {
+                    if(over.contains("!")) {
                         toggle = false;
                     }
 
                     //Set AR
-                    if(opt.contains("isAR")) {
+                    if(over.contains("isAR")) {
                         last_zone.setAR(toggle);
                     }
 
                     //Set Dual
-                    if(opt.contains("isDualInput")) {
+                    if(over.contains("isDualInput")) {
                         last_zone.setDualInput(toggle);
                     }
 
                     //Set NS
-                    if(opt.contains("isNS")) {
+                    if(over.contains("isNS")) {
                         last_zone.setNS(toggle);
                     }
                 }
