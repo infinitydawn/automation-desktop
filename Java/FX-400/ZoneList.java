@@ -107,7 +107,7 @@ class ZoneList {
                         last_zone.setNS(toggle);
                     }
 
-                    //Set NS
+                    //Set Sensor
                     if(over.contains("isSensor")) {
                         last_zone.setSensor(toggle);
                     }
