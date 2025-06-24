@@ -117,6 +117,10 @@ class Zone {
         isAR = isar;
     }
 
+    public void setSensor(boolean issensor) {
+        isSensor = issensor;
+    }
+
     public void setSubAddress(subZone newzone) {
         subAddress = newzone;
     }
