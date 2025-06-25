@@ -54,7 +54,7 @@ public class Automation implements NativeKeyListener{
         if (e.getKeyCode() == NativeKeyEvent.VC_F2 || e.getKeyCode() == NativeKeyEvent.VC_F3 || e.getKeyCode() == NativeKeyEvent.VC_F4) {
             try {
                 //Start a new thread only if it doesn't exist or is no longer alive
-                if(isRunning()) {
+                if(bot == null || (bot != null && !bot.isAlive())) {
                     switch (e.getKeyCode()) {
                         case NativeKeyEvent.VC_F2:
                             bot = new FX400();
@@ -79,8 +79,4 @@ public class Automation implements NativeKeyListener{
             }
         }        
 	}
-
-    public boolean isRunning() {
-        return ((bot == null || (bot != null && !bot.isAlive())));
-    }
 }
