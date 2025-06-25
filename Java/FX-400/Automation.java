@@ -51,14 +51,23 @@ public class Automation implements NativeKeyListener{
             */
         }
 
-
-        if (e.getKeyCode() == NativeKeyEvent.VC_F2) {
+        if (e.getKeyCode() == NativeKeyEvent.VC_F2 || e.getKeyCode() == NativeKeyEvent.VC_F3 || e.getKeyCode() == NativeKeyEvent.VC_F4) {
             try {
                 //Start a new thread only if it doesn't exist or is no longer alive
                 if(isRunning()) {
-                    bot = new FX400();
+                    switch (e.getKeyCode()) {
+                        case NativeKeyEvent.VC_F2:
+                            bot = new FX400();
+                            break;
+                        case NativeKeyEvent.VC_F3:
+                            bot = new FX2000();
+                            break;
+                        case NativeKeyEvent.VC_F4: //Flexnet will want higher (2+ enter delay strength)
+                            bot = new Flexnet();
+                            break;
+                    }  
                 }
-
+                
                 if(!bot.isAlive()) {
                     Thread.sleep(START_DELAY);  
                     bot.start();
@@ -68,45 +77,7 @@ public class Automation implements NativeKeyListener{
             } catch (Exception except) {
                 except.printStackTrace();
             }
-        }
-        
-         if (e.getKeyCode() == NativeKeyEvent.VC_F3) {
-            try {
-                //Start a new thread only if it doesn't exist or is no longer alive
-                if(isRunning()) {
-                    bot = new FX2000();
-                }
-
-                if(!bot.isAlive()) {
-                    Thread.sleep(START_DELAY);   
-                    bot.start();
-                }else if(bot.isAlive() && bot.getIsPaused()) {
-                    bot.setIsPaused(false);
-                }
-            } catch (Exception except) {
-                except.printStackTrace();
-            }
-        }
-
-        //Flexnet will want higher (2+ enter delay strength)
-        if (e.getKeyCode() == NativeKeyEvent.VC_F4) {
-            try {
-                //Start a new thread only if it doesn't exist or is no longer alive
-                if(isRunning()) {
-                    bot = new Flexnet();
-                }
-
-                if(!bot.isAlive()) {
-                    Thread.sleep(START_DELAY);   
-                    bot.start();
-                }else if(bot.isAlive() && bot.getIsPaused()) {
-                    bot.setIsPaused(false);
-                }
-            } catch (Exception except) {
-                except.printStackTrace();
-            }
-        }
-        
+        }        
 	}
 
     public boolean isRunning() {
