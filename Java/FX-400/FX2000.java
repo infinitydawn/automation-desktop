@@ -50,7 +50,7 @@ public class FX2000 extends FX400{
                 skip_count = (int) zone.getAddress() - 1;
 
                 //Reduce skip count if first address in zone list is ipt/relay
-                if(zone.isSensor()) {
+                if(!zone.isSensor()) {
                     skip_count -= 100;
                 }
 
