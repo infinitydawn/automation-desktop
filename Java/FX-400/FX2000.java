@@ -62,7 +62,6 @@ public class FX2000 extends FX400{
                     if(current_zone > 0) {
                         if(zone.isSensor()) {
                             skip_count += (int) zone.getAddress() - (int) zones.get(current_zone - 1).getAddress() - 1;
-                            System.out.println("Skip:" + skip_count);
                         }
                         else {  
                             //Assuming zone list is sorted, reset skip count once ipt/relay devices are reached
