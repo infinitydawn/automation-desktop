@@ -84,7 +84,16 @@ public class FX400 extends Thread{
 
                     switch (zone.getType()) {
                         case "Photo Detector":
-                            addPhotoDetector();
+                            //Duct detectors have spare
+                            if (Zone.checkTags(zone.getTag1(), new String[] { "duct" }))
+                            {
+                                zone.setDualInput(true);
+                                addDuctDetector();
+                            }
+                            else {
+                                addPhotoDetector();
+                            }
+                            
                             break;
                         case "Alarm Input":
                             addAlarmInputMod();
@@ -146,6 +155,16 @@ public class FX400 extends Thread{
     
     protected void addPhotoDetector() {
         open();
+        bot.pressKey(KeyEvent.VK_TAB, 3);
+        skipDevices();
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ESCAPE);
+        bot.pressKey(KeyEvent.VK_END);
+    }
+
+    protected void addDuctDetector() {
+        open();
+        bot.pressKey(KeyEvent.VK_P, 5);
         bot.pressKey(KeyEvent.VK_TAB, 3);
         skipDevices();
         bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
