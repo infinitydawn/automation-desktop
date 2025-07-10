@@ -66,6 +66,7 @@ class Zone {
         } else if (Zone.checkTags(tag, new String[] { "relay", "door", "damper", "shutdown", "shut down", "Recall", "fsd",
                 "fan", "shunt", })) {
             type = "Relay";
+            this.isDualInput = true;
         } else if (Zone.checkTags(tag, new String[] { "heat" })) {
              if (Zone.checkTags(tag, new String[] { "dual" })) {
                 this.isDualInput = true;
