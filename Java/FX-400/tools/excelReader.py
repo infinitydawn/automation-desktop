@@ -3,7 +3,7 @@ from tkinter.filedialog import askopenfilename
 import pandas as pd
 
 Tk().withdraw() # we don't want a full GUI, so keep the root window from appearing
-file_path = askopenfilename(filetypes=[("CSV files", "*.csv"), ("Excel files", "*.xlsx")]) # show an "Open" dialog box and return the path to the selected file
+file_path = askopenfilename(filetypes=[("Worksheet Files", "*.xlsx *.csv")]) # show an "Open" dialog box and return the path to the selected file
 
 raw_df = ""
 
