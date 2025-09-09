@@ -111,6 +111,11 @@ class ZoneList {
                     if(over.contains("isSensor")) {
                         last_zone.setSensor(toggle);
                     }
+
+                    //Set Mini
+                    if(over.contains("isMini")) {
+                        last_zone.setMini(toggle);
+                    }
                 }
 
                 /*
