@@ -7,6 +7,7 @@ class Zone {
     private boolean isPullSttn = false;
     private boolean isSensor = false;
     private boolean isDualInput = false;
+    private boolean isMini = false;
     private String tag1;
     private String tag2;
 
@@ -46,6 +47,7 @@ class Zone {
             type = "Alarm Input";
         } else if (Zone.checkTags(tag, new String[] { "pull" })) {
             type = "Alarm Input Class A";
+            this.isMini = true;
             this.isPullSttn = true;
         } else if (Zone.checkTags(tag, new String[] { "co", "carb" }) && !Zone.checkTags(tag, new String[] { "smoke" })) {
             type = "Latched Supervisory";
@@ -54,6 +56,7 @@ class Zone {
                 "jockey", "jocky", "bypass", "radio trouble", "low heat", "generator", "dry sys", "elev pwr", "monitor" })) {
             type = "Non-latched Supervisory";
             this.isDualInput = true;
+            
         } else if (Zone.checkTags(tag, new String[] { "smoke", "duct" })) {
             if (Zone.checkTags(tag, new String[] { "dual" , "combo"})) {
                 this.isDualInput = true;
@@ -126,7 +129,11 @@ class Zone {
         subAddress = newzone;
     }
 
-    public String getType(){
+    public void setMini(boolean ismini) {
+        isMini = ismini;
+    }
+
+    public String getType() {
         return type;
     }
 
@@ -148,6 +155,10 @@ class Zone {
 
     public boolean isDualInput() {
         return isDualInput;
+    }
+
+    public boolean isMini() {
+        return isMini;
     }
 
     public double getAddress() {
