@@ -165,7 +165,7 @@ public class FX400 extends Thread{
     protected void addDuctDetector() {
         open();
         bot.pressKey(KeyEvent.VK_P, 5);
-        bot.pressKey(KeyEvent.VK_TAB, 3);
+        bot.pressKey(KeyEvent.VK_TAB, 2);
         skipDevices();
         bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
