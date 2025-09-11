@@ -402,11 +402,19 @@ public class FX400 extends Thread{
                 zone_errors += "address out of range, ";
             }
 
+            //Check zone type if it is unknown or blank
+            if(Zone.checkTags(zone.getType(), new String[] { "unknown", "blank"})) {
+                current_zone_valid = false;
+                zone_errors += "unknown zone type, ";
+            }
+
+            /* //Can be skipped with options
             //Check if tag1 is named correctly
             if(Zone.checkTags(zone.getTag1(), new String[] { "spare", "blank", "unknown" })) {
                 current_zone_valid = false;
                 zone_errors += "invalid tag 1, ";
             }
+            */
 
             //Check zone tag lengths
             if(zone.getTag1().length() > 20 && !IGNORE_TAG_LENGTH) {
@@ -420,13 +428,23 @@ public class FX400 extends Thread{
             }
            
             if(zone.getSubAddress() != null) {
+
+                /* 
+                //Cannot be reliably used if there are type overrides
                 //Check if subzone is spare, valve, or waterflow only
                 if(!Zone.checkTags(zone.getSubAddress().getTag1(), new String[] { "spare", "valve", "waterfl", "valve", "tamper", "stat", "pump", "intake", "discharge",
                 "jockey", "jocky", "bypass", "recall"})) {
                     current_zone_valid = false;
                     zone_errors += "invalid tag 1 name for subzone, ";
                 }
+                */
                 
+                //Check zone type if it is unknown or blank
+                if(Zone.checkTags(zone.getType(), new String[] { "unknown", "blank"})) {
+                    current_zone_valid = false;
+                    zone_errors += "subzone unknown zone type, ";
+                }
+
                 //Subzone tag 2 lengths
                 if(zone.getSubAddress().getTag1().length() > 20 && !IGNORE_TAG_LENGTH) {
                     current_zone_valid = false;
@@ -436,12 +454,6 @@ public class FX400 extends Thread{
                 if(zone.getSubAddress().getTag2().length() > 20 && !IGNORE_TAG_LENGTH) {
                     current_zone_valid = false;
                     zone_errors += "subzone tag 2 length > 20, ";
-                }
-
-                //Check zone type if it is unknown or blank
-                if(Zone.checkTags(zone.getType(), new String[] { "unknown", "blank"})) {
-                    current_zone_valid = false;
-                    zone_errors += "subzone unknown zone type, ";
                 }
 
                 /*

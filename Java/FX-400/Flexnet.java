@@ -129,7 +129,7 @@ public class Flexnet extends FX2000{
                             break;
                         case "Non-latched Supervisory":
                         //Check for radio, single monitor and dual monitor
-                            if(Zone.checkTags(zone.getTag1(), new String[] { "radio" })) {
+                            if(zone.isMini()) {
                                 addNonLatchedSupvMini();
                             } else {
                                 if(zone.getSubAddress() != null || Zone.checkTags(zone.getTag1(), new String[] { "generator", "dry sys" })) {
