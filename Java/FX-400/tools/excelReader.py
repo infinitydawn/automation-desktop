@@ -77,4 +77,4 @@ check_column_headers(df)
 # check if every .2 zone has a .1 zone
 check_subaddresses(zoneColumn)
 
-df.to_csv('./assets/temp_zones.csv', lineterminator=',\n', index=False)
+df.to_csv('./assets/temp_zones.csv', index=False)
