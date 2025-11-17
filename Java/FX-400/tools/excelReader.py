@@ -15,7 +15,8 @@ elif file_path.endswith('.csv'):
         raise ValueError("The selected file is not a .CSV Or .XLSX file.")
 
 
-df = raw_df.sort_values(by = 'Zone', ascending=True)
+#df = raw_df.sort_values(by = 'Zone', ascending=True)
+df = raw_df
 df = df[df['Zone'].notna()] #remove empty rows
 
 zoneColumn = df['Zone']
