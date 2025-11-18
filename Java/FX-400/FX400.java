@@ -326,6 +326,7 @@ public class FX400 extends Thread{
 
     protected void enterZoneList(ZoneList zone_list) {
         try {
+            Thread.sleep(DELAY);
             bot.pressKey(KeyEvent.VK_HOME, 1, 1); 
             for(Zone zone : zone_list.zones) {
                 System.out.println("Updating: " + zone.getZoneinfo());
