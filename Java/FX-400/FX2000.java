@@ -74,29 +74,31 @@ public class FX2000 extends FX400{
                         }
                     }
 
-                    System.out.println("Inserting: " + zone.getZoneinfo());
+                    if(!skip_insert_devices) {
+                        System.out.println("Inserting: " + zone.getZoneinfo());
 
-                    switch (zone.getType()) {
-                        case "Photo Detector":
-                            addPhotoDetector();
-                            break;
-                        case "Alarm Input":
-                        case "Alarm Input Class A":
-                            addAlarmInputMod();
-                            break;
-                        case "Non-latched Supervisory":
-                            addNonLatchedSupv();
-                            break;
-                        case "Latched Supervisory":
-                            addLatchedSupv();
-                            break;
-                        case "Heat Detector":
-                            addHeatDetector();
-                            break;
-                        case "Relay":
-                            addRelay();
-                            break;
-                    }
+                        switch (zone.getType()) {
+                            case "Photo Detector":
+                                addPhotoDetector();
+                                break;
+                            case "Alarm Input":
+                            case "Alarm Input Class A":
+                                addAlarmInputMod();
+                                break;
+                            case "Non-latched Supervisory":
+                                addNonLatchedSupv();
+                                break;
+                            case "Latched Supervisory":
+                                addLatchedSupv();
+                                break;
+                            case "Heat Detector":
+                                addHeatDetector();
+                                break;
+                            case "Relay":
+                                addRelay();
+                                break;
+                        }
+                    } 
                 }
 
                 if(is_running) {
