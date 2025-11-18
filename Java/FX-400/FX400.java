@@ -18,6 +18,7 @@ public class FX400 extends Thread{
     protected int skip_count = 19;
     protected boolean is_running = false; //used to stop the bot from running without closing process
     protected boolean is_paused = false; //used to prompt user to enable AR related settings -- MAKE USE OF THIS IF PAUSING GUI
+    protected boolean skip_insert_devices = false; //Update tags only. Meant for when the devices are entered and other details (type, f1 tags,etc) are untouched
 
     public FX400() {
         try {
@@ -80,40 +81,42 @@ public class FX400 extends Thread{
                         skip_count += (int) zone.getAddress() - (int) zones.get(current_zone - 1).getAddress() - 1;
                     }
 
-                    System.out.println("Inserting: " + zone.getZoneinfo());
+                    if(!skip_insert_devices) {
+                        System.out.println("Inserting: " + zone.getZoneinfo());
 
-                    switch (zone.getType()) {
-                        case "Photo Detector":
-                            //Duct detectors have spare
-                            if (Zone.checkTags(zone.getTag1(), new String[] { "duct" }))
-                            {
-                                zone.setDualInput(true);
-                                addDuctDetector();
-                            }
-                            else {
-                                addPhotoDetector();
-                            }
-                            
-                            break;
-                        case "Alarm Input":
-                            addAlarmInputMod();
-                            break;
-                        case "Non-latched Supervisory":
-                            addNonLatchedSupv();
-                            break;
-                        case "Latched Supervisory":
-                            addLatchedSupv();
-                            break;
-                        case "Heat Detector":
-                            addHeatDetector();
-                            break;
-                        case "Alarm Input Class A":
-                            addAlarmInputClassA();
-                            break;
-                        case "Relay":
-                            addRelay();
-                            break;
-                    }
+                        switch (zone.getType()) {
+                            case "Photo Detector":
+                                //Duct detectors have spare
+                                if (Zone.checkTags(zone.getTag1(), new String[] { "duct" }))
+                                {
+                                    zone.setDualInput(true);
+                                    addDuctDetector();
+                                }
+                                else {
+                                    addPhotoDetector();
+                                }
+                                
+                                break;
+                            case "Alarm Input":
+                                addAlarmInputMod();
+                                break;
+                            case "Non-latched Supervisory":
+                                addNonLatchedSupv();
+                                break;
+                            case "Latched Supervisory":
+                                addLatchedSupv();
+                                break;
+                            case "Heat Detector":
+                                addHeatDetector();
+                                break;
+                            case "Alarm Input Class A":
+                                addAlarmInputClassA();
+                                break;
+                            case "Relay":
+                                addRelay();
+                                break;
+                        }
+                    } 
                 }
 
                 if(is_running) {

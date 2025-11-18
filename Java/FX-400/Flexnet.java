@@ -104,65 +104,78 @@ public class Flexnet extends FX2000{
 
                     }
 
-                    System.out.println("Inserting: " + zone.getZoneinfo());
-
                     switch (zone.getType()) {
-                        case "Photo Detector":
+                        case "Photo Detector": //For Smoke CO
                             if (zone.isDualInput()) {
                                 zone.setTag1("Smoke Detector");
-                                addSmokeCODetector();
-                            }
-                            else {
-                                addPhotoDetector();
                             }
                             break;
-                        case "Alarm Input":
-                            if(zone.getSubAddress() != null) {
-                                addDualAlarmInputMod();
-                            }
-                            else {
-                                addAlarmInputMod(); 
-                            }                          
-                            break;
-                        case "Alarm Input Class A":
-                            addAlarmInputMiniMod();                         
-                            break;
-                        case "Non-latched Supervisory":
-                        //Check for radio, single monitor and dual monitor
-                            if(zone.isMini()) {
-                                addNonLatchedSupvMini();
-                            } else {
-                                if(zone.getSubAddress() != null || Zone.checkTags(zone.getTag1(), new String[] { "generator", "dry sys" })) {
-                                    addDualNonLatchedSupv();
-                                } 
-                                else {
-                                    addNonLatchedSupv();
-                                }    
-                            }
-                            break;
-                        case "Latched Supervisory":
-                            addLatchedSupv();
-                            break;
-                        case "Heat Detector": 
+                        case "Heat Detector": //For Dual Heat Smoke
                             if(zone.isDualInput()) {
-                                addDualHeatSmokeDetector();
-                                zone.setTag1("Smoke Detector"); //Rename Dual Heat to Smoke Detector
+                                zone.setTag1("Smoke Detector"); 
                             }
-                            else {
-                                addHeatDetector();
-                            }
-                            break;
-                        case "Relay":
-                            addRelay();
-                            break;
-                        case "Telephone Module":
-                            //addTelephoneModule();
-                            break;
-                        case "Speakers":
-                            addSpeakers();
                             break;
                     }
-                }
+
+                    if(!skip_insert_devices) {
+                        System.out.println("Inserting: " + zone.getZoneinfo());
+
+                        switch (zone.getType()) {
+                            case "Photo Detector":
+                                if (zone.isDualInput()) {
+                                    addSmokeCODetector();
+                                }
+                                else {
+                                    addPhotoDetector();
+                                }
+                                break;
+                            case "Alarm Input":
+                                if(zone.getSubAddress() != null) {
+                                    addDualAlarmInputMod();
+                                }
+                                else {
+                                    addAlarmInputMod(); 
+                                }                          
+                                break;
+                            case "Alarm Input Class A":
+                                addAlarmInputMiniMod();                         
+                                break;
+                            case "Non-latched Supervisory":
+                            //Check for radio, single monitor and dual monitor
+                                if(zone.isMini()) {
+                                    addNonLatchedSupvMini();
+                                } else {
+                                    if(zone.getSubAddress() != null || Zone.checkTags(zone.getTag1(), new String[] { "generator", "dry sys" })) {
+                                        addDualNonLatchedSupv();
+                                    } 
+                                    else {
+                                        addNonLatchedSupv();
+                                    }    
+                                }
+                                break;
+                            case "Latched Supervisory":
+                                addLatchedSupv();
+                                break;
+                            case "Heat Detector": 
+                                if(zone.isDualInput()) {
+                                    addDualHeatSmokeDetector();
+                                }
+                                else {
+                                    addHeatDetector();
+                                }
+                                break;
+                            case "Relay":
+                                addRelay();
+                                break;
+                            case "Telephone Module":
+                                //addTelephoneModule();
+                                break;
+                            case "Speakers":
+                                addSpeakers();
+                                break;
+                        }
+                    }
+                }   
 
                 if(is_running) {
                     enterZoneList(zone_list);
