@@ -18,7 +18,7 @@ public class FX400 extends Thread{
     protected int skip_count = 19;
     protected boolean is_running = false; //used to stop the bot from running without closing process
     protected boolean is_paused = false; //used to prompt user to enable AR related settings -- MAKE USE OF THIS IF PAUSING GUI
-    protected boolean skip_insert_devices = false; //Update tags only. Meant for when the devices are entered and other details (type, f1 tags,etc) are untouched
+    protected boolean SKIP_INSERT_DEVICES = false; //Update tags only. Meant for when the devices are entered and other details (type, f1 tags,etc) are untouched
 
     public FX400() {
         try {
@@ -81,7 +81,7 @@ public class FX400 extends Thread{
                         skip_count += (int) zone.getAddress() - (int) zones.get(current_zone - 1).getAddress() - 1;
                     }
 
-                    if(!skip_insert_devices) {
+                    if(!SKIP_INSERT_DEVICES) {
                         System.out.println("Inserting: " + zone.getZoneinfo());
 
                         switch (zone.getType()) {
@@ -326,7 +326,6 @@ public class FX400 extends Thread{
 
     protected void enterZoneList(ZoneList zone_list) {
         try {
-            Thread.sleep(DELAY);
             bot.pressKey(KeyEvent.VK_HOME, 1, 1); 
             for(Zone zone : zone_list.zones) {
                 System.out.println("Updating: " + zone.getZoneinfo());
