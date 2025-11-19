@@ -200,7 +200,7 @@ public class Flexnet extends FX2000{
         bot.pressKey(KeyEvent.VK_N);
         bot.pressKey(KeyEvent.VK_TAB, 2);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -212,7 +212,7 @@ public class Flexnet extends FX2000{
         bot.pressKey(KeyEvent.VK_N);
         bot.pressKey(KeyEvent.VK_TAB, 2);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -231,7 +231,7 @@ public class Flexnet extends FX2000{
         bot.pressKey(KeyEvent.VK_N);
         bot.pressKey(KeyEvent.VK_TAB, 2);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , Math.max(ENTER_DELAY_STRENGTH, 1.5));
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , Math.max(DEVICE_INSERT_DELAY_STRENGTH, 1.5));
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -243,7 +243,7 @@ public class Flexnet extends FX2000{
         bot.pressKey(KeyEvent.VK_N);
         bot.pressKey(KeyEvent.VK_TAB, 2);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -257,7 +257,7 @@ public class Flexnet extends FX2000{
         bot.pressKey(KeyEvent.VK_N);
         bot.pressKey(KeyEvent.VK_TAB, 2);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -271,7 +271,7 @@ public class Flexnet extends FX2000{
         bot.pressKey(KeyEvent.VK_N);
         bot.pressKey(KeyEvent.VK_TAB, 2);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -291,7 +291,7 @@ public class Flexnet extends FX2000{
         bot.pressKey(KeyEvent.VK_N);
         bot.pressKey(KeyEvent.VK_TAB, 2);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , Math.max(ENTER_DELAY_STRENGTH, 1.5));
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , Math.max(DEVICE_INSERT_DELAY_STRENGTH, 1.5));
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -305,7 +305,7 @@ public class Flexnet extends FX2000{
         bot.pressKey(KeyEvent.VK_N);
         bot.pressKey(KeyEvent.VK_TAB, 2);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -321,7 +321,7 @@ public class Flexnet extends FX2000{
         
         bot.pressKey(KeyEvent.VK_TAB, 5);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -336,7 +336,7 @@ public class Flexnet extends FX2000{
         }
         bot.pressKey(KeyEvent.VK_TAB, 5);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , Math.max(ENTER_DELAY_STRENGTH, 2)); //needs extra time for three address devices
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , Math.max(DEVICE_INSERT_DELAY_STRENGTH, 2)); //needs extra time for three address devices
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -351,7 +351,7 @@ public class Flexnet extends FX2000{
         }
         bot.pressKey(KeyEvent.VK_TAB, 4);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , Math.max(ENTER_DELAY_STRENGTH, 1.5));
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , Math.max(DEVICE_INSERT_DELAY_STRENGTH, 1.5));
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -361,7 +361,7 @@ public class Flexnet extends FX2000{
         bot.pressKey(KeyEvent.VK_F);
         bot.pressKey(KeyEvent.VK_TAB, 3);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1, ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ENTER, 1, DEVICE_INSERT_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -371,7 +371,7 @@ public class Flexnet extends FX2000{
         bot.pressKey(KeyEvent.VK_C, 2);
         bot.pressKey(KeyEvent.VK_TAB, 4);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1, ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ENTER, 1, DEVICE_INSERT_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -383,7 +383,7 @@ public class Flexnet extends FX2000{
         bot.pressKey(KeyEvent.VK_A);
         bot.pressKey(KeyEvent.VK_TAB, 4);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1, Math.max(ENTER_DELAY_STRENGTH, 2));
+        bot.pressKey(KeyEvent.VK_ENTER, 1, Math.max(DEVICE_INSERT_DELAY_STRENGTH, 2));
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -439,7 +439,7 @@ public class Flexnet extends FX2000{
                 case "Speakers":
                     break;
             }
-            bot.pressKey(KeyEvent.VK_ENTER, 1, ENTER_DELAY_STRENGTH);
+            bot.pressKey(KeyEvent.VK_ENTER, 1, DEVICE_UPDATE_DELAY_STRENGTH);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -450,14 +450,14 @@ public class Flexnet extends FX2000{
         updateType(zone);
         
         if(zone.isNS()) {
-            bot.pressKey(KeyEvent.VK_N, 1, ENTER_DELAY_STRENGTH);
+            bot.pressKey(KeyEvent.VK_N, 1, DEVICE_UPDATE_DELAY_STRENGTH);
         }
 
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_UPDATE_DELAY_STRENGTH);
 
         if(zone.isAR()) {
             bot.pressKey(KeyEvent.VK_A);
-            bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+            bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_UPDATE_DELAY_STRENGTH);
         }
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_DOWN);
