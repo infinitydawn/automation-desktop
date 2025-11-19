@@ -74,7 +74,7 @@ public class FX2000 extends FX400{
                         }
                     }
 
-                    if(!skip_insert_devices) {
+                    if(!SKIP_INSERT_DEVICES) {
                         System.out.println("Inserting: " + zone.getZoneinfo());
 
                         switch (zone.getType()) {

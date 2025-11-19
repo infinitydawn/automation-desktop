@@ -117,7 +117,7 @@ public class Flexnet extends FX2000{
                             break;
                     }
 
-                    if(!skip_insert_devices) {
+                    if(!SKIP_INSERT_DEVICES) {
                         System.out.println("Inserting: " + zone.getZoneinfo());
 
                         switch (zone.getType()) {
