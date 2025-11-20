@@ -13,7 +13,7 @@ public class FX400 extends Thread{
     protected double DEVICE_UPDATE_DELAY_STRENGTH = 1; // Default 1. Multiplied to DELAY. The Delay time after updating a device (tag name, type, etc).
     protected boolean BYPASS_PAUSE = false; //Prevents the error prompt from showing
     protected boolean IGNORE_TAG_LENGTH = false; //Omits tag length requirement from errors
-    protected boolean SKIP_INSERT_DEVICES = false; //Update tags only. Meant for when the devices are entered and other details (type, f1 tags,etc) are untouched
+    protected boolean SKIP_INSERT_DEVICES = false; //Set the bot to update devices only instead of inserting first. Meant for when the devices are entered and other details (type, f1 tags,etc) are untouched.
     protected String SETTINGS_FILE = "settings.ini";
 
     protected DataEntryBot bot;
@@ -356,15 +356,21 @@ public class FX400 extends Thread{
             if(!ini.containsKey("Key Delay")) {
                 ini.add("Key Delay");
                 ini.put("Key Delay", "delayTime", DELAY);
+                //ini.get("Key Delay","delayTime").setComment("Default 200. Delay time for everything. Multiply by delay strength to change duration.");
                 ini.put("Key Delay", "deviceInsertDelayStrength", DEVICE_INSERT_DELAY_STRENGTH);
+               // ini.get("Key Delay","deviceInsertDelayStrength").setComment("Default 1. Multiplied to DELAY. The Delay time after inserting a device.");
                 ini.put("Key Delay", "deviceUpdateDelayStrength", DEVICE_UPDATE_DELAY_STRENGTH);
+                //ini.get("Key Delay","deviceUpdateDelayStrength").setComment("Default 1. Multiplied to DELAY. The Delay time after updating a device (tag name, type, etc).");
             }
 
             if(!ini.containsKey("Options")) {
                 ini.add("Options");
                 ini.put("Options", "bypassPause", BYPASS_PAUSE);
+                //ini.get("Options","bypassPause").setComment("Prevents the error prompt from showing.");
                 ini.put("Options", "ignoreTagLength", IGNORE_TAG_LENGTH);
+                //ini.get("Options","ignoreTagLength").setComment("Omits tag length requirement from errors.");
                 ini.put("Options", "skipInsertDevices", SKIP_INSERT_DEVICES);
+                //ini.get("Options","skipInsertDevices").setComment("Set the bot to update devices only instead of inserting first. Meant for when the devices are entered and other details (type, f1 tags,etc) are untouched.");
             }
 
             ini.store(ini_file);
