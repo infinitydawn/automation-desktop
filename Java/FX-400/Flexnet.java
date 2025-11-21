@@ -174,6 +174,9 @@ public class Flexnet extends FX2000{
                                 addSpeakers();
                                 break;
                         }
+                        
+                        //Additional delay to ensure final device is added
+                        Thread.sleep(DELAY);
                     }
                 }   
 
