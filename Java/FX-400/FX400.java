@@ -117,6 +117,9 @@ public class FX400 extends Thread{
                                 addRelay();
                                 break;
                         }
+
+                        //Additional delay to ensure final device is added
+                        Thread.sleep(DELAY);
                     } 
                 }
 
