@@ -9,8 +9,8 @@ import org.ini4j.Ini;
 public class FX400 extends Thread{
 
     protected int DELAY = 200; //Default 200. Delay time for everything. Multiply by delay strength to change length
-    protected double DEVICE_INSERT_DELAY_STRENGTH = 1; // Default 1. Multiplied to DELAY. The Delay time after inserting a device.
-    protected double DEVICE_UPDATE_DELAY_STRENGTH = 1; // Default 1. Multiplied to DELAY. The Delay time after updating a device (tag name, type, etc).
+    protected double DEVICE_INSERT_DELAY_STRENGTH = 2; // Default 2. Multiplied to DELAY. The Delay time after inserting a device.
+    protected double DEVICE_UPDATE_DELAY_STRENGTH = 1.5; // Default 1.5. Multiplied to DELAY. The Delay time after updating a device (tag name, type, etc).
     protected boolean BYPASS_PAUSE = false; //Prevents the error prompt from showing
     protected boolean IGNORE_TAG_LENGTH = false; //Omits tag length requirement from errors
     protected boolean SKIP_INSERT_DEVICES = false; //Set the bot to update devices only instead of inserting first. Meant for when the devices are entered and other details (type, f1 tags,etc) are untouched.
@@ -357,8 +357,8 @@ public class FX400 extends Thread{
                 ini.add("Key Delay");
                 ini.putComment("Key Delay", 
                     "delayTime - Default 200. Delay time for everything. Multiply by delay strength to change duration. \n" +
-                    "#deviceInsertDelayStrength - Default 1. Multiplied to delayTime. The Delay time after inserting a device. \n" +
-                    "#deviceUpdateDelayStrength - Default 1. Multiplied to delayTime. The Delay time after updating a device (tag name, type, etc)."
+                    "#deviceInsertDelayStrength - Default 2. Multiplied to delayTime. The Delay time after inserting a device. \n" +
+                    "#deviceUpdateDelayStrength - Default 1.5. Multiplied to delayTime. The Delay time after updating a device (tag name, type, etc)."
                 );
                 ini.put("Key Delay", "delayTime", DELAY);
                 ini.put("Key Delay", "deviceInsertDelayStrength", DEVICE_INSERT_DELAY_STRENGTH);
