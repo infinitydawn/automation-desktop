@@ -356,9 +356,10 @@ public class FX400 extends Thread{
             if(!ini.containsKey("Key Delay")) {
                 ini.add("Key Delay");
                 ini.putComment("Key Delay", 
-                    "delayTime - Default 200. Delay time for everything. Multiply by delay strength to change duration. \n" +
-                    "#deviceInsertDelayStrength - Default 2. Multiplied to delayTime. The Delay time after inserting a device. \n" +
-                    "#deviceUpdateDelayStrength - Default 1.5. Multiplied to delayTime. The Delay time after updating a device (tag name, type, etc)."
+                    String.format("delayTime - Default %d. Delay time for everything. Multiply by delay strength to change duration. \n" +
+                    "#deviceInsertDelayStrength - Default %d. Multiplied to delayTime. The Delay time after inserting a device. \n" +
+                    "#deviceUpdateDelayStrength - Default %d. Multiplied to delayTime. The Delay time after updating a device (tag name, type, etc).",
+                    DELAY, DEVICE_INSERT_DELAY_STRENGTH, DEVICE_UPDATE_DELAY_STRENGTH)
                 );
                 ini.put("Key Delay", "delayTime", DELAY);
                 ini.put("Key Delay", "deviceInsertDelayStrength", DEVICE_INSERT_DELAY_STRENGTH);
