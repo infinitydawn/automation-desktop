@@ -23,7 +23,10 @@ public class Automation implements NativeKeyListener{
 
         GlobalScreen.addNativeKeyListener(new Automation());
 
-        System.out.println("Program ready. Press F2 to start zone insertion, F3 to begin logic entry.");
+        System.out.println("Program ready. Press F2 to update Input Zones, F3 to begin logic entry.");
+        System.out.println("-------------------------------------------------------------------------");
+        System.out.println("Input Zones: Create input zones first, then select the first zone to be used for FSAE.");
+        System.out.println("Logic Entry: Open Advanced Logic window for first Input Zone, select the Equation window, then press F3 to enter logic. Repeat for each zone.");
     }
 
     public void nativeKeyPressed(NativeKeyEvent e) {
