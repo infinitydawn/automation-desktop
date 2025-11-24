@@ -98,7 +98,10 @@ public class FX2000 extends FX400{
                                 addRelay();
                                 break;
                         }
-                    } 
+                    }
+                    
+                    //Additional delay to ensure final device is added
+                    Thread.sleep(DELAY);
                 }
 
                 if(is_running) {
