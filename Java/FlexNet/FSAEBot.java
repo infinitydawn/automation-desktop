@@ -5,7 +5,7 @@ import java.io.File;
 import java.util.ArrayList;
 
 //For Input Zone updating: create input zones in advance (preferably type Monitor) then select the first zone to be updated
-//To update logic: Get the input zone address (IZ-##) of the first Low Heat after zones are added, then write it in fsae_zones inside [brackets]
+//To update logic: Get the first input zone address (IZ-##) then write it in fsae_zones inside [brackets]. Press the key inside the Advanced Logic window for each zone to be updated.
 
 public class FSAEBot extends Thread{
 
@@ -114,7 +114,7 @@ public class FSAEBot extends Thread{
             if(!is_paused) {
                 setIsPaused(true);
                 System.out.println("Setting logic for " + floors.get(current_zone_index));
-
+                CURRENT_ZONE_ADDRESS += 1 //+1 since it intends to use the Low Heat and High Heat addresses instead of this one
                 //Insert 0 if zone index is too low
                 String final_input_zone1 = CURRENT_ZONE_ADDRESS + current_zone_index + "";
                 if(CURRENT_ZONE_ADDRESS + current_zone_index < 100) {
@@ -165,7 +165,7 @@ public class FSAEBot extends Thread{
                 if(line.contains("[") && line.contains("]")) {
                     line = line.replace("[","");
                     line = line.replace("]","");
-                    CURRENT_ZONE_ADDRESS = Integer.parseInt(line);
+                    CURRENT_ZONE_ADDRESS = Integer.parseInt(line); 
                     System.out.println("First input zone index: " + CURRENT_ZONE_ADDRESS);
                 } else {
                     floors.add(line);
