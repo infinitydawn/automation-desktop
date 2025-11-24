@@ -4,6 +4,7 @@ import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.ArrayList;
 
+//For Input Zone updating: create input zones in advance (preferably type Monitor) then select the first zone to be updated
 //To update logic: Get the input zone address (IZ-##) of the first Low Heat after zones are added, then write it in fsae_zones inside [brackets]
 
 public class FSAEBot extends Thread{
