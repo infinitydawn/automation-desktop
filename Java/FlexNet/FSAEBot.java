@@ -118,7 +118,7 @@ public class FSAEBot extends Thread{
                 //Insert 0s to reach 3 digits
                 //+1 since it intends to use the Low Heat
                 String final_input_zone1 = CURRENT_ZONE_ADDRESS + current_zone_index + 1 + ""; 
-                if(CURRENT_ZONE_ADDRESS + current_zone_index < 100) {
+                if(CURRENT_ZONE_ADDRESS + current_zone_index < 99) {
                     final_input_zone1 = "0" + final_input_zone1;
 
                     if(CURRENT_ZONE_ADDRESS + current_zone_index < 10) {
@@ -128,7 +128,7 @@ public class FSAEBot extends Thread{
                 
                 //+2 for High Heat
                 String final_input_zone2 = CURRENT_ZONE_ADDRESS + current_zone_index + 2 + "";
-                if(CURRENT_ZONE_ADDRESS + current_zone_index + 1 < 100) {
+                if(CURRENT_ZONE_ADDRESS + current_zone_index + 1 < 99) {
                     final_input_zone2 = "0" + final_input_zone2;
                     if(CURRENT_ZONE_ADDRESS + current_zone_index < 10) {
                         final_input_zone2 = "0" + final_input_zone2;
