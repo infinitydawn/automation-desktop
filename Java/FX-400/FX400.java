@@ -120,7 +120,6 @@ public class FX400 extends Thread{
 
                         //Additional delay to ensure final device is added
                         Thread.sleep(DELAY);
-                        System.exit(MAX_PRIORITY);
                     } 
                 }
 
@@ -130,6 +129,7 @@ public class FX400 extends Thread{
 
                 System.out.println("FX400 Entry Complete");
                 is_running = false;
+                System.exit(MAX_PRIORITY);
             }
             else {
                 System.out.println("FX400 entry did not run");
