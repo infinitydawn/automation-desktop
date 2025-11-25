@@ -110,6 +110,7 @@ public class FX2000 extends FX400{
 
                 System.out.println("FX2000 Entry Complete");
                 is_running = false;
+                System.exit(MAX_PRIORITY);
             }
             else {
                 System.out.println("FX2000 Entry did not run");
