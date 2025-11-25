@@ -121,7 +121,7 @@ public class FSAEBot extends Thread{
                 if(CURRENT_ZONE_ADDRESS + current_zone_index < 99) {
                     final_input_zone1 = "0" + final_input_zone1;
 
-                    if(CURRENT_ZONE_ADDRESS + current_zone_index < 10) {
+                    if(CURRENT_ZONE_ADDRESS + current_zone_index < 9) {
                         final_input_zone1 = "0" + final_input_zone1;
                     }
                 }
@@ -130,7 +130,7 @@ public class FSAEBot extends Thread{
                 String final_input_zone2 = CURRENT_ZONE_ADDRESS + current_zone_index + 2 + "";
                 if(CURRENT_ZONE_ADDRESS + current_zone_index + 1 < 99) {
                     final_input_zone2 = "0" + final_input_zone2;
-                    if(CURRENT_ZONE_ADDRESS + current_zone_index < 10) {
+                    if(CURRENT_ZONE_ADDRESS + current_zone_index < 9) {
                         final_input_zone2 = "0" + final_input_zone2;
                     }
                 }
