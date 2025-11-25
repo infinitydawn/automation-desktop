@@ -120,6 +120,7 @@ public class FX400 extends Thread{
 
                         //Additional delay to ensure final device is added
                         Thread.sleep(DELAY);
+                        System.exit(MAX_PRIORITY);
                     } 
                 }
 

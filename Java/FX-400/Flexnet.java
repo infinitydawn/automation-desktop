@@ -186,6 +186,7 @@ public class Flexnet extends FX2000{
 
                 System.out.println("Flexnet Entry Complete");
                 is_running = false;
+                System.exit(MAX_PRIORITY);
             }
             else {
                 System.out.println("Flexnet entry did not run");
