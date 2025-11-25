@@ -67,6 +67,7 @@ public class FSAEBot extends Thread{
 
                     setIsRunning(false);
                     System.out.println("Data Entry Complete");
+                    System.exit(MAX_PRIORITY);
                 }
             } else {
                 //Press the key to go to next floor for logic
@@ -156,6 +157,8 @@ public class FSAEBot extends Thread{
                 if(current_zone_index >= floors.size()) {
                     System.out.println("Finished logic updates.");
                     setIsRunning(false);
+                    setIsPaused(false);
+                    System.exit(MAX_PRIORITY);
                 }
                 else {
                     System.out.println("Next floor: " + floors.get(current_zone_index));
