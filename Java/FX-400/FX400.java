@@ -9,9 +9,11 @@ import org.ini4j.Ini;
 public class FX400 extends Thread{
 
     protected int DELAY = 200; //Default 200. Delay time for everything. Multiply by delay strength to change length
-    protected double ENTER_DELAY_STRENGTH = 1; // Default 1. Delay after pressing Enter (Writes to database. Larger databases may want this higher)
+    protected double DEVICE_INSERT_DELAY_STRENGTH = 2; // Default 2. Multiplied to DELAY. The Delay time after inserting a device.
+    protected double DEVICE_UPDATE_DELAY_STRENGTH = 1.5; // Default 1.5. Multiplied to DELAY. The Delay time after updating a device (tag name, type, etc).
     protected boolean BYPASS_PAUSE = false; //Prevents the error prompt from showing
     protected boolean IGNORE_TAG_LENGTH = false; //Omits tag length requirement from errors
+    protected boolean SKIP_INSERT_DEVICES = false; //Set the bot to update devices only instead of inserting first. Meant for when the devices are entered and other details (type, f1 tags,etc) are untouched.
     protected String SETTINGS_FILE = "settings.ini";
 
     protected DataEntryBot bot;
@@ -80,40 +82,45 @@ public class FX400 extends Thread{
                         skip_count += (int) zone.getAddress() - (int) zones.get(current_zone - 1).getAddress() - 1;
                     }
 
-                    System.out.println("Inserting: " + zone.getZoneinfo());
+                    if(!SKIP_INSERT_DEVICES) {
+                        System.out.println("Inserting: " + zone.getZoneinfo());
 
-                    switch (zone.getType()) {
-                        case "Photo Detector":
-                            //Duct detectors have spare
-                            if (Zone.checkTags(zone.getTag1(), new String[] { "duct" }))
-                            {
-                                zone.setDualInput(true);
-                                addDuctDetector();
-                            }
-                            else {
-                                addPhotoDetector();
-                            }
-                            
-                            break;
-                        case "Alarm Input":
-                            addAlarmInputMod();
-                            break;
-                        case "Non-latched Supervisory":
-                            addNonLatchedSupv();
-                            break;
-                        case "Latched Supervisory":
-                            addLatchedSupv();
-                            break;
-                        case "Heat Detector":
-                            addHeatDetector();
-                            break;
-                        case "Alarm Input Class A":
-                            addAlarmInputClassA();
-                            break;
-                        case "Relay":
-                            addRelay();
-                            break;
-                    }
+                        switch (zone.getType()) {
+                            case "Photo Detector":
+                                //Duct detectors have spare
+                                if (Zone.checkTags(zone.getTag1(), new String[] { "duct" }))
+                                {
+                                    zone.setDualInput(true);
+                                    addDuctDetector();
+                                }
+                                else {
+                                    addPhotoDetector();
+                                }
+                                
+                                break;
+                            case "Alarm Input":
+                                addAlarmInputMod();
+                                break;
+                            case "Non-latched Supervisory":
+                                addNonLatchedSupv();
+                                break;
+                            case "Latched Supervisory":
+                                addLatchedSupv();
+                                break;
+                            case "Heat Detector":
+                                addHeatDetector();
+                                break;
+                            case "Alarm Input Class A":
+                                addAlarmInputClassA();
+                                break;
+                            case "Relay":
+                                addRelay();
+                                break;
+                        }
+
+                        //Additional delay to ensure final device is added
+                        Thread.sleep(DELAY);
+                    } 
                 }
 
                 if(is_running) {
@@ -122,6 +129,7 @@ public class FX400 extends Thread{
 
                 System.out.println("FX400 Entry Complete");
                 is_running = false;
+                System.exit(MAX_PRIORITY);
             }
             else {
                 System.out.println("FX400 entry did not run");
@@ -146,7 +154,7 @@ public class FX400 extends Thread{
             bot.delay(DELAY);
 
             bot.pressKey(KeyEvent.VK_DOWN);
-            bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+            bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
             
         } catch (Exception e) {
             System.err.println(e);
@@ -157,7 +165,7 @@ public class FX400 extends Thread{
         open();
         bot.pressKey(KeyEvent.VK_TAB, 3);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -167,7 +175,7 @@ public class FX400 extends Thread{
         bot.pressKey(KeyEvent.VK_P, 5);
         bot.pressKey(KeyEvent.VK_TAB, 2);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -177,7 +185,7 @@ public class FX400 extends Thread{
         bot.pressKey(KeyEvent.VK_D, 2);
         bot.pressKey(KeyEvent.VK_TAB, 3);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -189,7 +197,7 @@ public class FX400 extends Thread{
         bot.pressKey(KeyEvent.VK_N);
         bot.pressKey(KeyEvent.VK_TAB);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -201,7 +209,7 @@ public class FX400 extends Thread{
         bot.pressKey(KeyEvent.VK_L);
         bot.pressKey(KeyEvent.VK_TAB);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -211,7 +219,7 @@ public class FX400 extends Thread{
         bot.pressKey(KeyEvent.VK_H,3);
         bot.pressKey(KeyEvent.VK_TAB,3);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -223,7 +231,7 @@ public class FX400 extends Thread{
         bot.pressKey(KeyEvent.VK_C, 1);
         bot.pressKey(KeyEvent.VK_TAB, 2);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -233,7 +241,7 @@ public class FX400 extends Thread{
         bot.pressKey(KeyEvent.VK_D);
         bot.pressKey(KeyEvent.VK_TAB, 2);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -241,11 +249,11 @@ public class FX400 extends Thread{
     protected void updateTags(Zone zone) {
         try {
             Thread.sleep(DELAY);
-            bot.pressKey(KeyEvent.VK_ENTER, 1, ENTER_DELAY_STRENGTH);
+            bot.pressKey(KeyEvent.VK_ENTER, 1, DEVICE_UPDATE_DELAY_STRENGTH);
             bot.pasteText(zone.getTag1());
-            bot.pressKey(KeyEvent.VK_ENTER, 1, ENTER_DELAY_STRENGTH);
+            bot.pressKey(KeyEvent.VK_ENTER, 1, DEVICE_UPDATE_DELAY_STRENGTH);
             bot.pasteText(zone.getTag2());
-            bot.pressKey(KeyEvent.VK_ENTER, 1, ENTER_DELAY_STRENGTH);
+            bot.pressKey(KeyEvent.VK_ENTER, 1, DEVICE_UPDATE_DELAY_STRENGTH);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -280,7 +288,7 @@ public class FX400 extends Thread{
                     bot.pressKey(KeyEvent.VK_R);
                     break;
             }
-            bot.pressKey(KeyEvent.VK_ENTER, 1, ENTER_DELAY_STRENGTH);
+            bot.pressKey(KeyEvent.VK_ENTER, 1, DEVICE_UPDATE_DELAY_STRENGTH);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -291,14 +299,14 @@ public class FX400 extends Thread{
         updateType(zone);
         
         if(zone.isNS()) {
-            bot.pressKey(KeyEvent.VK_N, 1, ENTER_DELAY_STRENGTH);
+            bot.pressKey(KeyEvent.VK_N, 1, DEVICE_UPDATE_DELAY_STRENGTH);
         }
 
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_UPDATE_DELAY_STRENGTH);
         
         if(zone.isAR()) {
             bot.pressKey(KeyEvent.VK_A);
-            bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+            bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_UPDATE_DELAY_STRENGTH);
         }
 
         bot.pressKey(KeyEvent.VK_ESCAPE);
@@ -351,21 +359,35 @@ public class FX400 extends Thread{
             //Add settings if doesn't exist - only checks if ini section exists, not keys
             if(!ini.containsKey("Key Delay")) {
                 ini.add("Key Delay");
+                ini.putComment("Key Delay", 
+                    String.format("delayTime - Default %s. Delay time for everything. Multiply by delay strength to change duration. \n" +
+                    "#deviceInsertDelayStrength - Default %s. Multiplied to delayTime. The Delay time after inserting a device. \n" +
+                    "#deviceUpdateDelayStrength - Default %s. Multiplied to delayTime. The Delay time after updating a device (tag name, type, etc).",
+                    DELAY, DEVICE_INSERT_DELAY_STRENGTH, DEVICE_UPDATE_DELAY_STRENGTH)
+                );
                 ini.put("Key Delay", "delayTime", DELAY);
-                ini.put("Key Delay", "enterDelayStrength", ENTER_DELAY_STRENGTH);
+                ini.put("Key Delay", "deviceInsertDelayStrength", DEVICE_INSERT_DELAY_STRENGTH);
+                ini.put("Key Delay", "deviceUpdateDelayStrength", DEVICE_UPDATE_DELAY_STRENGTH);
             }
 
             if(!ini.containsKey("Options")) {
                 ini.add("Options");
+                ini.putComment("Options", 
+                    "bypassPause - Prevents the error prompt from showing. \n" +
+                    "#ignoreTagLength - Omits tag length requirement from errors. \n" +
+                    "#skipInsertDevices - Set the bot to update devices only instead of inserting first. Meant for when the devices are entered and other details (type, f1 tags,etc) are untouched."
+                );
                 ini.put("Options", "bypassPause", BYPASS_PAUSE);
                 ini.put("Options", "ignoreTagLength", IGNORE_TAG_LENGTH);
+                ini.put("Options", "skipInsertDevices", SKIP_INSERT_DEVICES);   
             }
 
             ini.store(ini_file);
 
             //Read settings
             DELAY = ini.get("Key Delay", "delayTime", int.class);
-            ENTER_DELAY_STRENGTH = ini.get("Key Delay", "enterDelayStrength", double.class);
+            DEVICE_INSERT_DELAY_STRENGTH = ini.get("Key Delay", "deviceInsertDelayStrength", double.class);
+            DEVICE_UPDATE_DELAY_STRENGTH = ini.get("Key Delay", "deviceUpdateDelayStrength", double.class);
             BYPASS_PAUSE = ini.get("Options", "bypassPause", boolean.class);
             IGNORE_TAG_LENGTH = ini.get("Options", "ignoreTagLength", boolean.class);
             
