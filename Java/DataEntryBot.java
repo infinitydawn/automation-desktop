@@ -51,4 +51,13 @@ public class DataEntryBot extends Robot {
 
         this.delay(delay);
     }
+
+    public void clearText() {
+        this.keyPress(KeyEvent.VK_CONTROL);
+        this.keyPress(KeyEvent.VK_A);
+        this.keyRelease(KeyEvent.VK_CONTROL);
+        this.keyRelease(KeyEvent.VK_A);
+        this.keyPress(KeyEvent.VK_DELETE);
+        this.keyRelease(KeyEvent.VK_DELETE);
+    }
 }

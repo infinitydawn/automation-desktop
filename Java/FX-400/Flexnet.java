@@ -104,65 +104,81 @@ public class Flexnet extends FX2000{
 
                     }
 
-                    System.out.println("Inserting: " + zone.getZoneinfo());
-
                     switch (zone.getType()) {
-                        case "Photo Detector":
+                        case "Photo Detector": //For Smoke CO
                             if (zone.isDualInput()) {
                                 zone.setTag1("Smoke Detector");
-                                addSmokeCODetector();
-                            }
-                            else {
-                                addPhotoDetector();
                             }
                             break;
-                        case "Alarm Input":
-                            if(zone.getSubAddress() != null) {
-                                addDualAlarmInputMod();
-                            }
-                            else {
-                                addAlarmInputMod(); 
-                            }                          
-                            break;
-                        case "Alarm Input Class A":
-                            addAlarmInputMiniMod();                         
-                            break;
-                        case "Non-latched Supervisory":
-                        //Check for radio, single monitor and dual monitor
-                            if(zone.isMini()) {
-                                addNonLatchedSupvMini();
-                            } else {
-                                if(zone.getSubAddress() != null || Zone.checkTags(zone.getTag1(), new String[] { "generator", "dry sys" })) {
-                                    addDualNonLatchedSupv();
-                                } 
-                                else {
-                                    addNonLatchedSupv();
-                                }    
-                            }
-                            break;
-                        case "Latched Supervisory":
-                            addLatchedSupv();
-                            break;
-                        case "Heat Detector": 
+                        case "Heat Detector": //For Dual Heat Smoke
                             if(zone.isDualInput()) {
-                                addDualHeatSmokeDetector();
-                                zone.setTag1("Smoke Detector"); //Rename Dual Heat to Smoke Detector
+                                zone.setTag1("Smoke Detector"); 
                             }
-                            else {
-                                addHeatDetector();
-                            }
-                            break;
-                        case "Relay":
-                            addRelay();
-                            break;
-                        case "Telephone Module":
-                            //addTelephoneModule();
-                            break;
-                        case "Speakers":
-                            addSpeakers();
                             break;
                     }
-                }
+
+                    if(!SKIP_INSERT_DEVICES) {
+                        System.out.println("Inserting: " + zone.getZoneinfo());
+
+                        switch (zone.getType()) {
+                            case "Photo Detector":
+                                if (zone.isDualInput()) {
+                                    addSmokeCODetector();
+                                }
+                                else {
+                                    addPhotoDetector();
+                                }
+                                break;
+                            case "Alarm Input":
+                                if(zone.getSubAddress() != null) {
+                                    addDualAlarmInputMod();
+                                }
+                                else {
+                                    addAlarmInputMod(); 
+                                }                          
+                                break;
+                            case "Alarm Input Class A":
+                                addAlarmInputMiniMod();                         
+                                break;
+                            case "Non-latched Supervisory":
+                            //Check for radio, single monitor and dual monitor
+                                if(zone.isMini()) {
+                                    addNonLatchedSupvMini();
+                                } else {
+                                    if(zone.getSubAddress() != null || Zone.checkTags(zone.getTag1(), new String[] { "generator", "dry sys" })) {
+                                        addDualNonLatchedSupv();
+                                    } 
+                                    else {
+                                        addNonLatchedSupv();
+                                    }    
+                                }
+                                break;
+                            case "Latched Supervisory":
+                                addLatchedSupv();
+                                break;
+                            case "Heat Detector": 
+                                if(zone.isDualInput()) {
+                                    addDualHeatSmokeDetector();
+                                }
+                                else {
+                                    addHeatDetector();
+                                }
+                                break;
+                            case "Relay":
+                                addRelay();
+                                break;
+                            case "Telephone Module":
+                                //addTelephoneModule();
+                                break;
+                            case "Speakers":
+                                addSpeakers();
+                                break;
+                        }
+                        
+                        //Additional delay to ensure final device is added
+                        Thread.sleep(DELAY);
+                    }
+                }   
 
                 if(is_running) {
                     enterZoneList(zone_list);
@@ -170,6 +186,7 @@ public class Flexnet extends FX2000{
 
                 System.out.println("Flexnet Entry Complete");
                 is_running = false;
+                System.exit(MAX_PRIORITY);
             }
             else {
                 System.out.println("Flexnet entry did not run");
@@ -187,7 +204,7 @@ public class Flexnet extends FX2000{
         bot.pressKey(KeyEvent.VK_N);
         bot.pressKey(KeyEvent.VK_TAB, 2);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -199,7 +216,7 @@ public class Flexnet extends FX2000{
         bot.pressKey(KeyEvent.VK_N);
         bot.pressKey(KeyEvent.VK_TAB, 2);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -218,7 +235,7 @@ public class Flexnet extends FX2000{
         bot.pressKey(KeyEvent.VK_N);
         bot.pressKey(KeyEvent.VK_TAB, 2);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , Math.max(ENTER_DELAY_STRENGTH, 1.5));
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , Math.max(DEVICE_INSERT_DELAY_STRENGTH, 1.5));
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -230,7 +247,7 @@ public class Flexnet extends FX2000{
         bot.pressKey(KeyEvent.VK_N);
         bot.pressKey(KeyEvent.VK_TAB, 2);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -244,7 +261,7 @@ public class Flexnet extends FX2000{
         bot.pressKey(KeyEvent.VK_N);
         bot.pressKey(KeyEvent.VK_TAB, 2);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -258,7 +275,7 @@ public class Flexnet extends FX2000{
         bot.pressKey(KeyEvent.VK_N);
         bot.pressKey(KeyEvent.VK_TAB, 2);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -278,7 +295,7 @@ public class Flexnet extends FX2000{
         bot.pressKey(KeyEvent.VK_N);
         bot.pressKey(KeyEvent.VK_TAB, 2);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , Math.max(ENTER_DELAY_STRENGTH, 1.5));
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , Math.max(DEVICE_INSERT_DELAY_STRENGTH, 1.5));
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -292,7 +309,7 @@ public class Flexnet extends FX2000{
         bot.pressKey(KeyEvent.VK_N);
         bot.pressKey(KeyEvent.VK_TAB, 2);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -308,7 +325,7 @@ public class Flexnet extends FX2000{
         
         bot.pressKey(KeyEvent.VK_TAB, 5);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -323,7 +340,7 @@ public class Flexnet extends FX2000{
         }
         bot.pressKey(KeyEvent.VK_TAB, 5);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , Math.max(ENTER_DELAY_STRENGTH, 2)); //needs extra time for three address devices
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , Math.max(DEVICE_INSERT_DELAY_STRENGTH, 2)); //needs extra time for three address devices
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -338,7 +355,7 @@ public class Flexnet extends FX2000{
         }
         bot.pressKey(KeyEvent.VK_TAB, 4);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , Math.max(ENTER_DELAY_STRENGTH, 1.5));
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , Math.max(DEVICE_INSERT_DELAY_STRENGTH, 1.5));
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -348,7 +365,7 @@ public class Flexnet extends FX2000{
         bot.pressKey(KeyEvent.VK_F);
         bot.pressKey(KeyEvent.VK_TAB, 3);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1, ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ENTER, 1, DEVICE_INSERT_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -358,7 +375,7 @@ public class Flexnet extends FX2000{
         bot.pressKey(KeyEvent.VK_C, 2);
         bot.pressKey(KeyEvent.VK_TAB, 4);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1, ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ENTER, 1, DEVICE_INSERT_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -370,7 +387,7 @@ public class Flexnet extends FX2000{
         bot.pressKey(KeyEvent.VK_A);
         bot.pressKey(KeyEvent.VK_TAB, 4);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1, Math.max(ENTER_DELAY_STRENGTH, 2));
+        bot.pressKey(KeyEvent.VK_ENTER, 1, Math.max(DEVICE_INSERT_DELAY_STRENGTH, 2));
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -426,7 +443,7 @@ public class Flexnet extends FX2000{
                 case "Speakers":
                     break;
             }
-            bot.pressKey(KeyEvent.VK_ENTER, 1, ENTER_DELAY_STRENGTH);
+            bot.pressKey(KeyEvent.VK_ENTER, 1, DEVICE_UPDATE_DELAY_STRENGTH);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -437,14 +454,14 @@ public class Flexnet extends FX2000{
         updateType(zone);
         
         if(zone.isNS()) {
-            bot.pressKey(KeyEvent.VK_N, 1, ENTER_DELAY_STRENGTH);
+            bot.pressKey(KeyEvent.VK_N, 1, DEVICE_UPDATE_DELAY_STRENGTH);
         }
 
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_UPDATE_DELAY_STRENGTH);
 
         if(zone.isAR()) {
             bot.pressKey(KeyEvent.VK_A);
-            bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+            bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_UPDATE_DELAY_STRENGTH);
         }
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_DOWN);

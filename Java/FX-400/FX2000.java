@@ -74,29 +74,34 @@ public class FX2000 extends FX400{
                         }
                     }
 
-                    System.out.println("Inserting: " + zone.getZoneinfo());
+                    if(!SKIP_INSERT_DEVICES) {
+                        System.out.println("Inserting: " + zone.getZoneinfo());
 
-                    switch (zone.getType()) {
-                        case "Photo Detector":
-                            addPhotoDetector();
-                            break;
-                        case "Alarm Input":
-                        case "Alarm Input Class A":
-                            addAlarmInputMod();
-                            break;
-                        case "Non-latched Supervisory":
-                            addNonLatchedSupv();
-                            break;
-                        case "Latched Supervisory":
-                            addLatchedSupv();
-                            break;
-                        case "Heat Detector":
-                            addHeatDetector();
-                            break;
-                        case "Relay":
-                            addRelay();
-                            break;
+                        switch (zone.getType()) {
+                            case "Photo Detector":
+                                addPhotoDetector();
+                                break;
+                            case "Alarm Input":
+                            case "Alarm Input Class A":
+                                addAlarmInputMod();
+                                break;
+                            case "Non-latched Supervisory":
+                                addNonLatchedSupv();
+                                break;
+                            case "Latched Supervisory":
+                                addLatchedSupv();
+                                break;
+                            case "Heat Detector":
+                                addHeatDetector();
+                                break;
+                            case "Relay":
+                                addRelay();
+                                break;
+                        }
                     }
+                    
+                    //Additional delay to ensure final device is added
+                    Thread.sleep(DELAY);
                 }
 
                 if(is_running) {
@@ -105,6 +110,7 @@ public class FX2000 extends FX400{
 
                 System.out.println("FX2000 Entry Complete");
                 is_running = false;
+                System.exit(MAX_PRIORITY);
             }
             else {
                 System.out.println("FX2000 Entry did not run");
@@ -119,7 +125,7 @@ public class FX2000 extends FX400{
         open();
         bot.pressKey(KeyEvent.VK_TAB, 2);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -129,7 +135,7 @@ public class FX2000 extends FX400{
         bot.pressKey(KeyEvent.VK_I);
         bot.pressKey(KeyEvent.VK_TAB, 2);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -141,7 +147,7 @@ public class FX2000 extends FX400{
         bot.pressKey(KeyEvent.VK_N, 2);
         bot.pressKey(KeyEvent.VK_TAB);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -153,7 +159,7 @@ public class FX2000 extends FX400{
         bot.pressKey(KeyEvent.VK_L);
         bot.pressKey(KeyEvent.VK_TAB);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -163,7 +169,7 @@ public class FX2000 extends FX400{
         bot.pressKey(KeyEvent.VK_H);
         bot.pressKey(KeyEvent.VK_TAB,2);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -173,7 +179,7 @@ public class FX2000 extends FX400{
         bot.pressKey(KeyEvent.VK_R);
         bot.pressKey(KeyEvent.VK_TAB, 2);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -181,17 +187,17 @@ public class FX2000 extends FX400{
     protected void updateRow(Zone zone) {
         updateTags(zone);
 
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH); //make up for not updating Type
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_UPDATE_DELAY_STRENGTH); //make up for not updating Type
         
         if(zone.isNS()) {
-            bot.pressKey(KeyEvent.VK_N, 1, ENTER_DELAY_STRENGTH);
+            bot.pressKey(KeyEvent.VK_N, 1, DEVICE_UPDATE_DELAY_STRENGTH);
         }
 
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_UPDATE_DELAY_STRENGTH);
 
         if(zone.isAR()) {
             bot.pressKey(KeyEvent.VK_A);
-            bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+            bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_UPDATE_DELAY_STRENGTH);
         }
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_DOWN);
