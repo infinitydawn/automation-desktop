@@ -1,2 +1,1 @@
-conda activate &
-python convert_pdf_to_images.py
+python convert_pdf_to_jpg.py
