@@ -7,7 +7,7 @@ public class Automation implements NativeKeyListener{
 
     private int START_DELAY = 0;
 
-    private FSAEInputZoneBot bot;
+    private FSAEBot bot;
 
     public static void main(String[] args){
         //Register key presses
@@ -23,11 +23,13 @@ public class Automation implements NativeKeyListener{
 
         GlobalScreen.addNativeKeyListener(new Automation());
 
-        System.out.println("Program ready. Press F2 to update Input Zones, F3 to begin logic entry.");
+        System.out.println("Program ready. Press F2 to update Input Zones, F3 to begin logic entry, F4 to update graphic adder.");
         System.out.println("-------------------------------------------------------------------------");
         System.out.println("Before Running: Create the Input Zones in configurator, then add the floors and the first Input Zone address in [brackets] to fsae_zones.txt.");
         System.out.println("Input Zones: Select the first Input Zone to be used for FSAE, then press F2.");
         System.out.println("Logic Entry: Open Advanced Logic window for first Input Zone, select the Equation window, then press F3 to enter logic. Repeat for each zone.");
+        System.out.println("Graphic Adder: Go to graphic adder then press F4. If all zones are used up," +
+        "it will pause so that you can move to the next adder and continue by pressing F4. Enters Dual Heat devices only, the other zones will have to be added afterwards.");
     }
 
     public void nativeKeyPressed(NativeKeyEvent e) {
@@ -46,7 +48,7 @@ public class Automation implements NativeKeyListener{
 
         }
 
-        if (e.getKeyCode() == NativeKeyEvent.VC_F2 || e.getKeyCode() == NativeKeyEvent.VC_F3) {
+        if (e.getKeyCode() == NativeKeyEvent.VC_F2 || e.getKeyCode() == NativeKeyEvent.VC_F3 || e.getKeyCode() == NativeKeyEvent.VC_F4) {
             try {
                 //Start a new thread only if it doesn't exist or is no longer alive
                 if (bot == null || (bot != null && !bot.isAlive())) {
@@ -60,7 +62,13 @@ public class Automation implements NativeKeyListener{
                             break;
                     }
                     if (bot == null) {
-                        bot = new FSAEInputZoneBot(status);
+                        if(e.getKeyCode() == NativeKeyEvent.VC_F2 || e.getKeyCode() == NativeKeyEvent.VC_F3) {
+                            bot = new FSAEInputZoneBot(status);
+                        }
+                        else if(e.getKeyCode() == NativeKeyEvent.VC_F4) {
+                            bot = new FSAEGraphicAdderBot();
+                        }
+                        
                     }
                 }
                 

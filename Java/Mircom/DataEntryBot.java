@@ -7,7 +7,7 @@ import java.awt.event.KeyEvent;
 public class DataEntryBot extends Robot {
 
     private int delay = 200; //default 200. Delay time between key presses
-    private double DELAY_STRENGTH = 0; //Default 0. Multiply delay by this to determine final delay time
+    private double DELAY_STRENGTH = 1.2; //Default 0. Multiply delay by this to determine final delay time
 
     public DataEntryBot(int delay) throws Exception {
         this.delay = delay;

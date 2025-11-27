@@ -7,9 +7,8 @@ import java.util.ArrayList;
 //For Input Zone updating: create input zones in advance (preferably type Monitor) then select the first zone to be updated
 //To update logic: Get the first input zone address (IZ-##) then write it in fsae_zones inside [brackets]. Press the key inside the Advanced Logic window for each zone to be updated.
 
-public class FSAEInputZoneBot extends Thread{
+public class FSAEInputZoneBot extends FSAEBot{
 
-    private int CURRENT_ZONE_ADDRESS = 0; 
     private String EQUATION = "NOT ANY 1 OF (  %n" +
                     " 01-00-**-IZ-%s:A ,  %n" +
                     " 01-00-**-IZ-%s:A ,  %n" +
@@ -19,21 +18,13 @@ public class FSAEInputZoneBot extends Thread{
                     " 01-00-**-IZ-%s:F ) ";
     private String EQUATION_NAME = "NORMAL %s";
     private String EQUATION_COMMENT = "NORMAL %s - Dual Heat Not In Alarm Or Trouble";
-    
-    protected int DELAY = 200; //Default 200. Delay time for everything. Multiply by delay strength to change length
-    protected double DEVICE_UPDATE_DELAY_STRENGTH = 1.5; // Default 1. Multiplied to DELAY. The Delay time after updating a device (tag name, type, etc).
-    protected String FILE_NAME = "fsae_zones.txt";
 
-    protected boolean is_running = false; 
-    protected boolean is_paused = true;
-    private DataEntryBot bot;
-    private ArrayList<String> floors;
     private int current_zone_index = 0;
-    protected boolean is_data_entry_mode = false;
+    private boolean is_data_entry_mode = false;
 
     public FSAEInputZoneBot() {
         try {
-     
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -91,7 +82,7 @@ public class FSAEInputZoneBot extends Thread{
         }
     }
 
-    protected void updateZone(String name, int type_key) {
+    public void updateZone(String name, int type_key) {
         try {
             Thread.sleep(DELAY);
 
@@ -104,7 +95,7 @@ public class FSAEInputZoneBot extends Thread{
             bot.pressKey(type_key, 1);
             bot.pressKey(KeyEvent.VK_ENTER, 1, DEVICE_UPDATE_DELAY_STRENGTH * 3);
             bot.pressKey(KeyEvent.VK_ESCAPE, 1);
-            bot.pressKey(KeyEvent.VK_DOWN, 1);
+            bot.pressKey(KeyEvent.VK_DOWN);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -169,50 +160,7 @@ public class FSAEInputZoneBot extends Thread{
         }
     }
 
-    public void readFloors() {
-        try {
-            File fsaefile = new File(FILE_NAME);
-            Scanner scanner = new Scanner(fsaefile);
-            floors = new ArrayList<String>();
-
-            String line;
-            //Having a number in brackets will be used to set the first input zone address for updating logic.
-            while(scanner.hasNextLine()) {
-                line = scanner.nextLine();
-                if(line.contains("[") && line.contains("]")) {
-                    line = line.replace("[","");
-                    line = line.replace("]","");
-                    CURRENT_ZONE_ADDRESS = Integer.parseInt(line); 
-                    System.out.println("First input zone index: " + CURRENT_ZONE_ADDRESS);
-                } else {
-                    floors.add(line);
-                }
-            }
-
-            System.out.println("Final input zone address: " + ((4 * floors.size() - 1) + CURRENT_ZONE_ADDRESS));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void setIsRunning(boolean status) {
-        is_running = status;
-
-        //Set bot to null to prevent further inputs
-        if(!is_running) {
-            bot = null;
-        }
-    }
-
     public void setIsDataEntryMode(boolean status) {
         is_data_entry_mode = status;
-    }
-
-    public void setIsPaused(boolean status) {
-        is_paused = status;
-    }
-
-    public boolean getIsPaused() {
-        return is_paused;
     }
 }
