@@ -49,10 +49,10 @@ public class FSAEGraphicAdderBot extends FSAEBot{
                 System.out.println("Updating: " + floor);
 
                 if(!TAG_ONLY_MODE) {
-                updateZone("Normal " + floor , KeyEvent.VK_M);
-                updateZone("Low Heat " + floor, KeyEvent.VK_S);
-                updateZone("High Heat " + floor, KeyEvent.VK_A);
-                updateZone("Smoke Det " + floor, KeyEvent.VK_A);
+                    updateZone("Normal " + floor , KeyEvent.VK_M);
+                    updateZone("Low Heat " + floor, KeyEvent.VK_S);
+                    updateZone("High Heat " + floor, KeyEvent.VK_A);
+                    updateZone("Smoke Det " + floor, KeyEvent.VK_A);
                 }
                 else {
                     updateZoneTag("Normal " + floor);
