@@ -7,7 +7,7 @@ public class Automation implements NativeKeyListener{
 
     private int START_DELAY = 0;
 
-    private FX400 bot;
+    private ConfigBot bot;
 
     public static void main(String[] args){
         //Register key presses
