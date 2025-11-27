@@ -188,6 +188,8 @@ public class FSAEBot extends Thread{
                     floors.add(line);
                 }
             }
+
+            System.out.println("Final input zone address: " + ((4 * floors.size() - 1) + CURRENT_ZONE_ADDRESS));
         } catch (Exception e) {
             e.printStackTrace();
         }
