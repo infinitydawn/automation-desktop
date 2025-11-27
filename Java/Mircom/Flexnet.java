@@ -78,7 +78,7 @@ public class Flexnet extends ConfigBot{
                 zone = zones.get(0);
                 skip_count = (int) zone.getAddress() - AP_START;
 
-                //Reduce skip count if first address in zone list is ap mod
+                //Reduce skip count if first address in zone list is module
                 if(!zone.isSensor()) {
                     skip_count -= 100;
                 }
@@ -93,7 +93,7 @@ public class Flexnet extends ConfigBot{
                             skip_count += (int) zone.getAddress() - (int) zones.get(current_zone - 1).getAddress() - 1;
                         }
                         else {  
-                            //Assuming zone list is sorted, reset skip count once ap devices are reached
+                            //Assuming zone list is sorted, reset skip count once modules are reached
                             if(zones.get(current_zone - 1).isSensor() && !zone.isSensor()) {
                                 skip_count = (int) zone.getAddress() - AP_START - 100;
                             } 
@@ -484,7 +484,7 @@ public class Flexnet extends ConfigBot{
         String zone_errors;
         ArrayList<Integer> used_Phone_Zones = new ArrayList<>(); //phone addresses
         ArrayList<Integer> usedZones = new ArrayList<>(); //smoke/heat addresses
-        ArrayList<Integer> used100Zones = new ArrayList<>(); //ap mod addresses
+        ArrayList<Integer> used100Zones = new ArrayList<>(); //module addresses
         
         //Add to respective arrays for organized inserting and duplication checking
         for(Zone zone :zone_list.zones) {     
