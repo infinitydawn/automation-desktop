@@ -4,6 +4,8 @@ import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.ArrayList;
 
+//Shared functions and variables that the FSAE related bots will use.
+
 public abstract class FSAEBot extends Thread {
 
     protected int DELAY = 200; //Default 200. Delay time for everything. Multiply by delay strength to change length
