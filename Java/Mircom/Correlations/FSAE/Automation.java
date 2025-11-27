@@ -7,7 +7,7 @@ public class Automation implements NativeKeyListener{
 
     private int START_DELAY = 0;
 
-    private FSAEBot bot;
+    private FSAEInputZoneBot bot;
 
     public static void main(String[] args){
         //Register key presses
@@ -60,7 +60,7 @@ public class Automation implements NativeKeyListener{
                             break;
                     }
                     if (bot == null) {
-                        bot = new FSAEBot(status);
+                        bot = new FSAEInputZoneBot(status);
                     }
                 }
                 

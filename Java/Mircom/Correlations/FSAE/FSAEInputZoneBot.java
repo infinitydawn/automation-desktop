@@ -7,7 +7,7 @@ import java.util.ArrayList;
 //For Input Zone updating: create input zones in advance (preferably type Monitor) then select the first zone to be updated
 //To update logic: Get the first input zone address (IZ-##) then write it in fsae_zones inside [brackets]. Press the key inside the Advanced Logic window for each zone to be updated.
 
-public class FSAEBot extends Thread{
+public class FSAEInputZoneBot extends Thread{
 
     private int CURRENT_ZONE_ADDRESS = 0; 
     private String EQUATION = "NOT ANY 1 OF (  %n" +
@@ -31,7 +31,7 @@ public class FSAEBot extends Thread{
     private int current_zone_index = 0;
     protected boolean is_data_entry_mode = false;
 
-    public FSAEBot() {
+    public FSAEInputZoneBot() {
         try {
      
         } catch (Exception e) {
@@ -39,7 +39,7 @@ public class FSAEBot extends Thread{
         }
     }
 
-    public FSAEBot(boolean data_entry_status) {
+    public FSAEInputZoneBot(boolean data_entry_status) {
         super();
         setIsDataEntryMode(data_entry_status);
     }
