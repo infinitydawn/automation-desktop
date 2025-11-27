@@ -2,7 +2,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.awt.event.KeyEvent;
 
-public class FX2000 extends FX400{
+public class FX2000 extends ConfigBot{
 
     public void run() {
         System.out.println("Starting FX2000 Data Entry");
@@ -121,7 +121,7 @@ public class FX2000 extends FX400{
         }
     }
     
-    protected void addPhotoDetector() {
+    public void addPhotoDetector() {
         open();
         bot.pressKey(KeyEvent.VK_TAB, 2);
         skipDevices();
@@ -130,7 +130,7 @@ public class FX2000 extends FX400{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    protected void addAlarmInputMod() {
+    public void addAlarmInputMod() {
         open();
         bot.pressKey(KeyEvent.VK_I);
         bot.pressKey(KeyEvent.VK_TAB, 2);
@@ -140,7 +140,7 @@ public class FX2000 extends FX400{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    protected void addNonLatchedSupv() {
+    public void addNonLatchedSupv() {
         open();
         bot.pressKey(KeyEvent.VK_I);
         bot.pressKey(KeyEvent.VK_TAB);
@@ -152,7 +152,7 @@ public class FX2000 extends FX400{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    protected void addLatchedSupv() {
+    public void addLatchedSupv() {
         open();
         bot.pressKey(KeyEvent.VK_I);
         bot.pressKey(KeyEvent.VK_TAB);
@@ -164,7 +164,7 @@ public class FX2000 extends FX400{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    protected void addHeatDetector() {
+    public void addHeatDetector() {
         open();
         bot.pressKey(KeyEvent.VK_H);
         bot.pressKey(KeyEvent.VK_TAB,2);
@@ -174,7 +174,7 @@ public class FX2000 extends FX400{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    protected void addRelay() {
+    public void addRelay() {
         open();
         bot.pressKey(KeyEvent.VK_R);
         bot.pressKey(KeyEvent.VK_TAB, 2);
@@ -184,7 +184,11 @@ public class FX2000 extends FX400{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    protected void updateRow(Zone zone) {
+    //Not used
+    public void updateType(Zone zone) {};
+
+    @Override
+    public void updateRow(Zone zone) {
         updateTags(zone);
 
         bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_UPDATE_DELAY_STRENGTH); //make up for not updating Type
@@ -203,7 +207,7 @@ public class FX2000 extends FX400{
         bot.pressKey(KeyEvent.VK_DOWN);
     }
 
-    protected void updateZone(Zone zone) {
+    public void updateZone(Zone zone) {
         try {
             updateRow(zone);
         } catch (Exception e) {
@@ -211,7 +215,7 @@ public class FX2000 extends FX400{
         }    
     }
 
-    protected boolean validateZones(ZoneList zone_list) {
+    public boolean validateZones(ZoneList zone_list) {
         boolean invalid_found = false;
         boolean current_zone_valid;
         String zone_errors;

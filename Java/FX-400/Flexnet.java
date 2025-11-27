@@ -2,7 +2,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.awt.event.KeyEvent;
 
-public class Flexnet extends FX2000{
+public class Flexnet extends ConfigBot{
 
     private ArrayList<Zone> phones = new ArrayList<>();
     private int AP_START = 1;
@@ -197,7 +197,7 @@ public class Flexnet extends FX2000{
         }
     }
     
-    protected void addPhotoDetector() {
+    public void addPhotoDetector() {
         open();
         bot.pressKey(KeyEvent.VK_P);
         bot.pressKey(KeyEvent.VK_TAB, 3);
@@ -209,7 +209,7 @@ public class Flexnet extends FX2000{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    protected void addAlarmInputMod() {
+    public void addAlarmInputMod() {
         open();
         bot.pressKey(KeyEvent.VK_M);
         bot.pressKey(KeyEvent.VK_TAB, 2);
@@ -222,7 +222,7 @@ public class Flexnet extends FX2000{
     }
 
     //Meant for Monitor only waterflow/valve
-    protected void addDualAlarmInputMod() {
+    public void addDualAlarmInputMod() {
         open();
         if(AP_START > 1) {
             bot.pressKey(KeyEvent.VK_D, 5);
@@ -240,7 +240,7 @@ public class Flexnet extends FX2000{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    protected void addAlarmInputMiniMod() {
+    public void addAlarmInputMiniMod() {
         open();
         bot.pressKey(KeyEvent.VK_M, 2);
         bot.pressKey(KeyEvent.VK_TAB, 2);
@@ -252,7 +252,7 @@ public class Flexnet extends FX2000{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    protected void addNonLatchedSupv() {
+    public void addNonLatchedSupv() {
         open();
         bot.pressKey(KeyEvent.VK_M);
         bot.pressKey(KeyEvent.VK_TAB);
@@ -266,7 +266,7 @@ public class Flexnet extends FX2000{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    protected void addNonLatchedSupvMini() {
+    public void addNonLatchedSupvMini() {
         open();
         bot.pressKey(KeyEvent.VK_M, 2);
         bot.pressKey(KeyEvent.VK_TAB);
@@ -280,7 +280,7 @@ public class Flexnet extends FX2000{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    protected void addDualNonLatchedSupv() {
+    public void addDualNonLatchedSupv() {
         open();
         if(AP_START > 1) {
             bot.pressKey(KeyEvent.VK_D, 5);
@@ -300,7 +300,7 @@ public class Flexnet extends FX2000{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    protected void addLatchedSupv() {
+    public void addLatchedSupv() {
         open();
         bot.pressKey(KeyEvent.VK_M, 2);
         bot.pressKey(KeyEvent.VK_TAB);
@@ -314,7 +314,7 @@ public class Flexnet extends FX2000{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    protected void addHeatDetector() {
+    public void addHeatDetector() {
         open();
         if(AP_START > 1) {
             bot.pressKey(KeyEvent.VK_H, 2);
@@ -330,7 +330,7 @@ public class Flexnet extends FX2000{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    protected void addDualHeatSmokeDetector() {
+    public void addDualHeatSmokeDetector() {
         open();
         if(AP_START > 1) {
             bot.pressKey(KeyEvent.VK_D, 6);
@@ -345,7 +345,7 @@ public class Flexnet extends FX2000{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    protected void addRelay() {
+    public void addRelay() {
         open();
         if(AP_START > 1) {
             bot.pressKey(KeyEvent.VK_R, 2);
@@ -380,7 +380,7 @@ public class Flexnet extends FX2000{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    protected void addSmokeCODetector() {
+    public void addSmokeCODetector() {
         open();
         bot.pressKey(KeyEvent.VK_F, 2);
         bot.pressKey(KeyEvent.VK_TAB);
@@ -392,7 +392,8 @@ public class Flexnet extends FX2000{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    protected void enterZoneList(ZoneList zone_list) {
+    @Override
+    public void enterZoneList(ZoneList zone_list) {
         try {
             bot.pressKey(KeyEvent.VK_HOME, 1, 1); 
 
@@ -413,7 +414,8 @@ public class Flexnet extends FX2000{
             e.printStackTrace();
         }
     }
-    protected void updateType(Zone zone) {
+    
+    public void updateType(Zone zone) {
         try {
             Thread.sleep(DELAY);
             switch(zone.getType()) {
@@ -449,25 +451,7 @@ public class Flexnet extends FX2000{
         }
     }
 
-    protected void updateRow(Zone zone) {
-        updateTags(zone);
-        updateType(zone);
-        
-        if(zone.isNS()) {
-            bot.pressKey(KeyEvent.VK_N, 1, DEVICE_UPDATE_DELAY_STRENGTH);
-        }
-
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_UPDATE_DELAY_STRENGTH);
-
-        if(zone.isAR()) {
-            bot.pressKey(KeyEvent.VK_A);
-            bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_UPDATE_DELAY_STRENGTH);
-        }
-        bot.pressKey(KeyEvent.VK_ESCAPE);
-        bot.pressKey(KeyEvent.VK_DOWN);
-    }
-
-    protected void updateZone(Zone zone) {
+    public void updateZone(Zone zone) {
         try {
             updateRow(zone);
             if(zone.isDualInput()) { 
@@ -494,7 +478,7 @@ public class Flexnet extends FX2000{
     }
 
     //Check each zone to see if it meets the panel's requirements. Returns True if one incorrect device found
-    protected boolean validateZones(ZoneList zone_list) {
+    public boolean validateZones(ZoneList zone_list) {
         boolean invalid_found = false;
         boolean current_zone_valid;
         String zone_errors;
