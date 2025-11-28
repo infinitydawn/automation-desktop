@@ -5,8 +5,6 @@ import java.awt.event.KeyEvent;
 public class Flexnet extends ConfigBot{
 
     private ArrayList<Zone> phones;  //phone devices
-    private ArrayList<Zone> sensors; //smoke/heat devices
-    private ArrayList<Zone> modules; //module devices
     private int AP_START = 1;
 
     public void run() {
@@ -122,7 +120,7 @@ public class Flexnet extends ConfigBot{
         }
     }
     
-    public void addPhotoDetector() {
+    protected void addPhotoDetector() {
         open();
         bot.pressKey(KeyEvent.VK_P);
         bot.pressKey(KeyEvent.VK_TAB, 3);
@@ -134,7 +132,7 @@ public class Flexnet extends ConfigBot{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    public void addAlarmInputMod() {
+    protected void addAlarmInputMod() {
         open();
         bot.pressKey(KeyEvent.VK_M);
         bot.pressKey(KeyEvent.VK_TAB, 2);
@@ -147,7 +145,7 @@ public class Flexnet extends ConfigBot{
     }
 
     //Meant for Monitor only waterflow/valve
-    public void addDualAlarmInputMod() {
+    protected void addDualAlarmInputMod() {
         open();
         if(AP_START > 1) {
             bot.pressKey(KeyEvent.VK_D, 5);
@@ -165,7 +163,7 @@ public class Flexnet extends ConfigBot{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    public void addAlarmInputMiniMod() {
+    protected void addAlarmInputMiniMod() {
         open();
         bot.pressKey(KeyEvent.VK_M, 2);
         bot.pressKey(KeyEvent.VK_TAB, 2);
@@ -177,7 +175,7 @@ public class Flexnet extends ConfigBot{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    public void addNonLatchedSupv() {
+    protected void addNonLatchedSupv() {
         open();
         bot.pressKey(KeyEvent.VK_M);
         bot.pressKey(KeyEvent.VK_TAB);
@@ -191,7 +189,7 @@ public class Flexnet extends ConfigBot{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    public void addNonLatchedSupvMini() {
+    protected void addNonLatchedSupvMini() {
         open();
         bot.pressKey(KeyEvent.VK_M, 2);
         bot.pressKey(KeyEvent.VK_TAB);
@@ -205,7 +203,7 @@ public class Flexnet extends ConfigBot{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    public void addDualNonLatchedSupv() {
+    protected void addDualNonLatchedSupv() {
         open();
         if(AP_START > 1) {
             bot.pressKey(KeyEvent.VK_D, 5);
@@ -225,7 +223,7 @@ public class Flexnet extends ConfigBot{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    public void addLatchedSupv() {
+    protected void addLatchedSupv() {
         open();
         bot.pressKey(KeyEvent.VK_M, 2);
         bot.pressKey(KeyEvent.VK_TAB);
@@ -239,7 +237,7 @@ public class Flexnet extends ConfigBot{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    public void addHeatDetector() {
+    protected void addHeatDetector() {
         open();
         if(AP_START > 1) {
             bot.pressKey(KeyEvent.VK_H, 2);
@@ -255,7 +253,7 @@ public class Flexnet extends ConfigBot{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    public void addDualHeatSmokeDetector() {
+    protected void addDualHeatSmokeDetector() {
         open();
         if(AP_START > 1) {
             bot.pressKey(KeyEvent.VK_D, 6);
@@ -270,7 +268,7 @@ public class Flexnet extends ConfigBot{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    public void addRelay() {
+    protected void addRelay() {
         open();
         if(AP_START > 1) {
             bot.pressKey(KeyEvent.VK_R, 2);
@@ -285,7 +283,7 @@ public class Flexnet extends ConfigBot{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    public void addTelephoneModule() {
+    protected void addTelephoneModule() {
         open();
         bot.pressKey(KeyEvent.VK_F);
         bot.pressKey(KeyEvent.VK_TAB, 3);
@@ -295,7 +293,7 @@ public class Flexnet extends ConfigBot{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    public void addSpeakers() {
+    protected void addSpeakers() {
         open();
         bot.pressKey(KeyEvent.VK_C, 2);
         bot.pressKey(KeyEvent.VK_TAB, 4);
@@ -305,7 +303,7 @@ public class Flexnet extends ConfigBot{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    public void addSmokeCODetector() {
+    protected void addSmokeCODetector() {
         open();
         bot.pressKey(KeyEvent.VK_F, 2);
         bot.pressKey(KeyEvent.VK_TAB);
@@ -317,7 +315,7 @@ public class Flexnet extends ConfigBot{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    public void insertDevice(Zone zone) {
+    protected void insertDevice(Zone zone) {
         System.out.println("Inserting: " + zone.getZoneinfo());
         switch (zone.getType()) {
             case "Photo Detector":
@@ -376,7 +374,7 @@ public class Flexnet extends ConfigBot{
     }
 
     @Override
-    public void enterZoneList(ZoneList zone_list) {
+    protected void enterZoneList(ZoneList zone_list) {
         try {
             bot.pressKey(KeyEvent.VK_HOME, 1, 1); 
 
@@ -405,7 +403,7 @@ public class Flexnet extends ConfigBot{
         }
     }
     
-    public void updateType(Zone zone) {
+    protected void updateType(Zone zone) {
         try {
             Thread.sleep(DELAY);
             switch(zone.getType()) {
@@ -441,7 +439,7 @@ public class Flexnet extends ConfigBot{
         }
     }
 
-    public void updateZone(Zone zone) {
+    protected void updateZone(Zone zone) {
         try {
             updateRow(zone);
             if(zone.isDualInput()) { 
@@ -468,7 +466,7 @@ public class Flexnet extends ConfigBot{
     }
 
     //Check each zone to see if it meets the panel's requirements. Returns True if one incorrect device found
-    public boolean validateZones(ZoneList zone_list) {
+    protected boolean validateZones(ZoneList zone_list) {
         boolean invalid_found = false;
         boolean current_zone_valid;
         String zone_errors;
@@ -585,7 +583,8 @@ public class Flexnet extends ConfigBot{
         return invalid_found;
     }
 
-    public void organizeZones(ZoneList zone_list) {
+    @Override
+    protected void organizeZones(ZoneList zone_list) {
         phones = new ArrayList<Zone>(); //phone addresses
         sensors = new ArrayList<Zone>(); //smoke/heat addresses
         modules = new ArrayList<Zone>(); //module addresses
@@ -593,18 +592,13 @@ public class Flexnet extends ConfigBot{
         //Add to respective arrays for organized inserting and duplication checking
         for(Zone zone :zone_list.zones) {     
             if(zone.isSensor()) {
-                //Update tags for these devices specifically
-                switch (zone.getType()) {
-                    case "Photo Detector": //For Smoke CO
-                        if (zone.isDualInput()) {
-                            zone.setTag1("Smoke Detector");
-                        }
-                        break;
-                    case "Heat Detector": //For Dual Heat Smoke
-                        if(zone.isDualInput()) {
-                            zone.setTag1("Smoke Detector"); 
-                        }
-                        break;
+                //Update tags for Dual Heats and Smoke CO specifically
+                if (zone.getType().equals("Photo Detector") && zone.isDualInput()) {
+                    zone.setTag1("Smoke Detector");
+                }
+                
+                if (zone.getType().equals("Heat Detector") && zone.isDualInput()) {
+                    zone.setTag1("Smoke Detector");
                 }
                 sensors.add(zone);
             } 
