@@ -590,7 +590,7 @@ public class Flexnet extends ConfigBot{
         modules = new ArrayList<Zone>(); //module addresses
         
         //Add to respective arrays for organized inserting and duplication checking
-        for(Zone zone :zone_list.zones) {     
+        for(Zone zone : zone_list.zones) {     
             if(zone.isSensor()) {
                 //Update tags for Dual Heats and Smoke CO specifically
                 if (zone.getType().equals("Photo Detector") && zone.isDualInput()) {
