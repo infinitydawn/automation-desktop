@@ -2,7 +2,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.awt.event.KeyEvent;
 import java.io.File;
-
 import org.ini4j.Ini;
 
 
@@ -17,6 +16,7 @@ public class FX400 extends ConfigBot{
             ZoneList zone_list = new ZoneList();
             zone_list.readFile();
             zone_list.displayZoneList();
+            //organizeZones(zone_list); // Sensors/modules both use the same set of addresses for FX400
 
             if(zone_list.CONTAINS_AR) {
                 is_paused = true;
@@ -45,66 +45,28 @@ public class FX400 extends ConfigBot{
                 }
 
                 while(is_paused) {
-                    Thread.sleep(Math.max(100,DELAY)); //Wait until start button pressed again
+                    Thread.sleep(DELAY); //Wait until start button pressed again
                 }
 
-                ArrayList<Zone> zones = zone_list.zones;
-                Zone zone = zones.get(0);
-                skip_count = (int) zone.getAddress() - 1;
+                ArrayList<Zone> zonelist = zone_list.zones;
+                if(!SKIP_INSERT_DEVICES && !zonelist.isEmpty()) {
+                    Zone zone = zonelist.get(0);
+                    skip_count = (int) zone.getAddress() - 1;
 
-                for(int current_zone = 0; current_zone < zones.size() && is_running; current_zone++) {
-
-                    zone = zones.get(current_zone);
-                    //Get difference of current and previous address, then -1
-                    if(current_zone > 0) {
-                        skip_count += (int) zone.getAddress() - (int) zones.get(current_zone - 1).getAddress() - 1;
+                    for(int current_zone = 0; current_zone < zonelist.size() && is_running; current_zone++) {
+                        zone = zonelist.get(current_zone);
+                        if(current_zone > 0) {
+                            skip_count += (int) zone.getAddress() - (int) zonelist.get(current_zone - 1).getAddress() - 1;
+                        }
+                        insertDevice(zone);
                     }
 
-                    if(!SKIP_INSERT_DEVICES) {
-                        System.out.println("Inserting: " + zone.getZoneinfo());
-
-                        switch (zone.getType()) {
-                            case "Photo Detector":
-                                //Duct detectors have spare
-                                if (Zone.checkTags(zone.getTag1(), new String[] { "duct" }))
-                                {
-                                    zone.setDualInput(true);
-                                    addDuctDetector();
-                                }
-                                else {
-                                    addPhotoDetector();
-                                }
-                                
-                                break;
-                            case "Alarm Input":
-                                addAlarmInputMod();
-                                break;
-                            case "Non-latched Supervisory":
-                                addNonLatchedSupv();
-                                break;
-                            case "Latched Supervisory":
-                                addLatchedSupv();
-                                break;
-                            case "Heat Detector":
-                                addHeatDetector();
-                                break;
-                            case "Alarm Input Class A":
-                                addAlarmInputClassA();
-                                break;
-                            case "Relay":
-                                addRelay();
-                                break;
-                        }
-
-                        //Additional delay to ensure final device is added
-                        Thread.sleep(DELAY);
-                    } 
+                    //Additional delay to ensure final device is added
+                    Thread.sleep(DELAY);
                 }
 
-                if(is_running) {
-                    enterZoneList(zone_list);
-                }
-
+                enterZoneList(zone_list);
+                
                 System.out.println("FX400 Entry Complete");
                 is_running = false;
                 System.exit(MAX_PRIORITY);
@@ -118,7 +80,7 @@ public class FX400 extends ConfigBot{
         }
     }
 
-    public void addPhotoDetector() {
+    protected void addPhotoDetector() {
         open();
         bot.pressKey(KeyEvent.VK_TAB, 3);
         skipDevices();
@@ -127,7 +89,7 @@ public class FX400 extends ConfigBot{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    public void addDuctDetector() {
+    protected void addDuctDetector() {
         open();
         bot.pressKey(KeyEvent.VK_P, 5);
         bot.pressKey(KeyEvent.VK_TAB, 2);
@@ -137,7 +99,7 @@ public class FX400 extends ConfigBot{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    public void addAlarmInputMod() {
+    protected void addAlarmInputMod() {
         open();
         bot.pressKey(KeyEvent.VK_D, 2);
         bot.pressKey(KeyEvent.VK_TAB, 3);
@@ -147,7 +109,7 @@ public class FX400 extends ConfigBot{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    public void addNonLatchedSupv() {
+    protected void addNonLatchedSupv() {
         open();
         bot.pressKey(KeyEvent.VK_D, 2);
         bot.pressKey(KeyEvent.VK_TAB, 2);
@@ -159,7 +121,7 @@ public class FX400 extends ConfigBot{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    public void addLatchedSupv() {
+    protected void addLatchedSupv() {
         open();
         bot.pressKey(KeyEvent.VK_D,2);
         bot.pressKey(KeyEvent.VK_TAB,2);
@@ -171,7 +133,7 @@ public class FX400 extends ConfigBot{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    public void addHeatDetector() {
+    protected void addHeatDetector() {
         open();
         bot.pressKey(KeyEvent.VK_H,3);
         bot.pressKey(KeyEvent.VK_TAB,3);
@@ -181,7 +143,7 @@ public class FX400 extends ConfigBot{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    public void addAlarmInputClassA() {
+    protected void addAlarmInputClassA() {
         open();
         bot.pressKey(KeyEvent.VK_D, 2);
         bot.pressKey(KeyEvent.VK_TAB, 1);
@@ -193,7 +155,7 @@ public class FX400 extends ConfigBot{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    public void addRelay() {
+    protected void addRelay() {
         open();
         bot.pressKey(KeyEvent.VK_D);
         bot.pressKey(KeyEvent.VK_TAB, 2);
@@ -203,7 +165,42 @@ public class FX400 extends ConfigBot{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    public void updateType(Zone zone) {
+    protected void insertDevice(Zone zone){
+        System.out.println("Inserting: " + zone.getZoneinfo());
+        switch (zone.getType()) {
+            case "Photo Detector":
+                //Duct detectors have spare
+                if (Zone.checkTags(zone.getTag1(), new String[] { "duct" }))
+                {
+                    zone.setDualInput(true);
+                    addDuctDetector();
+                }
+                else {
+                    addPhotoDetector();
+                }
+                break;
+            case "Alarm Input":
+                addAlarmInputMod();
+                break;
+            case "Non-latched Supervisory":
+                addNonLatchedSupv();
+                break;
+            case "Latched Supervisory":
+                addLatchedSupv();
+                break;
+            case "Heat Detector":
+                addHeatDetector();
+                break;
+            case "Alarm Input Class A":
+                addAlarmInputClassA();
+                break;
+            case "Relay":
+                addRelay();
+                break;
+        }
+    }
+
+    protected void updateType(Zone zone) {
         try {
             Thread.sleep(DELAY);
             switch(zone.getType()) {
@@ -238,7 +235,7 @@ public class FX400 extends ConfigBot{
         }
     }
 
-    public void updateZone(Zone zone) {
+    protected void updateZone(Zone zone) {
         try {
             updateRow(zone);
 
@@ -254,8 +251,7 @@ public class FX400 extends ConfigBot{
         
     }
 
-    //Check each zone to see if it meets the panel's requirements. Returns True if one incorrect device found
-    public boolean validateZones(ZoneList zone_list) {
+    protected boolean validateZones(ZoneList zone_list) {
         boolean invalid_found = false;
         boolean current_zone_valid;
         String zone_errors;
