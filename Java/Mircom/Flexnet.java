@@ -4,7 +4,9 @@ import java.awt.event.KeyEvent;
 
 public class Flexnet extends ConfigBot{
 
-    private ArrayList<Zone> phones = new ArrayList<>();
+    private ArrayList<Zone> phones;  //phone devices
+    private ArrayList<Zone> sensors; //smoke/heat devices
+    private ArrayList<Zone> modules; //module devices
     private int AP_START = 1;
 
     public void run() {
@@ -16,6 +18,7 @@ public class Flexnet extends ConfigBot{
             ZoneList zone_list = new ZoneList();
             zone_list.readFile();
             zone_list.displayZoneList();
+            organizeZones(zone_list);
             AP_START = zone_list.AP_START;
 
             if(zone_list.CONTAINS_AR || AP_START > 1 || zone_list.CONTAINS_DUAL_HEAT) {
@@ -31,7 +34,6 @@ public class Flexnet extends ConfigBot{
             }
 
             if(is_running) {
-
                 if(is_paused) {
                     if(BYPASS_PAUSE) {
                         is_paused = false;
@@ -59,130 +61,53 @@ public class Flexnet extends ConfigBot{
                     Thread.sleep(DELAY); //Wait until start button pressed again
                 }
 
-                Zone zone;
+                if(!SKIP_INSERT_DEVICES) {
+                    Zone zone;
 
-                if(!phones.isEmpty()) {
-                    zone = phones.get(0);
-                    skip_count = (int) zone.getAddress() - 100 - 1;
+                    //Add phones first if they exist
+                    if(!phones.isEmpty()) {
+                        zone = phones.get(0);
+                        skip_count = (int) zone.getAddress() - 100 - 1;
 
-                    for (int current_zone = 0; current_zone < phones.size() && is_running; current_zone++) {
-                        if(current_zone > 0) {
-                            skip_count += (int) zone.getAddress() - (int) phones.get(current_zone - 1).getAddress() - 1;
-                        }
-                        System.out.println("Inserting: " + zone.getZoneinfo());
-                        addTelephoneModule(); 
-                    }
-                }
-
-                ArrayList<Zone> zones = zone_list.zones;
-                zone = zones.get(0);
-                skip_count = (int) zone.getAddress() - AP_START;
-
-                //Reduce skip count if first address in zone list is module
-                if(!zone.isSensor()) {
-                    skip_count -= 100;
-                }
-
-                for(int current_zone = 0; current_zone < zones.size() && is_running; current_zone++) {
-
-                    zone = zones.get(current_zone);
-
-                    //Get difference of current and previous address, then -1. Skip telephone mods
-                    if(current_zone > 0 && !zone.getType().equals("Telephone Module")) {
-                        if(zone.isSensor()) {
-                            skip_count += (int) zone.getAddress() - (int) zones.get(current_zone - 1).getAddress() - 1;
-                        }
-                        else {  
-                            //Assuming zone list is sorted, reset skip count once modules are reached
-                            if(zones.get(current_zone - 1).isSensor() && !zone.isSensor()) {
-                                skip_count = (int) zone.getAddress() - AP_START - 100;
-                            } 
-                            else {
-                                skip_count += ((int) zone.getAddress() - 100) - ((int) zones.get(current_zone - 1).getAddress() - 100) - 1;
+                        for (int current_zone = 0; current_zone < phones.size() && is_running; current_zone++) {
+                            if(current_zone > 0) {
+                                skip_count += (int) zone.getAddress() - (int) phones.get(current_zone - 1).getAddress() - 1;
                             }
+                            insertDevice(zone);
                         }
-
                     }
 
-                    switch (zone.getType()) {
-                        case "Photo Detector": //For Smoke CO
-                            if (zone.isDualInput()) {
-                                zone.setTag1("Smoke Detector");
-                            }
-                            break;
-                        case "Heat Detector": //For Dual Heat Smoke
-                            if(zone.isDualInput()) {
-                                zone.setTag1("Smoke Detector"); 
-                            }
-                            break;
-                    }
+                    if(!sensors.isEmpty()) {
+                        zone = sensors.get(0);
+                        skip_count = (int) zone.getAddress() - AP_START;
 
-                    if(!SKIP_INSERT_DEVICES) {
-                        System.out.println("Inserting: " + zone.getZoneinfo());
-
-                        switch (zone.getType()) {
-                            case "Photo Detector":
-                                if (zone.isDualInput()) {
-                                    addSmokeCODetector();
-                                }
-                                else {
-                                    addPhotoDetector();
-                                }
-                                break;
-                            case "Alarm Input":
-                                if(zone.getSubAddress() != null) {
-                                    addDualAlarmInputMod();
-                                }
-                                else {
-                                    addAlarmInputMod(); 
-                                }                          
-                                break;
-                            case "Alarm Input Class A":
-                                addAlarmInputMiniMod();                         
-                                break;
-                            case "Non-latched Supervisory":
-                            //Check for radio, single monitor and dual monitor
-                                if(zone.isMini()) {
-                                    addNonLatchedSupvMini();
-                                } else {
-                                    if(zone.getSubAddress() != null || Zone.checkTags(zone.getTag1(), new String[] { "generator", "dry sys" })) {
-                                        addDualNonLatchedSupv();
-                                    } 
-                                    else {
-                                        addNonLatchedSupv();
-                                    }    
-                                }
-                                break;
-                            case "Latched Supervisory":
-                                addLatchedSupv();
-                                break;
-                            case "Heat Detector": 
-                                if(zone.isDualInput()) {
-                                    addDualHeatSmokeDetector();
-                                }
-                                else {
-                                    addHeatDetector();
-                                }
-                                break;
-                            case "Relay":
-                                addRelay();
-                                break;
-                            case "Telephone Module":
-                                //addTelephoneModule();
-                                break;
-                            case "Speakers":
-                                addSpeakers();
-                                break;
+                        for(int current_zone = 0; current_zone < sensors.size() && is_running; current_zone++) {
+                            zone = sensors.get(current_zone);
+                            if(current_zone > 0) {
+                                skip_count += (int) zone.getAddress() - (int) sensors.get(current_zone - 1).getAddress() - 1;
+                            }
+                            insertDevice(zone);
                         }
-                        
-                        //Additional delay to ensure final device is added
-                        Thread.sleep(DELAY);
                     }
-                }   
 
-                if(is_running) {
-                    enterZoneList(zone_list);
-                }
+                    if(!modules.isEmpty()) {
+                        zone = modules.get(0);
+                        skip_count = (int) zone.getAddress() - AP_START - 100;
+
+                        for(int current_zone = 0; current_zone < modules.size() && is_running; current_zone++) {
+                            zone = modules.get(current_zone);
+                            if(current_zone > 0) {
+                                skip_count += ((int) zone.getAddress() - 100) - ((int) modules.get(current_zone - 1).getAddress() - 100) - 1;
+                            }
+                            insertDevice(zone);
+                        }
+                    }
+
+                    //Additional delay to ensure final device is added
+                    Thread.sleep(DELAY);
+                }                        
+
+                enterZoneList(zone_list);
 
                 System.out.println("Flexnet Entry Complete");
                 is_running = false;
@@ -392,6 +317,64 @@ public class Flexnet extends ConfigBot{
         bot.pressKey(KeyEvent.VK_END);
     }
 
+    public void insertDevice(Zone zone) {
+        System.out.println("Inserting: " + zone.getZoneinfo());
+        switch (zone.getType()) {
+            case "Photo Detector":
+                if (zone.isDualInput()) {
+                    addSmokeCODetector();
+                }
+                else {
+                    addPhotoDetector();
+                }
+                break;
+            case "Alarm Input":
+                if(zone.getSubAddress() != null) {
+                    addDualAlarmInputMod();
+                }
+                else {
+                    addAlarmInputMod(); 
+                }                          
+                break;
+            case "Alarm Input Class A":
+                addAlarmInputMiniMod();                         
+                break;
+            case "Non-latched Supervisory":
+            //Check for radio, single monitor and dual monitor
+                if(zone.isMini()) {
+                    addNonLatchedSupvMini();
+                } else {
+                    if(zone.getSubAddress() != null || Zone.checkTags(zone.getTag1(), new String[] { "generator", "dry sys" })) {
+                        addDualNonLatchedSupv();
+                    } 
+                    else {
+                        addNonLatchedSupv();
+                    }    
+                }
+                break;
+            case "Latched Supervisory":
+                addLatchedSupv();
+                break;
+            case "Heat Detector": 
+                if(zone.isDualInput()) {
+                    addDualHeatSmokeDetector();
+                }
+                else {
+                    addHeatDetector();
+                }
+                break;
+            case "Relay":
+                addRelay();
+                break;
+            case "Telephone Module":
+                addTelephoneModule();
+                break;
+            case "Speakers":
+                addSpeakers();
+                break;
+        }
+    }
+
     @Override
     public void enterZoneList(ZoneList zone_list) {
         try {
@@ -403,8 +386,15 @@ public class Flexnet extends ConfigBot{
                 updateZone(zone);
             }
 
-            for(Zone zone : zone_list.zones) {
-                if(!zone.getType().equals("Blank Device") && !zone.getType().equals("Telephone Module")) {
+            for(Zone zone : sensors) {
+                if(!zone.getType().equals("Blank Device")) {
+                    System.out.println("Updating: " + zone.getZoneinfo());
+                    updateZone(zone);
+                }
+            }
+
+            for(Zone zone : modules) {
+                if(!zone.getType().equals("Blank Device")) {
                     System.out.println("Updating: " + zone.getZoneinfo());
                     updateZone(zone);
                 }
@@ -482,22 +472,20 @@ public class Flexnet extends ConfigBot{
         boolean invalid_found = false;
         boolean current_zone_valid;
         String zone_errors;
-        ArrayList<Integer> used_Phone_Zones = new ArrayList<>(); //phone addresses
-        ArrayList<Integer> usedZones = new ArrayList<>(); //smoke/heat addresses
-        ArrayList<Integer> used100Zones = new ArrayList<>(); //module addresses
-        
-        //Add to respective arrays for organized inserting and duplication checking
-        for(Zone zone :zone_list.zones) {     
-            if(zone.isSensor()) {
-                usedZones.add((int) zone.getAddress());
-            } 
-            else if(zone.getType().equals("Telephone Module")) {
-                used_Phone_Zones.add((int) zone.getAddress());
-                phones.add(zone);
-            }
-            else {
-                used100Zones.add((int) zone.getAddress());
-            }
+        ArrayList<Integer> phones_addresses = new ArrayList<Integer>();
+        ArrayList<Integer> sensors_addresses = new ArrayList<Integer>();
+        ArrayList<Integer> modules_addresses = new ArrayList<Integer>();
+
+        for(Zone z : phones) {
+            phones_addresses.add((int) z.getAddress());
+        }
+
+        for(Zone z : sensors) {
+            sensors_addresses.add((int) z.getAddress());
+        }
+
+        for(Zone z : modules) {
+            modules_addresses.add((int) z.getAddress());
         }
 
         for(Zone zone : zone_list.zones) {
@@ -507,7 +495,7 @@ public class Flexnet extends ConfigBot{
             //Check zone type if it is unknown or blank
             //Check address in valid range
             //Smoke, heat: AP_START - 159
-            //AP mod: 100 + AP_START - 259
+            //Module: 100 + AP_START - 259
             if(Zone.checkTags(zone.getType(), new String[] { "unknown", "blank"})) {
                 current_zone_valid = false;
                 zone_errors += "unknown zone type, ";
@@ -519,7 +507,7 @@ public class Flexnet extends ConfigBot{
                 }
 
                 //Check for duplicate addresses 
-                if(Collections.frequency(usedZones, (int) zone.getAddress()) > 1) {
+                if(Collections.frequency(sensors_addresses, (int) zone.getAddress()) > 1) {
                     current_zone_valid = false;
                     zone_errors += "duplicate smoke/heat address, ";
                 }
@@ -530,7 +518,7 @@ public class Flexnet extends ConfigBot{
                     zone_errors += "address out of range for telephone mod, ";
                 }
 
-                if(Collections.frequency(used_Phone_Zones, (int) zone.getAddress()) > 1) {
+                if(Collections.frequency(phones_addresses, (int) zone.getAddress()) > 1) {
                     current_zone_valid = false;
                     zone_errors += "duplicate telephone address, ";
                 }
@@ -538,11 +526,11 @@ public class Flexnet extends ConfigBot{
             else {
                 if((int) zone.getAddress() < 100 + AP_START || (int) zone.getAddress() > 259) {
                     current_zone_valid = false;
-                    zone_errors += "address out of range for ap module, ";
+                    zone_errors += "address out of range for module, ";
                 }
 
                 //Check for duplicate addresses 
-                if(Collections.frequency(used100Zones, (int) zone.getAddress()) > 1) {
+                if(Collections.frequency(modules_addresses, (int) zone.getAddress()) > 1) {
                     current_zone_valid = false;
                     zone_errors += "duplicate ap module address, ";
                 }
@@ -593,6 +581,39 @@ public class Flexnet extends ConfigBot{
                 invalid_found = true;
             }
         }
+
         return invalid_found;
+    }
+
+    public void organizeZones(ZoneList zone_list) {
+        phones = new ArrayList<Zone>(); //phone addresses
+        sensors = new ArrayList<Zone>(); //smoke/heat addresses
+        modules = new ArrayList<Zone>(); //module addresses
+        
+        //Add to respective arrays for organized inserting and duplication checking
+        for(Zone zone :zone_list.zones) {     
+            if(zone.isSensor()) {
+                //Update tags for these devices specifically
+                switch (zone.getType()) {
+                    case "Photo Detector": //For Smoke CO
+                        if (zone.isDualInput()) {
+                            zone.setTag1("Smoke Detector");
+                        }
+                        break;
+                    case "Heat Detector": //For Dual Heat Smoke
+                        if(zone.isDualInput()) {
+                            zone.setTag1("Smoke Detector"); 
+                        }
+                        break;
+                }
+                sensors.add(zone);
+            } 
+            else if(zone.getType().equals("Telephone Module")) {
+                phones.add(zone);
+            }
+            else {
+                modules.add(zone);
+            }
+        }
     }
 }
