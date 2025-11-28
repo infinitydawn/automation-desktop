@@ -13,6 +13,7 @@ public class FX2000 extends ConfigBot{
             ZoneList zone_list = new ZoneList();
             zone_list.readFile();
             zone_list.displayZoneList();
+            organizeZones(zone_list);
 
             if(zone_list.CONTAINS_AR) {
                 is_paused = true;
@@ -27,7 +28,6 @@ public class FX2000 extends ConfigBot{
             }
 
             if(is_running) {
-
                 if(is_paused) {
                     if(BYPASS_PAUSE) {
                         is_paused = false;
@@ -45,68 +45,40 @@ public class FX2000 extends ConfigBot{
                     Thread.sleep(DELAY); //Wait until start button pressed again
                 }
 
-                ArrayList<Zone> zones = zone_list.zones;
-                Zone zone = zones.get(0);
-                skip_count = (int) zone.getAddress() - 1;
+                if(!SKIP_INSERT_DEVICES) {
+                    Zone zone;
 
-                //Reduce skip count if first address in zone list is ipt/relay
-                if(!zone.isSensor()) {
-                    skip_count -= 100;
-                }
+                    if(!sensors.isEmpty()) {
+                        zone = sensors.get(0);
+                        skip_count = (int) zone.getAddress() - 1;
 
-                for(int current_zone = 0; current_zone < zones.size() && is_running; current_zone++) {
-
-                    zone = zones.get(current_zone);
-                    
-                    //Get difference of current and previous address, then -1
-                    if(current_zone > 0) {
-                        if(zone.isSensor()) {
-                            skip_count += (int) zone.getAddress() - (int) zones.get(current_zone - 1).getAddress() - 1;
-                        }
-                        else {  
-                            //Assuming zone list is sorted, reset skip count once ipt/relay devices are reached
-                            if(zones.get(current_zone - 1).isSensor() && !zone.isSensor()) {
-                                skip_count = (int) zone.getAddress() - 1 - 100;
-                            } 
-                            else {
-                                skip_count += ((int) zone.getAddress() - 100) - ((int) zones.get(current_zone - 1).getAddress() - 100) - 1;
+                        for(int current_zone = 0; current_zone < sensors.size() && is_running; current_zone++) {
+                            zone = sensors.get(current_zone);
+                            if(current_zone > 0) {
+                                skip_count += (int) zone.getAddress() - (int) sensors.get(current_zone - 1).getAddress() - 1;
                             }
+                            insertDevice(zone);
                         }
                     }
 
-                    if(!SKIP_INSERT_DEVICES) {
-                        System.out.println("Inserting: " + zone.getZoneinfo());
+                    if(!modules.isEmpty()) {
+                        zone = modules.get(0);
+                        skip_count = (int) zone.getAddress() - 1 - 100;
 
-                        switch (zone.getType()) {
-                            case "Photo Detector":
-                                addPhotoDetector();
-                                break;
-                            case "Alarm Input":
-                            case "Alarm Input Class A":
-                                addAlarmInputMod();
-                                break;
-                            case "Non-latched Supervisory":
-                                addNonLatchedSupv();
-                                break;
-                            case "Latched Supervisory":
-                                addLatchedSupv();
-                                break;
-                            case "Heat Detector":
-                                addHeatDetector();
-                                break;
-                            case "Relay":
-                                addRelay();
-                                break;
+                        for(int current_zone = 0; current_zone < modules.size() && is_running; current_zone++) {
+                            zone = modules.get(current_zone);
+                            if(current_zone > 0) {
+                                skip_count += ((int) zone.getAddress() - 100) - ((int) modules.get(current_zone - 1).getAddress() - 100) - 1;
+                            }
+                            insertDevice(zone);
                         }
                     }
-                    
+
                     //Additional delay to ensure final device is added
                     Thread.sleep(DELAY);
                 }
 
-                if(is_running) {
-                    enterZoneList(zone_list);
-                }
+                enterZoneList(zone_list);
 
                 System.out.println("FX2000 Entry Complete");
                 is_running = false;
@@ -121,7 +93,7 @@ public class FX2000 extends ConfigBot{
         }
     }
     
-    public void addPhotoDetector() {
+    protected void addPhotoDetector() {
         open();
         bot.pressKey(KeyEvent.VK_TAB, 2);
         skipDevices();
@@ -130,7 +102,7 @@ public class FX2000 extends ConfigBot{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    public void addAlarmInputMod() {
+    protected void addAlarmInputMod() {
         open();
         bot.pressKey(KeyEvent.VK_I);
         bot.pressKey(KeyEvent.VK_TAB, 2);
@@ -140,7 +112,7 @@ public class FX2000 extends ConfigBot{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    public void addNonLatchedSupv() {
+    protected void addNonLatchedSupv() {
         open();
         bot.pressKey(KeyEvent.VK_I);
         bot.pressKey(KeyEvent.VK_TAB);
@@ -152,7 +124,7 @@ public class FX2000 extends ConfigBot{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    public void addLatchedSupv() {
+    protected void addLatchedSupv() {
         open();
         bot.pressKey(KeyEvent.VK_I);
         bot.pressKey(KeyEvent.VK_TAB);
@@ -164,7 +136,7 @@ public class FX2000 extends ConfigBot{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    public void addHeatDetector() {
+    protected void addHeatDetector() {
         open();
         bot.pressKey(KeyEvent.VK_H);
         bot.pressKey(KeyEvent.VK_TAB,2);
@@ -174,7 +146,7 @@ public class FX2000 extends ConfigBot{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    public void addRelay() {
+    protected void addRelay() {
         open();
         bot.pressKey(KeyEvent.VK_R);
         bot.pressKey(KeyEvent.VK_TAB, 2);
@@ -184,11 +156,37 @@ public class FX2000 extends ConfigBot{
         bot.pressKey(KeyEvent.VK_END);
     }
 
+    protected void insertDevice(Zone zone) { 
+        System.out.println("Inserting: " + zone.getZoneinfo());
+
+        switch (zone.getType()) {
+            case "Photo Detector":
+                addPhotoDetector();
+                break;
+            case "Alarm Input":
+            case "Alarm Input Class A":
+                addAlarmInputMod();
+                break;
+            case "Non-latched Supervisory":
+                addNonLatchedSupv();
+                break;
+            case "Latched Supervisory":
+                addLatchedSupv();
+                break;
+            case "Heat Detector":
+                addHeatDetector();
+                break;
+            case "Relay":
+                addRelay();
+                break;
+        }
+    }
+
     //Not used
-    public void updateType(Zone zone) {};
+    protected void updateType(Zone zone) {};
 
     @Override
-    public void updateRow(Zone zone) {
+    protected void updateRow(Zone zone) {
         updateTags(zone);
 
         bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_UPDATE_DELAY_STRENGTH); //make up for not updating Type
@@ -207,7 +205,7 @@ public class FX2000 extends ConfigBot{
         bot.pressKey(KeyEvent.VK_DOWN);
     }
 
-    public void updateZone(Zone zone) {
+    protected void updateZone(Zone zone) {
         try {
             updateRow(zone);
         } catch (Exception e) {
@@ -215,7 +213,7 @@ public class FX2000 extends ConfigBot{
         }    
     }
 
-    public boolean validateZones(ZoneList zone_list) {
+    protected boolean validateZones(ZoneList zone_list) {
         boolean invalid_found = false;
         boolean current_zone_valid;
         String zone_errors;
