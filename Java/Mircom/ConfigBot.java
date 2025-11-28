@@ -1,6 +1,8 @@
 import java.io.File;
 import java.awt.event.KeyEvent;
 import org.ini4j.Ini;
+import java.util.ArrayList;
+import java.util.Collections;
 
 public abstract class ConfigBot extends Thread {
     protected int DELAY = 200; //Default 200. Delay time for everything. Multiply by delay strength to change length
@@ -12,9 +14,12 @@ public abstract class ConfigBot extends Thread {
     protected String SETTINGS_FILE = "settings.ini";
 
     protected DataEntryBot bot;
-    protected int skip_count = 19;
+    protected int skip_count;
     protected boolean is_running = false; //used to stop the bot from running without closing process
     protected boolean is_paused = false; //used to prompt user to enable AR related settings -- MAKE USE OF THIS IF PAUSING GUI
+
+    protected ArrayList<Zone> sensors; //smoke/heat devices
+    protected ArrayList<Zone> modules; //module devices
 
     public ConfigBot() {
         try {
@@ -27,21 +32,23 @@ public abstract class ConfigBot extends Thread {
 
     public abstract void run();
 
-    public abstract void addPhotoDetector();
+    protected abstract void addPhotoDetector();
 
-    public abstract void addNonLatchedSupv();
+    protected abstract void addNonLatchedSupv();
 
-    public abstract void addLatchedSupv();
+    protected abstract void addLatchedSupv();
 
-    public abstract void addHeatDetector();
+    protected abstract void addHeatDetector();
 
-    public abstract void addRelay();
+    protected abstract void addRelay();
 
-    public void skipDevices() {
+    protected abstract void insertDevice(Zone zone);
+
+    protected void skipDevices() {
         bot.pressKey(KeyEvent.VK_RIGHT, skip_count);
     }
 
-    public void open() {
+    protected void open() {
         try {
             Thread.sleep(DELAY);
             bot.keyPress(KeyEvent.VK_SHIFT);
@@ -58,7 +65,7 @@ public abstract class ConfigBot extends Thread {
         }
     }
 
-    public void updateTags(Zone zone) {
+    protected void updateTags(Zone zone) {
         try {
             Thread.sleep(DELAY);
             bot.pressKey(KeyEvent.VK_ENTER, 1, DEVICE_UPDATE_DELAY_STRENGTH);
@@ -71,7 +78,7 @@ public abstract class ConfigBot extends Thread {
         }
     }
 
-    public abstract void updateType(Zone zone);
+    protected abstract void updateType(Zone zone);
 
     protected void updateRow(Zone zone) {
         updateTags(zone);
@@ -109,7 +116,23 @@ public abstract class ConfigBot extends Thread {
         }
     }
 
+    //Check each zone to see if it meets the configurator's requirements. Returns True if one incorrect device found
     protected abstract boolean validateZones(ZoneList zone_list);
+
+    protected void organizeZones(ZoneList zone_list) {
+        sensors = new ArrayList<Zone>(); //smoke/heat addresses
+        modules = new ArrayList<Zone>(); //module addresses
+        
+        //Add to respective arrays for organized inserting and duplication checking
+        for(Zone zone :zone_list.zones) {     
+            if(zone.isSensor()) {
+                sensors.add(zone);
+            } 
+            else {
+                modules.add(zone);
+            }
+        }
+    }
 
     protected void readSettings() {
         try{
