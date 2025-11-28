@@ -584,7 +584,7 @@ public class Flexnet extends ConfigBot{
     }
 
     @Override
-    protected void organizeZones(ZoneList zone_list) {
+    public void organizeZones(ZoneList zone_list) {
         phones = new ArrayList<Zone>(); //phone addresses
         sensors = new ArrayList<Zone>(); //smoke/heat addresses
         modules = new ArrayList<Zone>(); //module addresses

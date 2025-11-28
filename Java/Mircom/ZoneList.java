@@ -65,7 +65,7 @@ class ZoneList {
         while (temp_scan.hasNext()) {
             content = temp_scan.nextLine();
             parts = content.split("\\,");
-            System.out.println(parts[0] + " , " + parts[1] + ", " + parts[2]);
+            //System.out.println(parts[0] + " , " + parts[1] + ", " + parts[2]);
             this.addZone(Double.parseDouble(parts[0]), parts[1], parts[2]);
 
             Zone last_zone = zones.getLast();
