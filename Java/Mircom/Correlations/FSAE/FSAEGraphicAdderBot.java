@@ -4,19 +4,9 @@ import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.ArrayList;
 
-//There are 2 modes to this bot - Full mode and Tag Only mode.
-//Full mode:
-//Select the first row of the graphic adder, then press F4. All zones must be UNASSIGNED. The correct type will be entered. The drawback is that this mode will be slow.
-//Tag Only mode:
-//Set all the zones of the graphic adder to Ipt Zone before hand then run the bot. Only the tags will be updated. Although this mode is MUCH faster,
-//  the drawback is that the user will have to update the Types afterwards, which may crash the configurator. 
+//Select the first row of the graphic adder, then press F4. All zones must be UNASSIGNED. The correct type will be entered.
 
 public class FSAEGraphicAdderBot extends FSAEBot{
-
-    private boolean TAG_ONLY_MODE = true; //Default True. 
-
-    //Default 3. This is the position of the Tag column in the configurator. If you want to speed things up, move Tag to the first column and change this to 1. 
-    private int TAG_COLUMN_POSITION = 3; 
 
     //Override the default settings since it is not as heavy of a task
     private int DELAY = 200;
@@ -25,6 +15,10 @@ public class FSAEGraphicAdderBot extends FSAEBot{
     private int graphic_index; //the index of the current graphic adder that will be updated
     private int floor_index;
     private int overall_index;
+
+    //UNUSED - update Tags only. Unfortunately changing the Assignment will reset the Tag, so this wouldn't be very useful.
+    private boolean TAG_ONLY_MODE = false; //Default False. 
+    private int TAG_COLUMN_POSITION = 3;  //Default 3. This is the position of the Tag column in the configurator. If you want to speed things up, move Tag to the first column and change this to 1. 
 
     public void run() {
         try {
@@ -47,7 +41,7 @@ public class FSAEGraphicAdderBot extends FSAEBot{
             while(floor_index < floors.size()) {
                 floor = floors.get(floor_index);
                 System.out.println("Updating: " + floor);
-
+                
                 if(!TAG_ONLY_MODE) {
                     updateZone("Normal " + floor , KeyEvent.VK_M);
                     updateZone("Low Heat " + floor, KeyEvent.VK_S);
@@ -55,6 +49,7 @@ public class FSAEGraphicAdderBot extends FSAEBot{
                     updateZone("Smoke Det " + floor, KeyEvent.VK_A);
                 }
                 else {
+                    //Unused
                     updateZoneTag("Normal " + floor);
                     updateZoneTag("Low Heat " + floor);
                     updateZoneTag("High Heat " + floor);
@@ -116,6 +111,7 @@ public class FSAEGraphicAdderBot extends FSAEBot{
         }
     }
 
+    //Unused
     public void updateZoneTag(String name) {
 
         try {
