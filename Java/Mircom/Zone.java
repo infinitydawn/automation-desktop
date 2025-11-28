@@ -1,4 +1,4 @@
-class Zone {
+public class Zone {
     private double address;
     private subZone subAddress = null;
     private String type = "";

@@ -2,13 +2,13 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Scanner;
 
-class ZoneList {
+public class ZoneList {
     private String FILENAME = "assets/temp_zones.csv";
 
-    ArrayList<Zone> zones = new ArrayList<Zone>();
-    boolean CONTAINS_AR = false;
-    boolean CONTAINS_DUAL_HEAT = false;
-    int AP_START = 1;
+    public ArrayList<Zone> zones = new ArrayList<Zone>();
+    public boolean CONTAINS_AR = false;
+    public boolean CONTAINS_DUAL_HEAT = false;
+    public int AP_START = 1;
 
     public ZoneList() {
 
