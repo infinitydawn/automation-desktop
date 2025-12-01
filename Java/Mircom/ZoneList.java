@@ -14,6 +14,10 @@ public class ZoneList {
 
     } // end constructor
 
+    public ZoneList(String filename) {
+        FILENAME = filename;
+    }
+
     public void addZone(double address, String tag1, String tag2) {
         if (!isSubZone(address)) {
             zones.add(new Zone(address, tag1, tag2));
