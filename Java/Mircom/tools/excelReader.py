@@ -1,6 +1,11 @@
 from tkinter import Tk
 from tkinter.filedialog import askopenfilename
 import pandas as pd
+import os
+
+abspath = os.path.abspath(__file__)
+dname = os.path.dirname(abspath)
+os.chdir(dname)
 
 Tk().withdraw() # we don't want a full GUI, so keep the root window from appearing
 file_path = askopenfilename(filetypes=[("Worksheet Files", "*.xlsx *.csv")]) # show an "Open" dialog box and return the path to the selected file
@@ -78,4 +83,4 @@ check_column_headers(df)
 # check if every .2 zone has a .1 zone
 check_subaddresses(zoneColumn)
 
-df.to_csv('./assets/temp_zones.csv', index=False)
+df.to_csv('../assets/temp_zones.csv', index=False)

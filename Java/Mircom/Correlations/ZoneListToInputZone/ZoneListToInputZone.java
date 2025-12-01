@@ -19,7 +19,7 @@ public class ZoneListToInputZone extends Thread {
     
     private int DELAY = 200; //Default 200. Delay time for everything. Multiply by delay strength to change length
     private double DEVICE_UPDATE_DELAY_STRENGTH = 1.5; // Default 1. Multiplied to DELAY. The Delay time after updating a device (tag name, type, etc).
-    private String FILE_NAME = "temp_zones.csv";
+    private String FILE_NAME = "../../assets/temp_zones.csv";
 
     private DataEntryBot bot;
     private ArrayList<Zone> sensors; //smoke/heat devices
@@ -28,7 +28,7 @@ public class ZoneListToInputZone extends Thread {
 
     public void run() {
         try {
-            ZoneList zone_list = new ZoneList();
+            ZoneList zone_list = new ZoneList(FILE_NAME);
             zone_list.readFile();
             zone_list.displayZoneList();
             organizeZones(zone_list);
@@ -44,6 +44,9 @@ public class ZoneListToInputZone extends Thread {
             for (Zone z : modules) {
                 updateRow(z);
             }
+
+            System.out.println("Data Entry Complete.");
+            System.exit(MAX_PRIORITY);
         }
         catch(Exception e) {
             e.printStackTrace();
@@ -97,7 +100,6 @@ public class ZoneListToInputZone extends Thread {
             e.printStackTrace();
         }
     }
-
 
     protected void organizeZones(ZoneList zone_list) {
         phones = new ArrayList<Zone>(); //phone addresses
