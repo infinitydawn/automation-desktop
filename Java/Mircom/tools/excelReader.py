@@ -3,6 +3,7 @@ from tkinter.filedialog import askopenfilename
 import pandas as pd
 import os
 
+#Change working path to this file's path
 abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)
 os.chdir(dname)
