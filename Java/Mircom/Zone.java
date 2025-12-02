@@ -20,6 +20,7 @@ public class Zone {
     }
 
     public void addSubZone(double subAddress, String tag1, String tag2) {
+        this.isDualInput = true;
         this.subAddress = new subZone(subAddress, tag1, tag2);
     }
 
