@@ -12,7 +12,6 @@ public class FSAEGraphicAdderBot extends FSAEBot{
     private double SKIP_DELAY_STRENGTH = .4; // Default .4. For Full mode. The delay time for scrolling through zones.
 
     private int graphic_index; //the index of the current graphic adder that will be updated
-    private int floor_index;
     private int overall_index;
 
     //UNUSED - update Tags only. Unfortunately changing the Assignment will reset the Tag, so this wouldn't be very useful.
@@ -32,30 +31,27 @@ public class FSAEGraphicAdderBot extends FSAEBot{
             setIsRunning(true);
             setIsPaused(false);
 
-            floor_index = 0;
             graphic_index = 0;
             overall_index = 0;
-            String floor;  
 
-            while(floor_index < floors.size()) {
-                floor = floors.get(floor_index);
-                System.out.println("Updating: " + floor);
-                
-                if(!TAG_ONLY_MODE) {
-                    updateZone("Normal " + floor , KeyEvent.VK_M);
-                    updateZone("Low Heat " + floor, KeyEvent.VK_S);
-                    updateZone("High Heat " + floor, KeyEvent.VK_A);
-                    updateZone("Smoke Det " + floor, KeyEvent.VK_A);
-                }
-                else {
-                    //Unused
-                    updateZoneTag("Normal " + floor);
-                    updateZoneTag("Low Heat " + floor);
-                    updateZoneTag("High Heat " + floor);
-                    updateZoneTag("Smoke Det " + floor);
-                }
+            for (String floor : floors) {
+                System.out.println("Updating: " + floor + " Normal");
+                updateZone("Normal " + floor , KeyEvent.VK_M);
+            }
 
-                floor_index++;
+            for (String floor : floors) {
+                System.out.println("Updating: " + floor + " Low Heat");
+                updateZone("Low Heat " + floor , KeyEvent.VK_S);
+            }
+
+            for (String floor : floors) {
+                System.out.println("Updating: " + floor + " High Heat");
+                updateZone("High Heat " + floor , KeyEvent.VK_A);
+            }
+
+            for (String floor : floors) {
+                System.out.println("Updating: " + floor + " Smoke Det");
+                updateZone("Smoke Det " + floor , KeyEvent.VK_A);
             }
 
             setIsRunning(false);
