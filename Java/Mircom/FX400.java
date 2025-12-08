@@ -2,31 +2,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.awt.event.KeyEvent;
 import java.io.File;
-
 import org.ini4j.Ini;
 
 
-public class FX400 extends Thread{
-
-    protected int DELAY = 200; //Default 200. Delay time for everything. Multiply by delay strength to change length
-    protected double ENTER_DELAY_STRENGTH = 1; // Default 1. Delay after pressing Enter (Writes to database. Larger databases may want this higher)
-    protected boolean BYPASS_PAUSE = false; //Prevents the error prompt from showing
-    protected boolean IGNORE_TAG_LENGTH = false; //Omits tag length requirement from errors
-    protected String SETTINGS_FILE = "settings.ini";
-
-    protected DataEntryBot bot;
-    protected int skip_count = 19;
-    protected boolean is_running = false; //used to stop the bot from running without closing process
-    protected boolean is_paused = false; //used to prompt user to enable AR related settings -- MAKE USE OF THIS IF PAUSING GUI
-
-    public FX400() {
-        try {
-            readSettings();
-            bot = new DataEntryBot(DELAY);           
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
+public class FX400 extends ConfigBot{
 
     public void run() {
         System.out.println("Starting FX400 Data Entry");
@@ -37,6 +16,7 @@ public class FX400 extends Thread{
             ZoneList zone_list = new ZoneList();
             zone_list.readFile();
             zone_list.displayZoneList();
+            //organizeZones(zone_list); // Sensors/modules both use the same set of addresses for FX400
 
             if(zone_list.CONTAINS_AR) {
                 is_paused = true;
@@ -65,63 +45,31 @@ public class FX400 extends Thread{
                 }
 
                 while(is_paused) {
-                    Thread.sleep(Math.max(100,DELAY)); //Wait until start button pressed again
+                    Thread.sleep(DELAY); //Wait until start button pressed again
                 }
 
-                ArrayList<Zone> zones = zone_list.zones;
-                Zone zone = zones.get(0);
-                skip_count = (int) zone.getAddress() - 1;
+                ArrayList<Zone> zonelist = zone_list.zones;
+                if(!SKIP_INSERT_DEVICES && !zonelist.isEmpty()) {
+                    Zone zone = zonelist.get(0);
+                    skip_count = (int) zone.getAddress() - 1;
 
-                for(int current_zone = 0; current_zone < zones.size() && is_running; current_zone++) {
-
-                    zone = zones.get(current_zone);
-                    //Get difference of current and previous address, then -1
-                    if(current_zone > 0) {
-                        skip_count += (int) zone.getAddress() - (int) zones.get(current_zone - 1).getAddress() - 1;
+                    for(int current_zone = 0; current_zone < zonelist.size() && is_running; current_zone++) {
+                        zone = zonelist.get(current_zone);
+                        if(current_zone > 0) {
+                            skip_count += (int) zone.getAddress() - (int) zonelist.get(current_zone - 1).getAddress() - 1;
+                        }
+                        insertDevice(zone);
                     }
 
-                    System.out.println("Inserting: " + zone.getZoneinfo());
-
-                    switch (zone.getType()) {
-                        case "Photo Detector":
-                            //Duct detectors have spare
-                            if (Zone.checkTags(zone.getTag1(), new String[] { "duct" }))
-                            {
-                                zone.setDualInput(true);
-                                addDuctDetector();
-                            }
-                            else {
-                                addPhotoDetector();
-                            }
-                            
-                            break;
-                        case "Alarm Input":
-                            addAlarmInputMod();
-                            break;
-                        case "Non-latched Supervisory":
-                            addNonLatchedSupv();
-                            break;
-                        case "Latched Supervisory":
-                            addLatchedSupv();
-                            break;
-                        case "Heat Detector":
-                            addHeatDetector();
-                            break;
-                        case "Alarm Input Class A":
-                            addAlarmInputClassA();
-                            break;
-                        case "Relay":
-                            addRelay();
-                            break;
-                    }
+                    //Additional delay to ensure final device is added
+                    Thread.sleep(DELAY);
                 }
 
-                if(is_running) {
-                    enterZoneList(zone_list);
-                }
-
+                enterZoneList(zone_list);
+                
                 System.out.println("FX400 Entry Complete");
                 is_running = false;
+                System.exit(MAX_PRIORITY);
             }
             else {
                 System.out.println("FX400 entry did not run");
@@ -132,32 +80,11 @@ public class FX400 extends Thread{
         }
     }
 
-    protected void skipDevices() {
-        bot.pressKey(KeyEvent.VK_RIGHT, skip_count);
-    }
-
-    protected void open() {
-        try {
-            Thread.sleep(DELAY);
-            bot.keyPress(KeyEvent.VK_SHIFT);
-            bot.keyPress(KeyEvent.VK_F10);
-            bot.keyRelease(KeyEvent.VK_SHIFT);
-            bot.keyRelease(KeyEvent.VK_F10);
-            bot.delay(DELAY);
-
-            bot.pressKey(KeyEvent.VK_DOWN);
-            bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
-            
-        } catch (Exception e) {
-            System.err.println(e);
-        }
-    }
-    
     protected void addPhotoDetector() {
         open();
         bot.pressKey(KeyEvent.VK_TAB, 3);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -167,7 +94,7 @@ public class FX400 extends Thread{
         bot.pressKey(KeyEvent.VK_P, 5);
         bot.pressKey(KeyEvent.VK_TAB, 2);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -177,7 +104,7 @@ public class FX400 extends Thread{
         bot.pressKey(KeyEvent.VK_D, 2);
         bot.pressKey(KeyEvent.VK_TAB, 3);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -189,7 +116,7 @@ public class FX400 extends Thread{
         bot.pressKey(KeyEvent.VK_N);
         bot.pressKey(KeyEvent.VK_TAB);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -201,7 +128,7 @@ public class FX400 extends Thread{
         bot.pressKey(KeyEvent.VK_L);
         bot.pressKey(KeyEvent.VK_TAB);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -211,7 +138,7 @@ public class FX400 extends Thread{
         bot.pressKey(KeyEvent.VK_H,3);
         bot.pressKey(KeyEvent.VK_TAB,3);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -223,7 +150,7 @@ public class FX400 extends Thread{
         bot.pressKey(KeyEvent.VK_C, 1);
         bot.pressKey(KeyEvent.VK_TAB, 2);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -233,21 +160,43 @@ public class FX400 extends Thread{
         bot.pressKey(KeyEvent.VK_D);
         bot.pressKey(KeyEvent.VK_TAB, 2);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    protected void updateTags(Zone zone) {
-        try {
-            Thread.sleep(DELAY);
-            bot.pressKey(KeyEvent.VK_ENTER, 1, ENTER_DELAY_STRENGTH);
-            bot.pasteText(zone.getTag1());
-            bot.pressKey(KeyEvent.VK_ENTER, 1, ENTER_DELAY_STRENGTH);
-            bot.pasteText(zone.getTag2());
-            bot.pressKey(KeyEvent.VK_ENTER, 1, ENTER_DELAY_STRENGTH);
-        } catch (Exception e) {
-            e.printStackTrace();
+    protected void insertDevice(Zone zone){
+        System.out.println("Inserting: " + zone.getZoneinfo());
+        switch (zone.getType()) {
+            case "Photo Detector":
+                //Duct detectors have spare
+                if (Zone.checkTags(zone.getTag1(), new String[] { "duct" }))
+                {
+                    zone.setDualInput(true);
+                    addDuctDetector();
+                }
+                else {
+                    addPhotoDetector();
+                }
+                break;
+            case "Alarm Input":
+                addAlarmInputMod();
+                break;
+            case "Non-latched Supervisory":
+                addNonLatchedSupv();
+                break;
+            case "Latched Supervisory":
+                addLatchedSupv();
+                break;
+            case "Heat Detector":
+                addHeatDetector();
+                break;
+            case "Alarm Input Class A":
+                addAlarmInputClassA();
+                break;
+            case "Relay":
+                addRelay();
+                break;
         }
     }
 
@@ -280,29 +229,10 @@ public class FX400 extends Thread{
                     bot.pressKey(KeyEvent.VK_R);
                     break;
             }
-            bot.pressKey(KeyEvent.VK_ENTER, 1, ENTER_DELAY_STRENGTH);
+            bot.pressKey(KeyEvent.VK_ENTER, 1, DEVICE_UPDATE_DELAY_STRENGTH);
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    protected void updateRow(Zone zone) {
-        updateTags(zone);
-        updateType(zone);
-        
-        if(zone.isNS()) {
-            bot.pressKey(KeyEvent.VK_N, 1, ENTER_DELAY_STRENGTH);
-        }
-
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
-        
-        if(zone.isAR()) {
-            bot.pressKey(KeyEvent.VK_A);
-            bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
-        }
-
-        bot.pressKey(KeyEvent.VK_ESCAPE);
-        bot.pressKey(KeyEvent.VK_DOWN);
     }
 
     protected void updateZone(Zone zone) {
@@ -321,60 +251,6 @@ public class FX400 extends Thread{
         
     }
 
-    protected void enterZoneList(ZoneList zone_list) {
-        try {
-            bot.pressKey(KeyEvent.VK_HOME, 1, 1); 
-            for(Zone zone : zone_list.zones) {
-                System.out.println("Updating: " + zone.getZoneinfo());
-                if(!zone.getType().equals("Blank Device")) {
-                    updateZone(zone);
-                }
-            }
-            
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    protected void readSettings() {
-        try{
-            Ini ini;
-            File ini_file = new File(SETTINGS_FILE);
-
-            //Create settings file if doesn't exist
-            if(!ini_file.exists()) {
-                ini_file.createNewFile();
-            }
-
-            ini = new Ini(ini_file);
-
-            //Add settings if doesn't exist - only checks if ini section exists, not keys
-            if(!ini.containsKey("Key Delay")) {
-                ini.add("Key Delay");
-                ini.put("Key Delay", "delayTime", DELAY);
-                ini.put("Key Delay", "enterDelayStrength", ENTER_DELAY_STRENGTH);
-            }
-
-            if(!ini.containsKey("Options")) {
-                ini.add("Options");
-                ini.put("Options", "bypassPause", BYPASS_PAUSE);
-                ini.put("Options", "ignoreTagLength", IGNORE_TAG_LENGTH);
-            }
-
-            ini.store(ini_file);
-
-            //Read settings
-            DELAY = ini.get("Key Delay", "delayTime", int.class);
-            ENTER_DELAY_STRENGTH = ini.get("Key Delay", "enterDelayStrength", double.class);
-            BYPASS_PAUSE = ini.get("Options", "bypassPause", boolean.class);
-            IGNORE_TAG_LENGTH = ini.get("Options", "ignoreTagLength", boolean.class);
-            
-        }catch(Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    //Check each zone to see if it meets the panel's requirements. Returns True if one incorrect device found
     protected boolean validateZones(ZoneList zone_list) {
         boolean invalid_found = false;
         boolean current_zone_valid;
@@ -470,22 +346,5 @@ public class FX400 extends Thread{
             }
         }
         return invalid_found;
-    }
-
-    public void setIsRunning(boolean status) {
-        is_running = status;
-
-        //Set bot to null to prevent further inputs
-        if(!is_running) {
-            bot = null;
-        }
-    }
-
-    public void setIsPaused(boolean status) {
-        is_paused = status;
-    }
-
-    public boolean getIsPaused() {
-        return is_paused;
     }
 }

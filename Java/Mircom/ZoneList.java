@@ -2,17 +2,21 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Scanner;
 
-class ZoneList {
+public class ZoneList {
     private String FILENAME = "assets/temp_zones.csv";
 
-    ArrayList<Zone> zones = new ArrayList<Zone>();
-    boolean CONTAINS_AR = false;
-    boolean CONTAINS_DUAL_HEAT = false;
-    int AP_START = 1;
+    public ArrayList<Zone> zones = new ArrayList<Zone>();
+    public boolean CONTAINS_AR = false;
+    public boolean CONTAINS_DUAL_HEAT = false;
+    public int AP_START = 1;
 
     public ZoneList() {
 
     } // end constructor
+
+    public ZoneList(String filename) {
+        FILENAME = filename;
+    }
 
     public void addZone(double address, String tag1, String tag2) {
         if (!isSubZone(address)) {
@@ -65,7 +69,7 @@ class ZoneList {
         while (temp_scan.hasNext()) {
             content = temp_scan.nextLine();
             parts = content.split("\\,");
-
+            //System.out.println(parts[0] + " , " + parts[1] + ", " + parts[2]);
             this.addZone(Double.parseDouble(parts[0]), parts[1], parts[2]);
 
             Zone last_zone = zones.getLast();

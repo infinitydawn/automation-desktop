@@ -1,4 +1,4 @@
-class Zone {
+public class Zone {
     private double address;
     private subZone subAddress = null;
     private String type = "";
@@ -20,6 +20,7 @@ class Zone {
     }
 
     public void addSubZone(double subAddress, String tag1, String tag2) {
+        this.isDualInput = true;
         this.subAddress = new subZone(subAddress, tag1, tag2);
     }
 

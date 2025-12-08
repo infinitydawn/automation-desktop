@@ -2,7 +2,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.awt.event.KeyEvent;
 
-public class FX2000 extends FX400{
+public class FX2000 extends ConfigBot{
 
     public void run() {
         System.out.println("Starting FX2000 Data Entry");
@@ -13,6 +13,7 @@ public class FX2000 extends FX400{
             ZoneList zone_list = new ZoneList();
             zone_list.readFile();
             zone_list.displayZoneList();
+            organizeZones(zone_list);
 
             if(zone_list.CONTAINS_AR) {
                 is_paused = true;
@@ -27,7 +28,6 @@ public class FX2000 extends FX400{
             }
 
             if(is_running) {
-
                 if(is_paused) {
                     if(BYPASS_PAUSE) {
                         is_paused = false;
@@ -45,66 +45,44 @@ public class FX2000 extends FX400{
                     Thread.sleep(DELAY); //Wait until start button pressed again
                 }
 
-                ArrayList<Zone> zones = zone_list.zones;
-                Zone zone = zones.get(0);
-                skip_count = (int) zone.getAddress() - 1;
+                if(!SKIP_INSERT_DEVICES) {
+                    Zone zone;
 
-                //Reduce skip count if first address in zone list is ipt/relay
-                if(!zone.isSensor()) {
-                    skip_count -= 100;
-                }
+                    if(!sensors.isEmpty()) {
+                        zone = sensors.get(0);
+                        skip_count = (int) zone.getAddress() - 1;
 
-                for(int current_zone = 0; current_zone < zones.size() && is_running; current_zone++) {
-
-                    zone = zones.get(current_zone);
-                    
-                    //Get difference of current and previous address, then -1
-                    if(current_zone > 0) {
-                        if(zone.isSensor()) {
-                            skip_count += (int) zone.getAddress() - (int) zones.get(current_zone - 1).getAddress() - 1;
-                        }
-                        else {  
-                            //Assuming zone list is sorted, reset skip count once ipt/relay devices are reached
-                            if(zones.get(current_zone - 1).isSensor() && !zone.isSensor()) {
-                                skip_count = (int) zone.getAddress() - 1 - 100;
-                            } 
-                            else {
-                                skip_count += ((int) zone.getAddress() - 100) - ((int) zones.get(current_zone - 1).getAddress() - 100) - 1;
+                        for(int current_zone = 0; current_zone < sensors.size() && is_running; current_zone++) {
+                            zone = sensors.get(current_zone);
+                            if(current_zone > 0) {
+                                skip_count += (int) zone.getAddress() - (int) sensors.get(current_zone - 1).getAddress() - 1;
                             }
+                            insertDevice(zone);
                         }
                     }
 
-                    System.out.println("Inserting: " + zone.getZoneinfo());
+                    if(!modules.isEmpty()) {
+                        zone = modules.get(0);
+                        skip_count = (int) zone.getAddress() - 1 - 100;
 
-                    switch (zone.getType()) {
-                        case "Photo Detector":
-                            addPhotoDetector();
-                            break;
-                        case "Alarm Input":
-                        case "Alarm Input Class A":
-                            addAlarmInputMod();
-                            break;
-                        case "Non-latched Supervisory":
-                            addNonLatchedSupv();
-                            break;
-                        case "Latched Supervisory":
-                            addLatchedSupv();
-                            break;
-                        case "Heat Detector":
-                            addHeatDetector();
-                            break;
-                        case "Relay":
-                            addRelay();
-                            break;
+                        for(int current_zone = 0; current_zone < modules.size() && is_running; current_zone++) {
+                            zone = modules.get(current_zone);
+                            if(current_zone > 0) {
+                                skip_count += ((int) zone.getAddress() - 100) - ((int) modules.get(current_zone - 1).getAddress() - 100) - 1;
+                            }
+                            insertDevice(zone);
+                        }
                     }
+
+                    //Additional delay to ensure final device is added
+                    Thread.sleep(DELAY);
                 }
 
-                if(is_running) {
-                    enterZoneList(zone_list);
-                }
+                enterZoneList(zone_list);
 
                 System.out.println("FX2000 Entry Complete");
                 is_running = false;
+                System.exit(MAX_PRIORITY);
             }
             else {
                 System.out.println("FX2000 Entry did not run");
@@ -119,7 +97,7 @@ public class FX2000 extends FX400{
         open();
         bot.pressKey(KeyEvent.VK_TAB, 2);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -129,7 +107,7 @@ public class FX2000 extends FX400{
         bot.pressKey(KeyEvent.VK_I);
         bot.pressKey(KeyEvent.VK_TAB, 2);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -141,7 +119,7 @@ public class FX2000 extends FX400{
         bot.pressKey(KeyEvent.VK_N, 2);
         bot.pressKey(KeyEvent.VK_TAB);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -153,7 +131,7 @@ public class FX2000 extends FX400{
         bot.pressKey(KeyEvent.VK_L);
         bot.pressKey(KeyEvent.VK_TAB);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -163,7 +141,7 @@ public class FX2000 extends FX400{
         bot.pressKey(KeyEvent.VK_H);
         bot.pressKey(KeyEvent.VK_TAB,2);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -173,25 +151,55 @@ public class FX2000 extends FX400{
         bot.pressKey(KeyEvent.VK_R);
         bot.pressKey(KeyEvent.VK_TAB, 2);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
 
+    protected void insertDevice(Zone zone) { 
+        System.out.println("Inserting: " + zone.getZoneinfo());
+
+        switch (zone.getType()) {
+            case "Photo Detector":
+                addPhotoDetector();
+                break;
+            case "Alarm Input":
+            case "Alarm Input Class A":
+                addAlarmInputMod();
+                break;
+            case "Non-latched Supervisory":
+                addNonLatchedSupv();
+                break;
+            case "Latched Supervisory":
+                addLatchedSupv();
+                break;
+            case "Heat Detector":
+                addHeatDetector();
+                break;
+            case "Relay":
+                addRelay();
+                break;
+        }
+    }
+
+    //Not used
+    protected void updateType(Zone zone) {};
+
+    @Override
     protected void updateRow(Zone zone) {
         updateTags(zone);
 
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH); //make up for not updating Type
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_UPDATE_DELAY_STRENGTH); //make up for not updating Type
         
         if(zone.isNS()) {
-            bot.pressKey(KeyEvent.VK_N, 1, ENTER_DELAY_STRENGTH);
+            bot.pressKey(KeyEvent.VK_N, 1, DEVICE_UPDATE_DELAY_STRENGTH);
         }
 
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_UPDATE_DELAY_STRENGTH);
 
         if(zone.isAR()) {
             bot.pressKey(KeyEvent.VK_A);
-            bot.pressKey(KeyEvent.VK_ENTER, 1 , ENTER_DELAY_STRENGTH);
+            bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_UPDATE_DELAY_STRENGTH);
         }
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_DOWN);
