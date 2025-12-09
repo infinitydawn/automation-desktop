@@ -1,0 +1,9 @@
+pypdf
+pdf2image
+pillow
+requests
+openai
+dotenv
+pandas
+# for pdf2image to work you will need to install poppler https://github.com/oschwartz10612/poppler-windows/releases/  & https://www.geeksforgeeks.org/python/convert-pdf-to-image-using-python/
+# I ended up having to download conda-forge and install poppler from there. Then I need to run "conda activate" in cmd as admin before I can execute the script
