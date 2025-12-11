@@ -9,13 +9,19 @@ import java.util.ArrayList;
 
 public class FSAEInputZoneBot extends FSAEBot{
 
+    private int NODE = 1; // The CPU that the input zones belong to
+    private String NORMAL_STRING = "Normal ";
+    private String LOW_STRING = "Low Heat ";
+    private String HIGH_STRING = "High Heat ";
+    private String SMOKE_STRING = "Smoke Det ";
+
     private String EQUATION = "NOT ANY 1 OF (  %n" +
-                    " 01-00-**-IZ-%s:A ,  %n" +
-                    " 01-00-**-IZ-%s:A ,  %n" +
+                    " 0%s-00-**-IZ-%s:A ,  %n" +
+                    " 0%s-00-**-IZ-%s:A ,  %n" +
                     "  %n" +
                     "  %n" +
-                    " 01-00-**-IZ-%s:F ,  %n" +
-                    " 01-00-**-IZ-%s:F ) ";
+                    " 0%s-00-**-IZ-%s:F ,  %n" +
+                    " 0%s-00-**-IZ-%s:F ) ";
     private String EQUATION_NAME = "NORMAL %s";
     private String EQUATION_COMMENT = "NORMAL %s - Dual Heat Not In Alarm Or Trouble";
 
@@ -50,10 +56,10 @@ public class FSAEInputZoneBot extends FSAEBot{
 
                     for (String floor : floors) {
                         System.out.println("Updating: " + floor);
-                        updateZone("Normal " + floor , KeyEvent.VK_M);
-                        updateZone("Low Heat " + floor, KeyEvent.VK_S);
-                        updateZone("High Heat " + floor, KeyEvent.VK_A);
-                        updateZone("Smoke Det " + floor, KeyEvent.VK_A);
+                        updateZone(NORMAL_STRING + floor , KeyEvent.VK_M);
+                        updateZone(LOW_STRING + floor, KeyEvent.VK_S);
+                        updateZone(HIGH_STRING + floor, KeyEvent.VK_A);
+                        updateZone(SMOKE_STRING + floor, KeyEvent.VK_A);
                     }
 
                     setIsRunning(false);
@@ -129,8 +135,10 @@ public class FSAEInputZoneBot extends FSAEBot{
 
                 bot.clearText();
                 bot.pasteText(String.format(EQUATION, 
-                    final_input_zone1, final_input_zone2,
-                    final_input_zone1, final_input_zone2));
+                    "" + NODE, final_input_zone1,
+                    "" + NODE, final_input_zone2,
+                    "" + NODE, final_input_zone1,
+                    "" + NODE, final_input_zone2));
                 bot.pressKey(KeyEvent.VK_TAB);
 
                 bot.clearText();
