@@ -78,6 +78,10 @@ public class FX2000 extends ConfigBot{
                     Thread.sleep(DELAY);
                 }
 
+                if(SKIP_INSERT_DEVICES) {
+                    System.out.println("Skipping device insertion.");
+                }
+                
                 enterZoneList(zone_list);
 
                 System.out.println("FX2000 Entry Complete");
