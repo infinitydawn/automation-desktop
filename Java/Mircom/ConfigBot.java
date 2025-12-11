@@ -180,6 +180,7 @@ public abstract class ConfigBot extends Thread {
             DEVICE_UPDATE_DELAY_STRENGTH = ini.get("Key Delay", "deviceUpdateDelayStrength", double.class);
             BYPASS_PAUSE = ini.get("Options", "bypassPause", boolean.class);
             IGNORE_TAG_LENGTH = ini.get("Options", "ignoreTagLength", boolean.class);
+            SKIP_INSERT_DEVICES = ini.get("Options", "skipInsertDevices", boolean.class);
             
         }catch(Exception e) {
             e.printStackTrace();
