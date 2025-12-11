@@ -67,6 +67,28 @@ public class FSAEInputZoneBot extends FSAEBot{
                     System.exit(MAX_PRIORITY);
                 }
             } else {
+                //Print out the zone addresses for the FSAE Dual Heat zone logic (contains all dual heats involved)
+                String lowheat;
+                String highheat;
+                System.out.println("Input Zone addresses for the FSAE Dual Heat Input Zone logic:");
+                String zone_string = "0%s-00-**-IZ-%s:F";
+                int current_index = 0;
+
+                for(String floor : floors) {
+                    lowheat = calcLowHeat(current_index);
+                    highheat = calcHighHeat(current_index);
+
+                    System.out.print(String.format(zone_string, NODE, lowheat) + ", " +
+                    String.format(zone_string, NODE, highheat));                   
+
+                    if(!floor.equals(floors.getLast())) {
+                        System.out.println(",");
+                    }
+                    current_index++;
+                }
+
+                System.out.println("");
+
                 //Press the key to go to next floor for logic
                 System.out.println("Begin logic updates. Use Win + V to go through paste history if an entry was skipped.");
 
@@ -111,34 +133,18 @@ public class FSAEInputZoneBot extends FSAEBot{
         if(floors != null && current_zone_index < floors.size()) {
             if(!is_paused) {
                 setIsPaused(true);
+
                 System.out.println("Setting logic for " + floors.get(current_zone_index));
 
-                //Insert 0s to reach 3 digits
-                //+1 since it intends to use the Low Heat
-                String final_input_zone1 = CURRENT_ZONE_ADDRESS + current_zone_index + 1 + ""; 
-                if(CURRENT_ZONE_ADDRESS + current_zone_index < 99) {
-                    final_input_zone1 = "0" + final_input_zone1;
-
-                    if(CURRENT_ZONE_ADDRESS + current_zone_index < 9) {
-                        final_input_zone1 = "0" + final_input_zone1;
-                    }
-                }
+                String lowheat = calcLowHeat(current_zone_index);
+                String highheat = calcHighHeat(current_zone_index);
                 
-                //+2 for High Heat
-                String final_input_zone2 = CURRENT_ZONE_ADDRESS + current_zone_index + 2 + "";
-                if(CURRENT_ZONE_ADDRESS + current_zone_index + 1 < 99) {
-                    final_input_zone2 = "0" + final_input_zone2;
-                    if(CURRENT_ZONE_ADDRESS + current_zone_index < 9) {
-                        final_input_zone2 = "0" + final_input_zone2;
-                    }
-                }
-
                 bot.clearText();
                 bot.pasteText(String.format(EQUATION, 
-                    "" + NODE, final_input_zone1,
-                    "" + NODE, final_input_zone2,
-                    "" + NODE, final_input_zone1,
-                    "" + NODE, final_input_zone2));
+                    "" + NODE, lowheat,
+                    "" + NODE, highheat,
+                    "" + NODE, lowheat,
+                    "" + NODE, highheat));
                 bot.pressKey(KeyEvent.VK_TAB);
 
                 bot.clearText();
@@ -166,6 +172,34 @@ public class FSAEInputZoneBot extends FSAEBot{
         } else {
             setIsRunning(false);
         }
+    }
+
+    public String calcLowHeat(int current_index) {
+        //Insert 0s to reach 3 digits
+        //+1 since it intends to use the Low Heat
+        String lowheat = CURRENT_ZONE_ADDRESS + current_index + 1 + ""; 
+        if(CURRENT_ZONE_ADDRESS + current_index < 99) {
+            lowheat = "0" + lowheat;
+
+            if(CURRENT_ZONE_ADDRESS + current_index < 9) {
+                lowheat = "0" + lowheat;
+            }
+        }
+
+        return lowheat;
+    }
+
+    public String calcHighHeat(int current_index) {
+        //+2 for High Heat
+        String highheat = CURRENT_ZONE_ADDRESS + current_index + 2 + "";
+        if(CURRENT_ZONE_ADDRESS + current_index + 1 < 99) {
+            highheat = "0" + highheat;
+            if(CURRENT_ZONE_ADDRESS + current_index < 9) {
+                highheat = "0" + highheat;
+            }
+        }
+
+        return highheat;
     }
 
     public void setIsDataEntryMode(boolean status) {
