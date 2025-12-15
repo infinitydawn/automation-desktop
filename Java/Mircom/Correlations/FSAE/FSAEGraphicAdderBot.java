@@ -11,7 +11,7 @@ public class FSAEGraphicAdderBot extends FSAEBot{
     //Settings
 
     //The first empty index to start from - meant for when there are already used zones prior to bot entry
-    private int GRAPHIC_INDEX; //Default 0 - this is the first index in the configurator
+    private int GRAPHIC_INDEX = 0; //Default 0 - this is the first index in the configurator
 
     //Tag names for each zone. Change these if they need to be shorter
     private String NORMAL_STRING = "Normal "; //Default "Normal "
