@@ -9,11 +9,16 @@ import java.util.ArrayList;
 
 public class FSAEInputZoneBot extends FSAEBot{
 
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //Settings
+
     private int NODE = 1; // The CPU that the input zones belong to
-    private String NORMAL_STRING = "Normal ";
-    private String LOW_STRING = "Low Heat ";
-    private String HIGH_STRING = "High Heat ";
-    private String SMOKE_STRING = "Smoke Det ";
+
+    //Tag names for each zone. Change these if they need to be shorter
+    private String NORMAL_STRING = "Normal "; //Default "Normal "
+    private String LOW_STRING = "Low Heat "; //Default "Low Heat "
+    private String HIGH_STRING = "High Heat "; //Default "High Heat "
+    private String SMOKE_STRING = "Smoke Det "; //Default "Smoke Det "
 
     private String EQUATION = "NOT ANY 1 OF (  %n" +
                     " 0%s-00-**-IZ-%s:A ,  %n" +
@@ -24,6 +29,8 @@ public class FSAEInputZoneBot extends FSAEBot{
                     " 0%s-00-**-IZ-%s:F ) ";
     private String EQUATION_NAME = "NORMAL %s";
     private String EQUATION_COMMENT = "NORMAL %s - Dual Heat Not In Alarm Or Trouble";
+
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     private int current_zone_index = 0;
     private boolean is_data_entry_mode = false;
