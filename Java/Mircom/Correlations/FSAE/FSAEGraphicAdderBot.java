@@ -7,12 +7,26 @@ import java.util.ArrayList;
 
 public class FSAEGraphicAdderBot extends FSAEBot{
 
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //Settings
+
+    //The first empty index to start from - meant for when there are already used zones prior to bot entry
+    private int START_INDEX = 2; //Default 0 - this is the first index in the configurator
+
+    //Tag names for each zone. Change these if they need to be shorter
+    private String NORMAL_STRING = "Normal "; //Default "Normal "
+    private String LOW_STRING = "Low Heat "; //Default "Low Heat "
+    private String HIGH_STRING = "High Heat "; //Default "High Heat "
+    private String SMOKE_STRING = "Smoke Det "; //Default "Smoke Det "
+
     //Override the default settings since it is not as heavy of a task
     private int DELAY = 200;
     private double SKIP_DELAY_STRENGTH = .4; // Default .4. For Full mode. The delay time for scrolling through zones.
 
     private int graphic_index; //the index of the current graphic adder that will be updated
     private int overall_index;
+
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     //UNUSED - update Tags only. Unfortunately changing the Assignment will reset the Tag, so this wouldn't be very useful.
     private boolean TAG_ONLY_MODE = false; //Default False. 
@@ -31,27 +45,27 @@ public class FSAEGraphicAdderBot extends FSAEBot{
             setIsRunning(true);
             setIsPaused(false);
 
-            graphic_index = 0;
+            graphic_index = START_INDEX;
             overall_index = 0;
 
             for (String floor : floors) {
                 System.out.println("Updating: " + floor + " Normal");
-                updateZone("Normal " + floor , KeyEvent.VK_M);
+                updateZone(NORMAL_STRING + floor , KeyEvent.VK_M);
             }
 
             for (String floor : floors) {
                 System.out.println("Updating: " + floor + " Low Heat");
-                updateZone("Low Heat " + floor , KeyEvent.VK_S);
+                updateZone(LOW_STRING + floor , KeyEvent.VK_S);
             }
 
             for (String floor : floors) {
                 System.out.println("Updating: " + floor + " High Heat");
-                updateZone("High Heat " + floor , KeyEvent.VK_A);
+                updateZone(HIGH_STRING + floor , KeyEvent.VK_A);
             }
 
             for (String floor : floors) {
                 System.out.println("Updating: " + floor + " Smoke Det");
-                updateZone("Smoke Det " + floor , KeyEvent.VK_A);
+                updateZone(SMOKE_STRING + floor , KeyEvent.VK_A);
             }
 
             setIsRunning(false);
@@ -93,6 +107,7 @@ public class FSAEGraphicAdderBot extends FSAEBot{
                 System.out.println("Entry paused. Move to next graphic adder, then press F4 to continue.");
             }
             else {
+                //Go down only if there is something to enter
                 if(overall_index < (floors.size() * 4) - 1) {
                     bot.pressKey(KeyEvent.VK_DOWN, 2 + graphic_index, SKIP_DELAY_STRENGTH);
                 }
