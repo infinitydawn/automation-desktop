@@ -12,7 +12,8 @@ public class FSAEInputZoneBot extends FSAEBot{
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //Settings
 
-    private int NODE = 1; // The CPU that the input zones belong to
+    private int NODE = 1; // Default 1. The CPU that the input zones belong to
+    private int LOOP = 0; // Default 0. The loop the input zone belongs to
 
     //Tag names for each zone. Change these if they need to be shorter
     private String NORMAL_STRING = "Normal "; //Default "Normal "
@@ -21,12 +22,12 @@ public class FSAEInputZoneBot extends FSAEBot{
     private String SMOKE_STRING = "Smoke Det "; //Default "Smoke Det "
 
     private String EQUATION = "NOT ANY 1 OF (  %n" +
-                    " 0%s-00-**-IZ-%s:A ,  %n" +
-                    " 0%s-00-**-IZ-%s:A ,  %n" +
+                    " 0%s-0%s-**-IZ-%s:A ,  %n" +
+                    " 0%s-0%s-**-IZ-%s:A ,  %n" +
                     "  %n" +
                     "  %n" +
-                    " 0%s-00-**-IZ-%s:F ,  %n" +
-                    " 0%s-00-**-IZ-%s:F ) ";
+                    " 0%s-0%s-**-IZ-%s:F ,  %n" +
+                    " 0%s-0%s-**-IZ-%s:F ) ";
     private String EQUATION_NAME = "NORMAL %s";
     private String EQUATION_COMMENT = "NORMAL %s - Dual Heat Not In Alarm Or Trouble";
 
@@ -78,15 +79,15 @@ public class FSAEInputZoneBot extends FSAEBot{
                 String lowheat;
                 String highheat;
                 System.out.println("Input Zone addresses for the FSAE Dual Heat Input Zone logic:");
-                String zone_string = "0%s-00-**-IZ-%s:F";
+                String zone_string = "0%s-0%s-**-IZ-%s:F";
                 int current_index = 0;
 
                 for(String floor : floors) {
                     lowheat = calcLowHeat(current_index);
                     highheat = calcHighHeat(current_index);
 
-                    System.out.print(String.format(zone_string, NODE, lowheat) + ", " +
-                    String.format(zone_string, NODE, highheat));                   
+                    System.out.print(String.format(zone_string, NODE, LOOP, lowheat) + ", " +
+                    String.format(zone_string, NODE, LOOP, highheat));                   
 
                     if(!floor.equals(floors.getLast())) {
                         System.out.println(",");
@@ -148,10 +149,10 @@ public class FSAEInputZoneBot extends FSAEBot{
                 
                 bot.clearText();
                 bot.pasteText(String.format(EQUATION, 
-                    "" + NODE, lowheat,
-                    "" + NODE, highheat,
-                    "" + NODE, lowheat,
-                    "" + NODE, highheat));
+                    "" + NODE, "" + LOOP, lowheat,
+                    "" + NODE, "" + LOOP, highheat,
+                    "" + NODE, "" + LOOP, lowheat,
+                    "" + NODE, "" + LOOP, highheat));
                 bot.pressKey(KeyEvent.VK_TAB);
 
                 bot.clearText();
