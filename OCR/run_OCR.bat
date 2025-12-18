@@ -1,1 +1,0 @@
-python convert_pdf_to_jpg.py
