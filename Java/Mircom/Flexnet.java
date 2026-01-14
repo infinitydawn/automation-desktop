@@ -105,6 +105,10 @@ public class Flexnet extends ConfigBot{
                     Thread.sleep(DELAY);
                 }                        
 
+                if(SKIP_INSERT_DEVICES) {
+                    System.out.println("Skipping device insertion.");
+                }
+                
                 enterZoneList(zone_list);
 
                 System.out.println("Flexnet Entry Complete");
