@@ -92,7 +92,7 @@ public class FSAEInputZoneBot extends FSAEBot{
                     if(!floor.equals(floors.getLast())) {
                         System.out.println(",");
                     }
-                    current_index++;
+                    current_index += 4;
                 }
 
                 System.out.println("");
