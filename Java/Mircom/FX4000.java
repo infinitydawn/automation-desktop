@@ -19,7 +19,7 @@ public class FX4000 extends ConfigBot{
             organizeZones(zone_list);
             AP_START = zone_list.AP_START;
 
-            if(zone_list.CONTAINS_AR || AP_START > 1 || zone_list.CONTAINS_DUAL_HEAT) {
+            if(zone_list.CONTAINS_AR || AP_START > 1) {
                 is_paused = true;
             }
 
@@ -283,9 +283,7 @@ public class FX4000 extends ConfigBot{
        bot.pressKey(KeyEvent.VK_H, 9);
         bot.pressKey(KeyEvent.VK_TAB, 4);
         skipDevices();
-        System.out.println("a");
         bot.pressKey(KeyEvent.VK_ENTER, 1 , Math.max(DEVICE_INSERT_DELAY_STRENGTH, 3)); //needs extra time for three address devices
-        System.out.println("b");
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -405,7 +403,9 @@ public class FX4000 extends ConfigBot{
     @Override
     protected void enterZoneList(ZoneList zone_list) {
         try {
-            bot.pressKey(KeyEvent.VK_HOME, 1, 1); 
+            if(!SKIP_INSERT_DEVICES) {
+                bot.pressKey(KeyEvent.VK_HOME, 1, 1); 
+            }
 
             //Update phones first since they go at the very top
             for(Zone zone : phones) {
