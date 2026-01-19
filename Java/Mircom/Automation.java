@@ -51,7 +51,8 @@ public class Automation implements NativeKeyListener{
             */
         }
 
-        if (e.getKeyCode() == NativeKeyEvent.VC_F2 || e.getKeyCode() == NativeKeyEvent.VC_F3 || e.getKeyCode() == NativeKeyEvent.VC_F4) {
+        if (e.getKeyCode() == NativeKeyEvent.VC_F2 || e.getKeyCode() == NativeKeyEvent.VC_F3 || e.getKeyCode() == NativeKeyEvent.VC_F4 ||
+             e.getKeyCode() == NativeKeyEvent.VC_F5) {
             try {
                 //Start a new thread only if it doesn't exist or is no longer alive
                 if(bot == null || (bot != null && !bot.isAlive())) {
@@ -64,6 +65,9 @@ public class Automation implements NativeKeyListener{
                             break;
                         case NativeKeyEvent.VC_F4: //Flexnet will want higher (2+ enter delay strength)
                             bot = new Flexnet();
+                            break;
+                        case NativeKeyEvent.VC_F5: //Flexnet will want higher (2+ enter delay strength)
+                            bot = new FX4000();
                             break;
                     }  
                 }
