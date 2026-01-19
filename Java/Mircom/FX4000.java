@@ -8,7 +8,7 @@ public class FX4000 extends ConfigBot{
     private int AP_START = 1;
 
     public void run() {
-        System.out.println("Starting FX6000 Data Entry");
+        System.out.println("Starting FX4000 Data Entry");
         try{
             is_running = true;
             is_paused = false;
@@ -62,6 +62,7 @@ public class FX4000 extends ConfigBot{
                 if(!SKIP_INSERT_DEVICES) {
                     Zone zone;
 
+                    /*
                     //Add phones first if they exist
                     if(!phones.isEmpty()) {
                         zone = phones.get(0);
@@ -74,6 +75,7 @@ public class FX4000 extends ConfigBot{
                             insertDevice(zone);
                         }
                     }
+                    */
 
                     if(!sensors.isEmpty()) {
                         zone = sensors.get(0);
@@ -124,13 +126,11 @@ public class FX4000 extends ConfigBot{
         }
     }
     
-    //fix thuis
+    //smoke
     protected void addPhotoDetector() {
         open();
-        bot.pressKey(KeyEvent.VK_P);
-        bot.pressKey(KeyEvent.VK_TAB, 3);
-        bot.pressKey(KeyEvent.VK_N);
-        bot.pressKey(KeyEvent.VK_TAB, 2);
+        bot.pressKey(KeyEvent.VK_UP);
+        bot.pressKey(KeyEvent.VK_TAB, 4);
         skipDevices();
         bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
@@ -254,35 +254,42 @@ public class FX4000 extends ConfigBot{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    //fix this
+    //heat
     protected void addHeatDetector() {
         open();
+        /*
         if(AP_START > 1) {
             bot.pressKey(KeyEvent.VK_H, 2);
         }
         else {
             bot.pressKey(KeyEvent.VK_H);
         }
-        
-        bot.pressKey(KeyEvent.VK_TAB, 5);
+        */
+       bot.pressKey(KeyEvent.VK_H, 2);
+        bot.pressKey(KeyEvent.VK_TAB, 4);
         skipDevices();
         bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    //fix this
+    //dual heat
     protected void addDualHeatSmokeDetector() {
         open();
+        /*
         if(AP_START > 1) {
             bot.pressKey(KeyEvent.VK_D, 6);
         }
         else {
             bot.pressKey(KeyEvent.VK_D, 4);
         }
-        bot.pressKey(KeyEvent.VK_TAB, 5);
+        */
+       bot.pressKey(KeyEvent.VK_H, 9);
+        bot.pressKey(KeyEvent.VK_TAB, 4);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , Math.max(DEVICE_INSERT_DELAY_STRENGTH, 2)); //needs extra time for three address devices
+        System.out.println("a");
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , Math.max(DEVICE_INSERT_DELAY_STRENGTH, 3)); //needs extra time for three address devices
+        System.out.println("b");
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
@@ -410,20 +417,20 @@ public class FX4000 extends ConfigBot{
                 updateZone(zone);
             }
 
-            for(Zone zone : sensors) {
-                if(!zone.getType().equals("Blank Device")) {
-                    System.out.println("Updating: " + zone.getZoneinfo());
-                    updateZone(zone);
-                }
-            }
-
+            //Modules go first in FX4000
             for(Zone zone : modules) {
                 if(!zone.getType().equals("Blank Device")) {
                     System.out.println("Updating: " + zone.getZoneinfo());
                     updateZone(zone);
                 }
             }
-            
+
+            for(Zone zone : sensors) {
+                if(!zone.getType().equals("Blank Device")) {
+                    System.out.println("Updating: " + zone.getZoneinfo());
+                    updateZone(zone);
+                }
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
