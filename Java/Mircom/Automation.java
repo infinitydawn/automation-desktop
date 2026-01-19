@@ -63,10 +63,10 @@ public class Automation implements NativeKeyListener{
                         case NativeKeyEvent.VC_F3:
                             bot = new FX2000();
                             break;
-                        case NativeKeyEvent.VC_F4: //Flexnet will want higher (2+ enter delay strength)
+                        case NativeKeyEvent.VC_F4:
                             bot = new Flexnet();
                             break;
-                        case NativeKeyEvent.VC_F5: //Flexnet will want higher (2+ enter delay strength)
+                        case NativeKeyEvent.VC_F5:
                             bot = new FX4000();
                             break;
                     }  
