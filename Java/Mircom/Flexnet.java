@@ -380,8 +380,10 @@ public class Flexnet extends ConfigBot{
     @Override
     protected void enterZoneList(ZoneList zone_list) {
         try {
-            bot.pressKey(KeyEvent.VK_HOME, 1, 1); 
-
+            if(!SKIP_INSERT_DEVICES) {
+                bot.pressKey(KeyEvent.VK_HOME, 1, 1); 
+            }
+            
             //Update phones first since they go at the very top
             for(Zone zone : phones) {
                 System.out.println("Updating: " + zone.getZoneinfo());
