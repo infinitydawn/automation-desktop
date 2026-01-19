@@ -38,10 +38,6 @@ public class FX4000 extends ConfigBot{
                     }else{
                         System.out.println("The following settings need to be enabled for data entry:");
 
-                        if (zone_list.CONTAINS_DUAL_HEAT) {
-                            System.out.println("100F Dual Heat detector enabled");
-                        }
-
                         if(zone_list.CONTAINS_AR) {
                             System.out.println("Auxiliary Reset in Base Control/Annun. Idx 3");
                         }
@@ -50,7 +46,7 @@ public class FX4000 extends ConfigBot{
                             System.out.println("AP Start to " + AP_START);
                         }
 
-                        System.out.println("Please make necessary changes and press F4 to continue.");
+                        System.out.println("Please make necessary changes and press F5 to continue.");
                         System.out.println("----------------------------------------------------------------");
                     }
                 }
@@ -113,12 +109,12 @@ public class FX4000 extends ConfigBot{
                 
                 enterZoneList(zone_list);
 
-                System.out.println("FX6000 Entry Complete");
+                System.out.println("FX4000 Entry Complete");
                 is_running = false;
                 System.exit(MAX_PRIORITY);
             }
             else {
-                System.out.println("FX6000 entry did not run");
+                System.out.println("FX4000 entry did not run");
             }
         }
         catch(Exception e) {

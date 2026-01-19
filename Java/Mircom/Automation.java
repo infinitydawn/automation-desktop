@@ -23,7 +23,7 @@ public class Automation implements NativeKeyListener{
 
         GlobalScreen.addNativeKeyListener(new Automation());
 
-        System.out.println("Program ready. Press F2 to start FX400, F3 to start FX2000, F4 to start Flexnet, ` to Exit anytime.");
+        System.out.println("Program ready. Press F2 to start FX400, F3 to start FX2000, F4 to start Flexnet, F5 to start FX4000, ` to Exit anytime.");
     }
 
     public void nativeKeyPressed(NativeKeyEvent e) {
