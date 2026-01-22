@@ -38,12 +38,6 @@ public class Flexnet extends ConfigBot{
                     }else{
                         System.out.println("The following settings need to be enabled for data entry:");
 
-                        /*
-                        if(zone_list.) {
-                            System.out.println("Duplicates detected:");
-                        }
-                            */
-
                         if (zone_list.CONTAINS_DUAL_HEAT) {
                             System.out.println("100F Dual Heat detector enabled");
                         }
@@ -53,7 +47,7 @@ public class Flexnet extends ConfigBot{
                         }
 
                         if(zone_list.CONTAINS_SPEAKERS) {
-                            System.out.println("Digital Audio and Digital Phone enabled.");
+                            System.out.println("Digital Audio and Digital Phone enabled");
                         }
 
                         if (zone_list.AP_START > 1) {
@@ -500,6 +494,14 @@ public class Flexnet extends ConfigBot{
 
         for(Zone z : modules) {
             modules_addresses.add((int) z.getAddress());
+        }
+
+        if(!zone_list.DUPLICATES.isEmpty()) {
+            invalid_found = true;
+            System.out.println("Duplicates detected:");
+            for(String s : zone_list.DUPLICATES) {
+                System.out.println(s);
+            }
         }
 
         for(Zone zone : zone_list.zones) {
