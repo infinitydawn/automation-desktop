@@ -33,7 +33,7 @@ public class ZoneList {
         // Duplicate checking
         String full_zone = tag1 + " " + tag2;
 
-        if(combined_zones.contains(full_zone)) {
+        if(combined_zones.contains(full_zone) && !full_zone.toLowerCase().contains("spare")) {
             DUPLICATES.add(address + " " + full_zone);
         } else {
             combined_zones.add(full_zone);
