@@ -234,6 +234,14 @@ public class FX2000 extends ConfigBot{
             }
         }
 
+        if(!zone_list.DUPLICATES.isEmpty()) {
+            invalid_found = true;
+            System.out.println("Duplicates detected:");
+            for(String s : zone_list.DUPLICATES) {
+                System.out.println(s);
+            }
+        }
+
         for(Zone zone : zone_list.zones) {
             current_zone_valid = true;
             zone_errors = zone.getAddress() + " " + zone.getTag1() + " errors: ";

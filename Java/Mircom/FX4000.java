@@ -43,7 +43,7 @@ public class FX4000 extends ConfigBot{
                         }
 
                         if(zone_list.CONTAINS_SPEAKERS) {
-                            System.out.println("Digital Audio and Digital Phone enabled.");
+                            System.out.println("Digital Audio and Digital Phone enabled");
                         }
 
                         if (zone_list.AP_START > 1) {
@@ -517,6 +517,14 @@ public class FX4000 extends ConfigBot{
 
         for(Zone z : modules) {
             modules_addresses.add((int) z.getAddress());
+        }
+
+        if(!zone_list.DUPLICATES.isEmpty()) {
+            invalid_found = true;
+            System.out.println("Duplicates detected:");
+            for(String s : zone_list.DUPLICATES) {
+                System.out.println(s);
+            }
         }
 
         for(Zone zone : zone_list.zones) {

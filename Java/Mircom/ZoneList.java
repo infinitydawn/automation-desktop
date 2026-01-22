@@ -8,6 +8,9 @@ public class ZoneList {
     public ArrayList<Zone> zones = new ArrayList<Zone>();
     public boolean CONTAINS_AR = false;
     public boolean CONTAINS_DUAL_HEAT = false;
+    public boolean CONTAINS_SPEAKERS = false;
+    public ArrayList<String> DUPLICATES = new ArrayList<String>();
+    public ArrayList<String> combined_zones = new ArrayList<String>(); // Tag1 + " " + Tag2
     public int AP_START = 1;
 
     public ZoneList() {
@@ -25,6 +28,15 @@ public class ZoneList {
             Zone last = zones.get(zones.size() - 1);
             last.addSubZone(address, tag1, tag2);
         }
+
+        // Duplicate checking
+        String full_zone = tag1 + " " + tag2;
+
+        if(combined_zones.contains(full_zone)) {
+            DUPLICATES.add(address + " " + full_zone);
+        } else {
+            combined_zones.add(full_zone);
+        }   
     }
 
     public void displayZoneList() {
@@ -141,6 +153,10 @@ public class ZoneList {
 
             if (last_zone.getType().equals("Heat Detector") && last_zone.isDualInput()) {
                 CONTAINS_DUAL_HEAT = true;
+            } 
+
+            if (last_zone.getType().equals("Speakers")) {
+                CONTAINS_SPEAKERS = true;
             } 
         }
         temp_scan.close();
