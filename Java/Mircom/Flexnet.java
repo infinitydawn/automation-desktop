@@ -38,12 +38,22 @@ public class Flexnet extends ConfigBot{
                     }else{
                         System.out.println("The following settings need to be enabled for data entry:");
 
+                        /*
+                        if(zone_list.) {
+                            System.out.println("Duplicates detected:");
+                        }
+                            */
+
                         if (zone_list.CONTAINS_DUAL_HEAT) {
                             System.out.println("100F Dual Heat detector enabled");
                         }
 
                         if(zone_list.CONTAINS_AR) {
                             System.out.println("Auxiliary Reset in Base Control/Annun. Idx 3");
+                        }
+
+                        if(zone_list.CONTAINS_SPEAKERS) {
+                            System.out.println("Digital Audio and Digital Phone enabled.");
                         }
 
                         if (zone_list.AP_START > 1) {
@@ -513,7 +523,7 @@ public class Flexnet extends ConfigBot{
                 //Check for duplicate addresses 
                 if(Collections.frequency(sensors_addresses, (int) zone.getAddress()) > 1) {
                     current_zone_valid = false;
-                    zone_errors += "duplicate smoke/heat address, ";
+                    zone_errors += "duplicate sensor address, ";
                 }
             } 
             else if(zone.getType().equals("Telephone Module")) {
@@ -536,7 +546,7 @@ public class Flexnet extends ConfigBot{
                 //Check for duplicate addresses 
                 if(Collections.frequency(modules_addresses, (int) zone.getAddress()) > 1) {
                     current_zone_valid = false;
-                    zone_errors += "duplicate ap module address, ";
+                    zone_errors += "duplicate module address, ";
                 }
             }
 
