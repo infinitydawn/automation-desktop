@@ -12,7 +12,7 @@ public abstract class FSAEBot extends Thread {
     protected double DEVICE_UPDATE_DELAY_STRENGTH = 1.5; // Default 1. Multiplied to DELAY. The Delay time after updating a device (tag name, type, etc).
     protected String FILE_NAME = "fsae_zones.txt";
 
-    protected int CURRENT_ZONE_ADDRESS = 0; 
+    protected int CURRENT_ZONE_ADDRESS = 0; //Intended to be the address of the first fsae input zone (Normal XX Floor)
     protected boolean is_running = false; 
     protected boolean is_paused = true;
     protected DataEntryBot bot;

@@ -12,8 +12,8 @@ public class FSAEInputZoneBot extends FSAEBot{
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //Settings
 
-    private int NODE = 1; // Default 1. The CPU that the input zones belong to
-    private int LOOP = 0; // Default 0. The loop the input zone belongs to
+    private String NODE = "01"; // Default 01. The CPU that the input zones belong to.
+    private String LOOP = "00"; // Default 00. The loop the input zone belongs to. For FX4000, this is overridden to **
 
     //Tag names for each zone. Change these if they need to be shorter
     private String NORMAL_STRING = "Normal "; //Default "Normal "
@@ -22,19 +22,24 @@ public class FSAEInputZoneBot extends FSAEBot{
     private String SMOKE_STRING = "Smoke Det "; //Default "Smoke Det "
 
     private String EQUATION = "NOT ANY 1 OF (  %n" +
-                    " 0%s-0%s-**-IZ-%s:A ,  %n" +
-                    " 0%s-0%s-**-IZ-%s:A ,  %n" +
+                    " 0%s-%s-**-IZ-%s:%s ,  %n" +
+                    " 0%s-%s-**-IZ-%s:%s ,  %n" +
                     "  %n" +
                     "  %n" +
-                    " 0%s-0%s-**-IZ-%s:F ,  %n" +
-                    " 0%s-0%s-**-IZ-%s:F ) ";
+                    " 0%s-%s-**-IZ-%s:%s ,  %n" +
+                    " 0%s-%s-**-IZ-%s:%s ) ";
     private String EQUATION_NAME = "NORMAL %s";
     private String EQUATION_COMMENT = "NORMAL %s - Dual Heat Not In Alarm Or Trouble";
+
+    private boolean IS_FX4000 = false;
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     private int current_zone_index = 0;
     private boolean is_data_entry_mode = false;
+
+    private String trouble_string = "F"; //FX4000 will use "Trouble" instead
+    private String alarm_string = "A";  //FX4000 will use "Input" instead
 
     public FSAEInputZoneBot() {
         try {
@@ -78,16 +83,24 @@ public class FSAEInputZoneBot extends FSAEBot{
                 //Print out the zone addresses for the FSAE Dual Heat zone logic (contains all dual heats involved)
                 String lowheat;
                 String highheat;
+                String CONDITIONAL_DASH = "-";
+
+                if(IS_FX4000) {
+                    LOOP = "**";
+                    trouble_string = "Trouble";
+                    CONDITIONAL_DASH = "";
+                }
+
                 System.out.println("Input Zone addresses for the FSAE Dual Heat Input Zone logic:");
-                String zone_string = "0%s-0%s-**-IZ-%s:F";
+                String zone_string = "%s-%s-**" + CONDITIONAL_DASH + "IZ-%s:%s";
                 int current_index = 0;
 
                 for(String floor : floors) {
                     lowheat = calcLowHeat(current_index);
                     highheat = calcHighHeat(current_index);
 
-                    System.out.print(String.format(zone_string, NODE, LOOP, lowheat) + ", " +
-                    String.format(zone_string, NODE, LOOP, highheat));                   
+                    System.out.print(String.format(zone_string, NODE, LOOP, lowheat, trouble_string) + ", " +
+                    String.format(zone_string, NODE, LOOP, highheat, trouble_string));                   
 
                     if(!floor.equals(floors.getLast())) {
                         System.out.println(",");
@@ -149,10 +162,10 @@ public class FSAEInputZoneBot extends FSAEBot{
                 
                 bot.clearText();
                 bot.pasteText(String.format(EQUATION, 
-                    "" + NODE, "" + LOOP, lowheat,
-                    "" + NODE, "" + LOOP, highheat,
-                    "" + NODE, "" + LOOP, lowheat,
-                    "" + NODE, "" + LOOP, highheat));
+                    NODE, LOOP, lowheat, trouble_string,
+                    NODE, LOOP, highheat, trouble_string,
+                    NODE, LOOP, lowheat, alarm_string,
+                    NODE, LOOP, highheat, alarm_string));
                 bot.pressKey(KeyEvent.VK_TAB);
 
                 bot.clearText();
@@ -183,9 +196,15 @@ public class FSAEInputZoneBot extends FSAEBot{
     }
 
     public String calcLowHeat(int current_index) {
-        //Insert 0s to reach 3 digits
+        //Insert 0s to reach 3 digits (Flexnet, FX6000)
+        //FX4000 can go up to 4 digits
         //+1 since it intends to use the Low Heat
         String lowheat = CURRENT_ZONE_ADDRESS + current_index + 1 + ""; 
+
+        if(IS_FX4000 && current_index < 999) {
+            lowheat = "0" + lowheat;
+        }
+
         if(CURRENT_ZONE_ADDRESS + current_index < 99) {
             lowheat = "0" + lowheat;
 
@@ -198,8 +217,13 @@ public class FSAEInputZoneBot extends FSAEBot{
     }
 
     public String calcHighHeat(int current_index) {
+        //Insert 0s to reach 3 digits (Flexnet, FX6000)
+        //FX4000 can go up to 4 digits
         //+2 for High Heat
         String highheat = CURRENT_ZONE_ADDRESS + current_index + 2 + "";
+        if(IS_FX4000 && current_index < 999) {
+            highheat = "0" + highheat;
+        }
         if(CURRENT_ZONE_ADDRESS + current_index + 1 < 99) {
             highheat = "0" + highheat;
             if(CURRENT_ZONE_ADDRESS + current_index < 9) {

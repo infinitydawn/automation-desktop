@@ -43,6 +43,13 @@ public class FSAEGraphicAdderBot extends FSAEBot{
 
             System.out.println("Starting Graphic Adder Entry");
 
+            if(IS_FX4000) 
+            {
+                System.out.println("Entering data for FX4000");  
+            } else {
+                System.out.println("Entering data for Flexnet/FX6000");
+            }
+
             setIsRunning(true);
             setIsPaused(false);
 

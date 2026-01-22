@@ -25,7 +25,7 @@ public class Automation implements NativeKeyListener{
 
         System.out.println("Program ready. Press F2 to update Input Zones, F3 to begin logic entry, F4 to update graphic adder.");
         System.out.println("-------------------------------------------------------------------------");
-        System.out.println("Before Running: Set zones in fsae_zones.txt. Also set the first Input Zone inside [brackets].");
+        System.out.println("Before Running: Set zones in fsae_zones.txt. Also set the first intended Input Zone address (Normal #FL) inside [brackets].");
         System.out.println("Input Zones: Create the Input Zones first, then select the first Input Zone to be used for FSAE.");
         System.out.println("Logic Entry: Open Advanced Logic window for first Input Zone, select the Equation text box, then press F3 to enter logic. Repeat for each zone.");
         System.out.println("Graphic Adder: Go to graphic adder then press F4. If all zones are used up," +
