@@ -10,8 +10,9 @@ public class ZoneList {
     public boolean CONTAINS_DUAL_HEAT = false;
     public boolean CONTAINS_SPEAKERS = false;
     public ArrayList<String> DUPLICATES = new ArrayList<String>();
-    public ArrayList<String> combined_zones = new ArrayList<String>(); // Tag1 + " " + Tag2
     public int AP_START = 1;
+
+    private ArrayList<String> combined_zones = new ArrayList<String>(); // Tag1 + " " + Tag2
 
     public ZoneList() {
 
