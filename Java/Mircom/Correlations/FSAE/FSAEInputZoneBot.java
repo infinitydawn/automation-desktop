@@ -22,16 +22,16 @@ public class FSAEInputZoneBot extends FSAEBot{
     private String SMOKE_STRING = "Smoke Det "; //Default "Smoke Det "
 
     private String EQUATION = "NOT ANY 1 OF (  %n" +
-                    " 0%s-%s-**-IZ-%s:%s ,  %n" +
-                    " 0%s-%s-**-IZ-%s:%s ,  %n" +
+                    " %s-%s-**%sIZ-%s:%s ,  %n" +
+                    " %s-%s-**%sIZ-%s:%s ,  %n" +
                     "  %n" +
                     "  %n" +
-                    " 0%s-%s-**-IZ-%s:%s ,  %n" +
-                    " 0%s-%s-**-IZ-%s:%s ) ";
+                    " %s-%s-**%sIZ-%s:%s ,  %n" +
+                    " %s-%s-**%sIZ-%s:%s ) ";
     private String EQUATION_NAME = "NORMAL %s";
     private String EQUATION_COMMENT = "NORMAL %s - Dual Heat Not In Alarm Or Trouble";
 
-    private boolean IS_FX4000 = false;
+    private boolean IS_FX4000 = true;
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -40,6 +40,7 @@ public class FSAEInputZoneBot extends FSAEBot{
 
     private String trouble_string = "F"; //FX4000 will use "Trouble" instead
     private String alarm_string = "A";  //FX4000 will use "Input" instead
+    private String CONDITIONAL_DASH = "-";
 
     public FSAEInputZoneBot() {
         try {
@@ -83,11 +84,11 @@ public class FSAEInputZoneBot extends FSAEBot{
                 //Print out the zone addresses for the FSAE Dual Heat zone logic (contains all dual heats involved)
                 String lowheat;
                 String highheat;
-                String CONDITIONAL_DASH = "-";
-
+                
                 if(IS_FX4000) {
                     LOOP = "**";
                     trouble_string = "Trouble";
+                    alarm_string = "Input";
                     CONDITIONAL_DASH = "";
                 }
 
@@ -159,13 +160,18 @@ public class FSAEInputZoneBot extends FSAEBot{
 
                 String lowheat = calcLowHeat(current_zone_index);
                 String highheat = calcHighHeat(current_zone_index);
+                String final_equation = String.format(EQUATION, 
+                    NODE, LOOP, CONDITIONAL_DASH, lowheat, trouble_string,
+                    NODE, LOOP, CONDITIONAL_DASH, highheat, trouble_string,
+                    NODE, LOOP, CONDITIONAL_DASH, lowheat, alarm_string,
+                    NODE, LOOP, CONDITIONAL_DASH, highheat, alarm_string);
+                
+                if(IS_FX4000) {
+                    final_equation = "if ( \n" + final_equation + "\n ) then use IptAlarm \n else use IptNormal";
+                }
                 
                 bot.clearText();
-                bot.pasteText(String.format(EQUATION, 
-                    NODE, LOOP, lowheat, trouble_string,
-                    NODE, LOOP, highheat, trouble_string,
-                    NODE, LOOP, lowheat, alarm_string,
-                    NODE, LOOP, highheat, alarm_string));
+                bot.pasteText(final_equation);
                 bot.pressKey(KeyEvent.VK_TAB);
 
                 bot.clearText();
