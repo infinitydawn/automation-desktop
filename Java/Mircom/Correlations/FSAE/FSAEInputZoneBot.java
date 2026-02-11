@@ -12,7 +12,7 @@ public class FSAEInputZoneBot extends FSAEBot{
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //Settings
 
-    private String NODE = "03"; // Default 01. The CPU that the input zones belong to.
+    private String NODE = "01"; // Default 01. The CPU that the input zones belong to.
     private String LOOP = "00"; // Default 00. The loop the input zone belongs to. For FX4000, this is overridden to **
 
     //Tag names for each zone. Change these if they need to be shorter
