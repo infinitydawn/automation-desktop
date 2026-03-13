@@ -11,6 +11,7 @@ public class FSAEInputZoneBot extends FSAEBot{
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //Settings
+    private double TAB_DELAY = 1.2; //Default 1.2. Delay strength after pressing Tab to prevent  system clipboard failure.
 
     private String NODE = "01"; // Default 01. The CPU that the input zones belong to.
     private String LOOP = "00"; // Default 00. The loop the input zone belongs to. For FX4000, this is overridden to **
@@ -31,7 +32,7 @@ public class FSAEInputZoneBot extends FSAEBot{
     private String EQUATION_NAME = "NORMAL %s";
     private String EQUATION_COMMENT = "NORMAL %s - Dual Heat Not In Alarm Or Trouble";
 
-    private boolean IS_FX4000 = true;
+    private boolean IS_FX4000 = false;
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -172,11 +173,11 @@ public class FSAEInputZoneBot extends FSAEBot{
                 
                 bot.clearText();
                 bot.pasteText(final_equation);
-                bot.pressKey(KeyEvent.VK_TAB);
+                bot.pressKey(KeyEvent.VK_TAB, TAB_DELAY);
 
                 bot.clearText();
                 bot.pasteText(String.format(EQUATION_NAME, floors.get(current_zone_index)));
-                bot.pressKey(KeyEvent.VK_TAB);
+                bot.pressKey(KeyEvent.VK_TAB, TAB_DELAY);
 
                 bot.clearText();
                 bot.pasteText(String.format(EQUATION_COMMENT, floors.get(current_zone_index)));
