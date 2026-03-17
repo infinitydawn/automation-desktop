@@ -173,11 +173,11 @@ public class FSAEInputZoneBot extends FSAEBot{
                 
                 bot.clearText();
                 bot.pasteText(final_equation);
-                bot.pressKey(KeyEvent.VK_TAB, TAB_DELAY);
+                bot.pressKey(KeyEvent.VK_TAB, 1, TAB_DELAY);
 
                 bot.clearText();
                 bot.pasteText(String.format(EQUATION_NAME, floors.get(current_zone_index)));
-                bot.pressKey(KeyEvent.VK_TAB, TAB_DELAY);
+                bot.pressKey(KeyEvent.VK_TAB, 1, TAB_DELAY);
 
                 bot.clearText();
                 bot.pasteText(String.format(EQUATION_COMMENT, floors.get(current_zone_index)));
