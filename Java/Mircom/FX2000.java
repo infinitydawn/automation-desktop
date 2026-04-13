@@ -269,7 +269,7 @@ public class FX2000 extends ConfigBot{
             else {
                 if((int) zone.getAddress() < 101 || (int) zone.getAddress() > 199) {
                     current_zone_valid = false;
-                    zone_errors += "address out of range for moduke, ";
+                    zone_errors += "address out of range for module, ";
                 }
 
                 //Check for duplicate addresses 
