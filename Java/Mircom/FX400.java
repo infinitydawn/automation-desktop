@@ -273,6 +273,38 @@ public class FX400 extends ConfigBot{
         
     }
 
+    protected boolean validateType(Zone zone) {
+        boolean result = false;
+        switch (zone.getType()) {
+            case "Photo Detector":
+                result = true;
+                break;
+            case "Alarm Input":
+                result = true;
+                break;
+            case "Non-latched Supervisory":
+                result = true;
+                break;
+            case "Latched Supervisory":
+                result = true;
+                break;
+            case "Heat Detector":
+                result = true;
+                break;
+            case "Alarm Input Class A":
+                result = true;
+                break;
+            case "Trouble Input":
+                result = true;
+                break;
+            case "Relay":
+                result = true;
+                break;
+        }
+
+        return result;
+    }
+
     protected boolean validateZones(ZoneList zone_list) {
         boolean invalid_found = false;
         boolean current_zone_valid;
@@ -332,6 +364,11 @@ public class FX400 extends ConfigBot{
                 current_zone_valid = false;
                 zone_errors += "tag 2 length > 20, ";
             }
+
+            if(!validateType(zone)) {
+                current_zone_valid = false;
+                zone_errors += "invalid zone type for this configurator, ";
+            }
            
             if(zone.getSubAddress() != null) {
 
@@ -346,7 +383,7 @@ public class FX400 extends ConfigBot{
                 */
                 
                 //Check zone type if it is unknown or blank
-                if(Zone.checkTags(zone.getType(), new String[] { "unknown", "blank"})) {
+                if(Zone.checkTags(zone.getSubAddress().getType(), new String[] { "unknown", "blank"})) {
                     current_zone_valid = false;
                     zone_errors += "subzone unknown zone type, ";
                 }
@@ -360,6 +397,11 @@ public class FX400 extends ConfigBot{
                 if(zone.getSubAddress().getTag2().length() > 20 && !IGNORE_TAG_LENGTH) {
                     current_zone_valid = false;
                     zone_errors += "subzone tag 2 length > 20, ";
+                }
+
+                if(!validateType(zone.getSubAddress())) {
+                    current_zone_valid = false;
+                    zone_errors += "invalid subzone type for this configurator, ";
                 }
 
                 /*

@@ -217,6 +217,33 @@ public class FX2000 extends ConfigBot{
         }    
     }
 
+    protected boolean validateType(Zone zone) {
+        boolean result = false;
+        switch (zone.getType()) {
+            case "Photo Detector":
+                result = true;
+                break;
+            case "Alarm Input":
+            case "Alarm Input Class A":
+                result = true;
+                break;
+            case "Non-latched Supervisory":
+                result = true;
+                break;
+            case "Latched Supervisory":
+                result = true;
+                break;
+            case "Heat Detector":
+                result = true;
+                break;
+            case "Relay":
+                result = true;
+                break;
+        }
+
+        return result;
+    }
+
     protected boolean validateZones(ZoneList zone_list) {
         boolean invalid_found = false;
         boolean current_zone_valid;
@@ -288,6 +315,11 @@ public class FX2000 extends ConfigBot{
             if(zone.getTag2().length() > 20 && !IGNORE_TAG_LENGTH) {
                 current_zone_valid = false;
                 zone_errors += "tag 2 length > 20, ";
+            }
+
+            if(!validateType(zone)) {
+                current_zone_valid = false;
+                zone_errors += "invalid zone type for this configurator, ";
             }
 
             if (!current_zone_valid) {
