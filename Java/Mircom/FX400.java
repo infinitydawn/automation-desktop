@@ -186,8 +186,7 @@ public class FX400 extends ConfigBot{
         switch (zone.getType()) {
             case "Photo Detector":
                 //Duct detectors have spare
-                if (Zone.checkTags(zone.getTag1(), new String[] { "duct" }))
-                {
+                if (Zone.checkTags(zone.getTag1(), new String[] { "duct" })){
                     zone.setDualInput(true);
                     addDuctDetector();
                 }
