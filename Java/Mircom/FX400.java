@@ -169,6 +169,18 @@ public class FX400 extends ConfigBot{
         bot.pressKey(KeyEvent.VK_END);
     }
 
+    protected void addTroubleInput() {
+         open();
+        bot.pressKey(KeyEvent.VK_D, 2);
+        bot.pressKey(KeyEvent.VK_TAB, 2);
+        bot.pressKey(KeyEvent.VK_T);
+        bot.pressKey(KeyEvent.VK_TAB);
+        skipDevices();
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ESCAPE);
+        bot.pressKey(KeyEvent.VK_END);
+    }
+
     protected void insertDevice(Zone zone){
         System.out.println("Inserting: " + zone.getZoneinfo());
         switch (zone.getType()) {
@@ -198,6 +210,9 @@ public class FX400 extends ConfigBot{
             case "Alarm Input Class A":
                 addAlarmInputClassA();
                 break;
+            case "Trouble Input":
+                addTroubleInput();
+                break;
             case "Relay":
                 addRelay();
                 break;
@@ -224,6 +239,10 @@ public class FX400 extends ConfigBot{
                 case "Heat Detector":
                     bot.pressKey(KeyEvent.VK_M);
                     bot.pressKey(KeyEvent.VK_A, 3);
+                    break;
+                case "Trouble Input":
+                    bot.pressKey(KeyEvent.VK_N);
+                    bot.pressKey(KeyEvent.VK_T);
                     break;
                 case "Blank Device":
                     bot.pressKey(KeyEvent.VK_N);
