@@ -119,6 +119,9 @@ public abstract class ConfigBot extends Thread {
     //Check each zone to see if it meets the configurator's requirements. Returns True if one incorrect device found
     protected abstract boolean validateZones(ZoneList zone_list);
 
+    //Check if zone's type is typically used with this configurator
+    protected abstract boolean validateType(Zone zone);
+
     protected void organizeZones(ZoneList zone_list) {
         sensors = new ArrayList<Zone>(); //smoke/heat addresses
         modules = new ArrayList<Zone>(); //module addresses
