@@ -82,9 +82,9 @@ public class Zone {
             type = "Relay";
             this.isDualInput = true;
         } else if (Zone.checkTags(tag, new String[] { "heat" })) {
-             if (Zone.checkTags(tag, new String[] { "dual" })) {
+            if (Zone.checkTags(tag, new String[] { "dual" })) {
                 this.isDualInput = true;
-             }
+            }
             type = "Heat Detector";
             this.isSensor = true;
         } 
