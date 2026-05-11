@@ -381,12 +381,14 @@ public class FX400 extends ConfigBot{
                     zone_errors += "invalid tag 1 name for subzone, ";
                 }
                 */
-                
-                //Check zone type if it is unknown or blank
+
+                /*
+                //Check zone type if it is unknown or blank - fix later
                 if(Zone.checkTags(zone.getSubAddress().getType(), new String[] { "unknown", "blank"})) {
                     current_zone_valid = false;
                     zone_errors += "subzone unknown zone type, ";
                 }
+                */
 
                 //Subzone tag 2 lengths
                 if(zone.getSubAddress().getTag1().length() > 20 && !IGNORE_TAG_LENGTH) {
