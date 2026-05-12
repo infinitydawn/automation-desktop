@@ -277,27 +277,14 @@ public class FX400 extends ConfigBot{
         boolean result = false;
         switch (zone.getType()) {
             case "Photo Detector":
-                result = true;
-                break;
             case "Alarm Input":
-                result = true;
-                break;
             case "Non-latched Supervisory":
-                result = true;
-                break;
             case "Latched Supervisory":
-                result = true;
-                break;
             case "Heat Detector":
-                result = true;
-                break;
             case "Alarm Input Class A":
-                result = true;
-                break;
             case "Trouble Input":
-                result = true;
-                break;
             case "Relay":
+            case "Blank Device":
                 result = true;
                 break;
         }
@@ -371,7 +358,6 @@ public class FX400 extends ConfigBot{
             }
            
             if(zone.getSubAddress() != null) {
-
                 /* 
                 //Cannot be reliably used if there are type overrides
                 //Check if subzone is spare, valve, or waterflow only
