@@ -221,21 +221,11 @@ public class FX2000 extends ConfigBot{
         boolean result = false;
         switch (zone.getType()) {
             case "Photo Detector":
-                result = true;
-                break;
             case "Alarm Input":
             case "Alarm Input Class A":
-                result = true;
-                break;
             case "Non-latched Supervisory":
-                result = true;
-                break;
             case "Latched Supervisory":
-                result = true;
-                break;
             case "Heat Detector":
-                result = true;
-                break;
             case "Relay":
                 result = true;
                 break;

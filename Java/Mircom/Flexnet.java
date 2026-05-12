@@ -479,29 +479,13 @@ public class Flexnet extends ConfigBot{
         boolean result = false;
         switch (zone.getType()) {
             case "Photo Detector":
-                result = true;
-                break;
             case "Alarm Input":                       
-                result = true;
-                break;
             case "Alarm Input Class A":                     
-                result = true;
-                break;
             case "Non-latched Supervisory":
-                result = true;
-                break;
             case "Latched Supervisory":
-                result = true;
-                break;
             case "Heat Detector": 
-                result = true;
-                break;
             case "Relay":
-                result = true;
-                break;
             case "Telephone Module":
-                result = true;
-                break;
             case "Speakers":
                 result = true;
                 break;
