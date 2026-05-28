@@ -86,6 +86,11 @@ public class FX400 extends ConfigBot{
 
     protected void addPhotoDetector() {
         open();
+
+        //For MIX-4011
+        //bot.pressKey(KeyEvent.VK_UP, 1);
+
+        //MIX-4010 is the default
         bot.pressKey(KeyEvent.VK_TAB, 3);
         skipDevices();
         bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
