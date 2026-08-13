@@ -333,13 +333,13 @@ public class FX4000 extends ConfigBot{
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    //photo co - might need to add base
+    //photo co
     protected void addSmokeCODetector() {
         open();
-        bot.pressKey(KeyEvent.VK_F, 3);
-        bot.pressKey(KeyEvent.VK_TAB, 4);
-        //bot.pressKey(KeyEvent.VK_A);
-        //bot.pressKey(KeyEvent.VK_TAB, 3);
+        bot.pressKey(KeyEvent.VK_F);
+        bot.pressKey(KeyEvent.VK_TAB);
+        bot.pressKey(KeyEvent.VK_S);
+        bot.pressKey(KeyEvent.VK_TAB, 3);
         skipDevices();
         bot.pressKey(KeyEvent.VK_ENTER, 1, Math.max(DEVICE_INSERT_DELAY_STRENGTH, 2));
         bot.pressKey(KeyEvent.VK_ESCAPE);
