@@ -23,7 +23,7 @@ public class Automation implements NativeKeyListener{
 
         GlobalScreen.addNativeKeyListener(new Automation());
 
-        System.out.println("Program ready. Press F2 to start FX400, F3 to start FX2000, F4 to start Flexnet, ` to Exit anytime.");
+        System.out.println("Program ready. Press F2 to start FX400, F3 to start FX2000, F4 to start Flexnet, F5 to start FX4000, ` to Exit anytime.");
     }
 
     public void nativeKeyPressed(NativeKeyEvent e) {
@@ -51,7 +51,8 @@ public class Automation implements NativeKeyListener{
             */
         }
 
-        if (e.getKeyCode() == NativeKeyEvent.VC_F2 || e.getKeyCode() == NativeKeyEvent.VC_F3 || e.getKeyCode() == NativeKeyEvent.VC_F4) {
+        if (e.getKeyCode() == NativeKeyEvent.VC_F2 || e.getKeyCode() == NativeKeyEvent.VC_F3 || e.getKeyCode() == NativeKeyEvent.VC_F4 ||
+             e.getKeyCode() == NativeKeyEvent.VC_F5) {
             try {
                 //Start a new thread only if it doesn't exist or is no longer alive
                 if(bot == null || (bot != null && !bot.isAlive())) {
@@ -62,8 +63,11 @@ public class Automation implements NativeKeyListener{
                         case NativeKeyEvent.VC_F3:
                             bot = new FX2000();
                             break;
-                        case NativeKeyEvent.VC_F4: //Flexnet will want higher (2+ enter delay strength)
+                        case NativeKeyEvent.VC_F4:
                             bot = new Flexnet();
+                            break;
+                        case NativeKeyEvent.VC_F5:
+                            bot = new FX4000();
                             break;
                     }  
                 }

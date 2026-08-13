@@ -23,6 +23,8 @@ public class FSAEGraphicAdderBot extends FSAEBot{
     private int DELAY = 200;
     private double SKIP_DELAY_STRENGTH = .4; // Default .4. For Full mode. The delay time for scrolling through zones.
 
+    private boolean IS_FX4000 = false; //Press Enter once more since there is an additional tag
+
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     private int overall_index;
@@ -40,6 +42,13 @@ public class FSAEGraphicAdderBot extends FSAEBot{
             }
 
             System.out.println("Starting Graphic Adder Entry");
+
+            if(IS_FX4000) 
+            {
+                System.out.println("Entering data for FX4000");  
+            } else {
+                System.out.println("Entering data for Flexnet/FX6000");
+            }
 
             setIsRunning(true);
             setIsPaused(false);
@@ -98,6 +107,10 @@ public class FSAEGraphicAdderBot extends FSAEBot{
 
             //Selection restarts from the top if a Type or Assignment is changed, need to get back to next available zone
             bot.pressKey(KeyEvent.VK_ENTER, 1, DEVICE_UPDATE_DELAY_STRENGTH);
+
+            if(IS_FX4000) {
+                bot.pressKey(KeyEvent.VK_ENTER);
+            }
 
             if(GRAPHIC_INDEX != 0 && GRAPHIC_INDEX % 47 == 0) {
                 GRAPHIC_INDEX = 0;

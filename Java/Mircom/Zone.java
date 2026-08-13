@@ -50,7 +50,7 @@ public class Zone {
             type = "Alarm Input Class A";
             this.isMini = true;
             this.isPullSttn = true;
-        } else if (Zone.checkTags(tag, new String[] { "co", "carb" }) && !Zone.checkTags(tag, new String[] { "smoke" })) {
+        } else if (Zone.checkTags(tag, new String[] { "co", "carb" }) && !Zone.checkTags(tag, new String[] { "smoke", "duct" })) {
             type = "Latched Supervisory";
             this.isDualInput = true;
         } else if (Zone.checkTags(tag, new String[] { "valve", "tamper", "stat", "pump", "intake", "discharge",
@@ -61,11 +61,19 @@ public class Zone {
                 this.isMini = true;
             }
         } else if (Zone.checkTags(tag, new String[] { "smoke", "duct" })) {
-            if (Zone.checkTags(tag, new String[] { "dual" , "combo"})) {
-                this.isDualInput = true;
-             }
-            type = "Photo Detector";
-            this.isSensor = true;
+            if (Zone.checkTags(tag, new String[] { "cover" })) {
+                type = "Trouble Input";
+                this.isDualInput = true; 
+            }
+            else {
+                if (Zone.checkTags(tag, new String[] { "dual" , "combo"})) {
+                    this.isDualInput = true;
+                } 
+
+                type = "Photo Detector";
+                this.isSensor = true;
+            }
+                
         } else if(Zone.checkTags(tag, new String[] {"fan shut", "ac shut", "rtu shut"})){
             this.isAR = true;
             type = "Relay";
@@ -74,9 +82,9 @@ public class Zone {
             type = "Relay";
             this.isDualInput = true;
         } else if (Zone.checkTags(tag, new String[] { "heat" })) {
-             if (Zone.checkTags(tag, new String[] { "dual" })) {
+            if (Zone.checkTags(tag, new String[] { "dual" })) {
                 this.isDualInput = true;
-             }
+            }
             type = "Heat Detector";
             this.isSensor = true;
         } 

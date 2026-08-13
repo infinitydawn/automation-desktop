@@ -86,6 +86,11 @@ public class FX400 extends ConfigBot{
 
     protected void addPhotoDetector() {
         open();
+
+        //For MIX-4011
+        //bot.pressKey(KeyEvent.VK_UP, 1);
+
+        //MIX-4010 is the default
         bot.pressKey(KeyEvent.VK_TAB, 3);
         skipDevices();
         bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
@@ -169,13 +174,24 @@ public class FX400 extends ConfigBot{
         bot.pressKey(KeyEvent.VK_END);
     }
 
+    protected void addTroubleInput() {
+         open();
+        bot.pressKey(KeyEvent.VK_D, 2);
+        bot.pressKey(KeyEvent.VK_TAB, 2);
+        bot.pressKey(KeyEvent.VK_T);
+        bot.pressKey(KeyEvent.VK_TAB);
+        skipDevices();
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ESCAPE);
+        bot.pressKey(KeyEvent.VK_END);
+    }
+
     protected void insertDevice(Zone zone){
         System.out.println("Inserting: " + zone.getZoneinfo());
         switch (zone.getType()) {
             case "Photo Detector":
                 //Duct detectors have spare
-                if (Zone.checkTags(zone.getTag1(), new String[] { "duct" }))
-                {
+                if (Zone.checkTags(zone.getTag1(), new String[] { "duct" })){
                     zone.setDualInput(true);
                     addDuctDetector();
                 }
@@ -197,6 +213,9 @@ public class FX400 extends ConfigBot{
                 break;
             case "Alarm Input Class A":
                 addAlarmInputClassA();
+                break;
+            case "Trouble Input":
+                addTroubleInput();
                 break;
             case "Relay":
                 addRelay();
@@ -224,6 +243,10 @@ public class FX400 extends ConfigBot{
                 case "Heat Detector":
                     bot.pressKey(KeyEvent.VK_M);
                     bot.pressKey(KeyEvent.VK_A, 3);
+                    break;
+                case "Trouble Input":
+                    bot.pressKey(KeyEvent.VK_N);
+                    bot.pressKey(KeyEvent.VK_T);
                     break;
                 case "Blank Device":
                     bot.pressKey(KeyEvent.VK_N);
@@ -255,6 +278,25 @@ public class FX400 extends ConfigBot{
         
     }
 
+    protected boolean validateType(Zone zone) {
+        boolean result = false;
+        switch (zone.getType()) {
+            case "Photo Detector":
+            case "Alarm Input":
+            case "Non-latched Supervisory":
+            case "Latched Supervisory":
+            case "Heat Detector":
+            case "Alarm Input Class A":
+            case "Trouble Input":
+            case "Relay":
+            case "Blank Device":
+                result = true;
+                break;
+        }
+
+        return result;
+    }
+
     protected boolean validateZones(ZoneList zone_list) {
         boolean invalid_found = false;
         boolean current_zone_valid;
@@ -264,6 +306,14 @@ public class FX400 extends ConfigBot{
         //Add all addresses to check for duplicates later
         for(Zone zone :zone_list.zones) {
             usedZones.add((int) zone.getAddress());
+        }
+
+        if(!zone_list.DUPLICATES.isEmpty()) {
+            invalid_found = true;
+            System.out.println("Duplicates detected:");
+            for(String s : zone_list.DUPLICATES) {
+                System.out.println(s);
+            }
         }
 
         for(Zone zone : zone_list.zones) {
@@ -306,9 +356,13 @@ public class FX400 extends ConfigBot{
                 current_zone_valid = false;
                 zone_errors += "tag 2 length > 20, ";
             }
+
+            if(!validateType(zone)) {
+                current_zone_valid = false;
+                zone_errors += "invalid zone type for this configurator, ";
+            }
            
             if(zone.getSubAddress() != null) {
-
                 /* 
                 //Cannot be reliably used if there are type overrides
                 //Check if subzone is spare, valve, or waterflow only
@@ -318,12 +372,14 @@ public class FX400 extends ConfigBot{
                     zone_errors += "invalid tag 1 name for subzone, ";
                 }
                 */
+
                 
-                //Check zone type if it is unknown or blank
-                if(Zone.checkTags(zone.getType(), new String[] { "unknown", "blank"})) {
+                //Check zone type if it is unknown
+                if(Zone.checkTags(zone.getSubAddress().getType(), new String[] { "unknown" })) {
                     current_zone_valid = false;
                     zone_errors += "subzone unknown zone type, ";
                 }
+                
 
                 //Subzone tag 2 lengths
                 if(zone.getSubAddress().getTag1().length() > 20 && !IGNORE_TAG_LENGTH) {
@@ -334,6 +390,11 @@ public class FX400 extends ConfigBot{
                 if(zone.getSubAddress().getTag2().length() > 20 && !IGNORE_TAG_LENGTH) {
                     current_zone_valid = false;
                     zone_errors += "subzone tag 2 length > 20, ";
+                }
+
+                if(!validateType(zone.getSubAddress())) {
+                    current_zone_valid = false;
+                    zone_errors += "invalid subzone type for this configurator, ";
                 }
 
                 /*

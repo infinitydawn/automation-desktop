@@ -2,13 +2,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.awt.event.KeyEvent;
 
-public class Flexnet extends ConfigBot{
+public class FX4000 extends ConfigBot{
 
     private ArrayList<Zone> phones;  //phone devices
     private int AP_START = 1;
 
     public void run() {
-        System.out.println("Starting Flexnet Data Entry");
+        System.out.println("Starting FX4000 Data Entry");
         try{
             is_running = true;
             is_paused = false;
@@ -19,7 +19,7 @@ public class Flexnet extends ConfigBot{
             organizeZones(zone_list);
             AP_START = zone_list.AP_START;
 
-            if(zone_list.CONTAINS_AR || AP_START > 1 || zone_list.CONTAINS_DUAL_HEAT) {
+            if(zone_list.CONTAINS_AR || AP_START > 1) {
                 is_paused = true;
             }
 
@@ -38,10 +38,6 @@ public class Flexnet extends ConfigBot{
                     }else{
                         System.out.println("The following settings need to be enabled for data entry:");
 
-                        if (zone_list.CONTAINS_DUAL_HEAT) {
-                            System.out.println("100F Dual Heat detector enabled");
-                        }
-
                         if(zone_list.CONTAINS_AR) {
                             System.out.println("Auxiliary Reset in Base Control/Annun. Idx 3");
                         }
@@ -54,7 +50,7 @@ public class Flexnet extends ConfigBot{
                             System.out.println("AP Start to " + AP_START);
                         }
 
-                        System.out.println("Please make necessary changes and press F4 to continue.");
+                        System.out.println("Please make necessary changes and press F5 to continue.");
                         System.out.println("----------------------------------------------------------------");
                     }
                 }
@@ -66,6 +62,7 @@ public class Flexnet extends ConfigBot{
                 if(!SKIP_INSERT_DEVICES) {
                     Zone zone;
 
+                    /*
                     //Add phones first if they exist
                     if(!phones.isEmpty()) {
                         zone = phones.get(0);
@@ -78,6 +75,7 @@ public class Flexnet extends ConfigBot{
                             insertDevice(zone);
                         }
                     }
+                    */
 
                     if(!sensors.isEmpty()) {
                         zone = sensors.get(0);
@@ -115,12 +113,12 @@ public class Flexnet extends ConfigBot{
                 
                 enterZoneList(zone_list);
 
-                System.out.println("Flexnet Entry Complete");
+                System.out.println("FX4000 Entry Complete");
                 is_running = false;
                 System.exit(MAX_PRIORITY);
             }
             else {
-                System.out.println("Flexnet entry did not run");
+                System.out.println("FX4000 entry did not run");
             }
         }
         catch(Exception e) {
@@ -128,172 +126,195 @@ public class Flexnet extends ConfigBot{
         }
     }
     
+    //smoke
     protected void addPhotoDetector() {
         open();
-        bot.pressKey(KeyEvent.VK_P);
-        bot.pressKey(KeyEvent.VK_TAB, 3);
-        bot.pressKey(KeyEvent.VK_N);
-        bot.pressKey(KeyEvent.VK_TAB, 2);
+        bot.pressKey(KeyEvent.VK_UP);
+        bot.pressKey(KeyEvent.VK_TAB, 4);
         skipDevices();
         bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
 
+    //Pull station
     protected void addAlarmInputMod() {
         open();
         bot.pressKey(KeyEvent.VK_M);
         bot.pressKey(KeyEvent.VK_TAB, 2);
         bot.pressKey(KeyEvent.VK_N);
-        bot.pressKey(KeyEvent.VK_TAB, 2);
+        bot.pressKey(KeyEvent.VK_TAB);
         skipDevices();
         bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    //Meant for Monitor only waterflow/valve
+    //Dual monitor, alarm
     protected void addDualAlarmInputMod() {
         open();
+        /*
         if(AP_START > 1) {
             bot.pressKey(KeyEvent.VK_D, 5);
         } 
         else {
-            bot.pressKey(KeyEvent.VK_D, 3);
+            bot.pressKey(KeyEvent.VK_D, 2);
         }
+        */
+       bot.pressKey(KeyEvent.VK_D, 2);
 
         bot.pressKey(KeyEvent.VK_TAB, 2);
         bot.pressKey(KeyEvent.VK_N);
-        bot.pressKey(KeyEvent.VK_TAB, 2);
+        bot.pressKey(KeyEvent.VK_TAB);
         skipDevices();
         bot.pressKey(KeyEvent.VK_ENTER, 1 , Math.max(DEVICE_INSERT_DELAY_STRENGTH, 1.5));
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
 
+    //Mini monitor, alarm
     protected void addAlarmInputMiniMod() {
         open();
-        bot.pressKey(KeyEvent.VK_M, 2);
+        bot.pressKey(KeyEvent.VK_M);
         bot.pressKey(KeyEvent.VK_TAB, 2);
         bot.pressKey(KeyEvent.VK_N);
-        bot.pressKey(KeyEvent.VK_TAB, 2);
+        bot.pressKey(KeyEvent.VK_TAB);
         skipDevices();
         bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
 
+    //monitor, non-latch
     protected void addNonLatchedSupv() {
+        open();
+        bot.pressKey(KeyEvent.VK_M, 2);
+        bot.pressKey(KeyEvent.VK_TAB);
+        bot.pressKey(KeyEvent.VK_N);
+        bot.pressKey(KeyEvent.VK_TAB);
+        bot.pressKey(KeyEvent.VK_N);
+        bot.pressKey(KeyEvent.VK_TAB);
+        skipDevices();
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
+        bot.pressKey(KeyEvent.VK_ESCAPE);
+        bot.pressKey(KeyEvent.VK_END);
+    }
+
+    //mini monitor, non latch
+    protected void addNonLatchedSupvMini() {
         open();
         bot.pressKey(KeyEvent.VK_M);
         bot.pressKey(KeyEvent.VK_TAB);
         bot.pressKey(KeyEvent.VK_N);
         bot.pressKey(KeyEvent.VK_TAB);
         bot.pressKey(KeyEvent.VK_N);
-        bot.pressKey(KeyEvent.VK_TAB, 2);
+        bot.pressKey(KeyEvent.VK_TAB);
         skipDevices();
         bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
 
-    protected void addNonLatchedSupvMini() {
-        open();
-        bot.pressKey(KeyEvent.VK_M, 2);
-        bot.pressKey(KeyEvent.VK_TAB);
-        bot.pressKey(KeyEvent.VK_N);
-        bot.pressKey(KeyEvent.VK_TAB);
-        bot.pressKey(KeyEvent.VK_N);
-        bot.pressKey(KeyEvent.VK_TAB, 2);
-        skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
-        bot.pressKey(KeyEvent.VK_ESCAPE);
-        bot.pressKey(KeyEvent.VK_END);
-    }
 
+    //dual monitor
     protected void addDualNonLatchedSupv() {
         open();
+        /*
         if(AP_START > 1) {
             bot.pressKey(KeyEvent.VK_D, 5);
         }
         else {
             bot.pressKey(KeyEvent.VK_D, 3);
         }
-        
+        */
+        bot.pressKey(KeyEvent.VK_D, 2);
         bot.pressKey(KeyEvent.VK_TAB);
         bot.pressKey(KeyEvent.VK_N);
         bot.pressKey(KeyEvent.VK_TAB);
         bot.pressKey(KeyEvent.VK_N);
-        bot.pressKey(KeyEvent.VK_TAB, 2);
+        bot.pressKey(KeyEvent.VK_TAB);
         skipDevices();
         bot.pressKey(KeyEvent.VK_ENTER, 1 , Math.max(DEVICE_INSERT_DELAY_STRENGTH, 1.5));
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
 
+    //mini monitor, latched supv
     protected void addLatchedSupv() {
         open();
-        bot.pressKey(KeyEvent.VK_M, 2);
+        bot.pressKey(KeyEvent.VK_M);
         bot.pressKey(KeyEvent.VK_TAB);
         bot.pressKey(KeyEvent.VK_L);
         bot.pressKey(KeyEvent.VK_TAB);
         bot.pressKey(KeyEvent.VK_N);
-        bot.pressKey(KeyEvent.VK_TAB, 2);
+        bot.pressKey(KeyEvent.VK_TAB);
         skipDevices();
         bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
 
+    //heat
     protected void addHeatDetector() {
         open();
+        /*
         if(AP_START > 1) {
             bot.pressKey(KeyEvent.VK_H, 2);
         }
         else {
             bot.pressKey(KeyEvent.VK_H);
         }
-        
-        bot.pressKey(KeyEvent.VK_TAB, 5);
+        */
+       bot.pressKey(KeyEvent.VK_H, 2);
+        bot.pressKey(KeyEvent.VK_TAB, 4);
         skipDevices();
         bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
 
+    //dual heat
     protected void addDualHeatSmokeDetector() {
         open();
+        /*
         if(AP_START > 1) {
             bot.pressKey(KeyEvent.VK_D, 6);
         }
         else {
             bot.pressKey(KeyEvent.VK_D, 4);
         }
-        bot.pressKey(KeyEvent.VK_TAB, 5);
+        */
+       bot.pressKey(KeyEvent.VK_H, 9);
+        bot.pressKey(KeyEvent.VK_TAB, 4);
         skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , Math.max(DEVICE_INSERT_DELAY_STRENGTH, 2)); //needs extra time for three address devices
+        bot.pressKey(KeyEvent.VK_ENTER, 1 , Math.max(DEVICE_INSERT_DELAY_STRENGTH, 3)); //needs extra time for three address devices
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
 
+    //relay
     protected void addRelay() {
         open();
+        /*
         if(AP_START > 1) {
             bot.pressKey(KeyEvent.VK_R, 2);
         }
         else {
             bot.pressKey(KeyEvent.VK_R);
         }
-        bot.pressKey(KeyEvent.VK_TAB, 4);
+            */
+        bot.pressKey(KeyEvent.VK_R);
+        bot.pressKey(KeyEvent.VK_TAB, 3);
         skipDevices();
         bot.pressKey(KeyEvent.VK_ENTER, 1 , Math.max(DEVICE_INSERT_DELAY_STRENGTH, 1.5));
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
 
+    //firephone
     protected void addTelephoneModule() {
         open();
-        bot.pressKey(KeyEvent.VK_F);
+        bot.pressKey(KeyEvent.VK_F, 3);
         bot.pressKey(KeyEvent.VK_TAB, 3);
         skipDevices();
         bot.pressKey(KeyEvent.VK_ENTER, 1, DEVICE_INSERT_DELAY_STRENGTH);
@@ -301,22 +322,24 @@ public class Flexnet extends ConfigBot{
         bot.pressKey(KeyEvent.VK_END);
     }
 
+    //control
     protected void addSpeakers() {
         open();
         bot.pressKey(KeyEvent.VK_C, 2);
-        bot.pressKey(KeyEvent.VK_TAB, 4);
+        bot.pressKey(KeyEvent.VK_TAB, 3);
         skipDevices();
         bot.pressKey(KeyEvent.VK_ENTER, 1, DEVICE_INSERT_DELAY_STRENGTH);
         bot.pressKey(KeyEvent.VK_ESCAPE);
         bot.pressKey(KeyEvent.VK_END);
     }
 
+    //photo co - might need to add base
     protected void addSmokeCODetector() {
         open();
-        bot.pressKey(KeyEvent.VK_F, 2);
-        bot.pressKey(KeyEvent.VK_TAB);
-        bot.pressKey(KeyEvent.VK_A);
+        bot.pressKey(KeyEvent.VK_F, 3);
         bot.pressKey(KeyEvent.VK_TAB, 4);
+        //bot.pressKey(KeyEvent.VK_A);
+        //bot.pressKey(KeyEvent.VK_TAB, 3);
         skipDevices();
         bot.pressKey(KeyEvent.VK_ENTER, 1, Math.max(DEVICE_INSERT_DELAY_STRENGTH, 2));
         bot.pressKey(KeyEvent.VK_ESCAPE);
@@ -387,11 +410,19 @@ public class Flexnet extends ConfigBot{
             if(!SKIP_INSERT_DEVICES) {
                 bot.pressKey(KeyEvent.VK_HOME, 1, 1); 
             }
-            
+
             //Update phones first since they go at the very top
             for(Zone zone : phones) {
                 System.out.println("Updating: " + zone.getZoneinfo());
                 updateZone(zone);
+            }
+
+            //Modules go first in FX4000
+            for(Zone zone : modules) {
+                if(!zone.getType().equals("Blank Device")) {
+                    System.out.println("Updating: " + zone.getZoneinfo());
+                    updateZone(zone);
+                }
             }
 
             for(Zone zone : sensors) {
@@ -400,14 +431,6 @@ public class Flexnet extends ConfigBot{
                     updateZone(zone);
                 }
             }
-
-            for(Zone zone : modules) {
-                if(!zone.getType().equals("Blank Device")) {
-                    System.out.println("Updating: " + zone.getZoneinfo());
-                    updateZone(zone);
-                }
-            }
-            
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -538,7 +561,7 @@ public class Flexnet extends ConfigBot{
             else if(zone.isSensor()) {
                 if((zone.getAddress() < AP_START || zone.getAddress() > 159 )) {
                     current_zone_valid = false;
-                    zone_errors += "address out of range for smoke/heat, ";
+                    zone_errors += "address out of range for sensor, ";
                 }
 
                 //Check for duplicate addresses 

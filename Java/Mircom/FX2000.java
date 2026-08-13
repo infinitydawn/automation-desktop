@@ -217,6 +217,23 @@ public class FX2000 extends ConfigBot{
         }    
     }
 
+    protected boolean validateType(Zone zone) {
+        boolean result = false;
+        switch (zone.getType()) {
+            case "Photo Detector":
+            case "Alarm Input":
+            case "Alarm Input Class A":
+            case "Non-latched Supervisory":
+            case "Latched Supervisory":
+            case "Heat Detector":
+            case "Relay":
+                result = true;
+                break;
+        }
+
+        return result;
+    }
+
     protected boolean validateZones(ZoneList zone_list) {
         boolean invalid_found = false;
         boolean current_zone_valid;
@@ -231,6 +248,14 @@ public class FX2000 extends ConfigBot{
             } 
             else {
                 used100Zones.add((int) zone.getAddress());
+            }
+        }
+
+        if(!zone_list.DUPLICATES.isEmpty()) {
+            invalid_found = true;
+            System.out.println("Duplicates detected:");
+            for(String s : zone_list.DUPLICATES) {
+                System.out.println(s);
             }
         }
 
@@ -249,25 +274,25 @@ public class FX2000 extends ConfigBot{
             else if(zone.isSensor()) {
                 if((zone.getAddress() < 0 || zone.getAddress() > 99)) {
                     current_zone_valid = false;
-                    zone_errors += "address out of range for smoke/heat, ";
+                    zone_errors += "address out of range for sensor, ";
                 }
 
                 //Check for duplicate addresses 
                 if(Collections.frequency(usedZones, (int) zone.getAddress()) > 1) {
                     current_zone_valid = false;
-                    zone_errors += "duplicate smoke/heat address, ";
+                    zone_errors += "duplicate sensor address, ";
                 }
             } 
             else {
                 if((int) zone.getAddress() < 101 || (int) zone.getAddress() > 199) {
                     current_zone_valid = false;
-                    zone_errors += "address out of range for ipt/relay, ";
+                    zone_errors += "address out of range for module, ";
                 }
 
                 //Check for duplicate addresses 
                 if(Collections.frequency(used100Zones, (int) zone.getAddress()) > 1) {
                     current_zone_valid = false;
-                    zone_errors += "duplicate ipt/relay address, ";
+                    zone_errors += "duplicate module address, ";
                 }
             }
 
@@ -280,6 +305,11 @@ public class FX2000 extends ConfigBot{
             if(zone.getTag2().length() > 20 && !IGNORE_TAG_LENGTH) {
                 current_zone_valid = false;
                 zone_errors += "tag 2 length > 20, ";
+            }
+
+            if(!validateType(zone)) {
+                current_zone_valid = false;
+                zone_errors += "invalid zone type for this configurator, ";
             }
 
             if (!current_zone_valid) {
