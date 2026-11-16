@@ -38,6 +38,7 @@ import javax.swing.JProgressBar;
 import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.ListSelectionModel;
@@ -113,6 +114,9 @@ public class BotWindow extends JFrame implements ConfigBot.Listener {
     private final JLabel status_label = new JLabel("Ready");
     private final JProgressBar progress = new JProgressBar();
     private final JTextArea log = new JTextArea();
+    private final JTabbedPane tabs = new JTabbedPane();
+    private static final int ZONE_TAB = 0, FSAE_TAB = 1;
+    private FsaePanel fsae;
 
     private ConfigBot.Plan plan;
     private ConfigBot.Phase shown_phase = ConfigBot.Phase.INSERT;
@@ -127,6 +131,7 @@ public class BotWindow extends JFrame implements ConfigBot.Listener {
     public BotWindow() {
         super("Mircom Data Entry");
         installLog();
+        fsae = new FsaePanel(this);
         buildLayout();
         wireActions();
 
@@ -137,12 +142,13 @@ public class BotWindow extends JFrame implements ConfigBot.Listener {
                 if(bot != null && bot.getIsRunning()) {
                     bot.setIsRunning(false);
                 }
+                fsae.stopIfRunning();
                 dispose();
                 System.exit(0);
             }
         });
 
-        setSize(900, 760);
+        setSize(1000, 820);
         setLocationByPlatform(true);
 
         refreshWindows();
@@ -229,9 +235,7 @@ public class BotWindow extends JFrame implements ConfigBot.Listener {
         log_scroll.setBorder(BorderFactory.createTitledBorder("Log"));
 
         table_scroll.setPreferredSize(new java.awt.Dimension(600, 300));
-        log_scroll.setPreferredSize(new java.awt.Dimension(600, 200));
-        JSplitPane split = new JSplitPane(JSplitPane.VERTICAL_SPLIT, table_scroll, log_scroll);
-        split.setResizeWeight(0.6);
+        log_scroll.setPreferredSize(new java.awt.Dimension(600, 160));
 
         //Bottom: controls
         JPanel controls = new JPanel(new BorderLayout(8, 4));
@@ -244,11 +248,24 @@ public class BotWindow extends JFrame implements ConfigBot.Listener {
         status.add(progress, BorderLayout.SOUTH);
         controls.add(status, BorderLayout.CENTER);
 
-        JPanel content = new JPanel(new BorderLayout());
-        content.add(top, BorderLayout.NORTH);
-        content.add(split, BorderLayout.CENTER);
-        content.add(controls, BorderLayout.SOUTH);
-        setContentPane(content);
+        JPanel zone_tab = new JPanel(new BorderLayout());
+        zone_tab.add(top, BorderLayout.NORTH);
+        zone_tab.add(table_scroll, BorderLayout.CENTER);
+        zone_tab.add(controls, BorderLayout.SOUTH);
+
+        //Zone list devices and FSAE each get a tab; the log below is shared
+        tabs.addTab("Zone list devices", zone_tab);
+        tabs.addTab("FSAE", fsae);
+        JSplitPane split = new JSplitPane(JSplitPane.VERTICAL_SPLIT, tabs, log_scroll);
+        split.setResizeWeight(0.85);
+        setContentPane(split);
+        //The tabs start with most of the height; the log keeps a strip at the bottom
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowOpened(WindowEvent e) {
+                split.setDividerLocation(0.85);
+            }
+        });
     }
 
     private static JPanel buttons(JButton... list) {
@@ -401,7 +418,7 @@ public class BotWindow extends JFrame implements ConfigBot.Listener {
 
     //from_hotkey: started with the old F-key while the configurator is in front, so lock onto that window
     private void start(boolean from_hotkey) {
-        if(running || converting) {
+        if(running || converting || fsae.isRunning()) {
             return;
         }
 
@@ -505,12 +522,22 @@ public class BotWindow extends JFrame implements ConfigBot.Listener {
         //While running, clicking this window must not pull focus away from the configurator
         setFocusableWindowState(!value);
         setAlwaysOnTop(value);
+        tabs.setEnabledAt(FSAE_TAB, !value);
+        fsae.setBlocked(value);
+        updateControls();
+    }
+
+    //Called by the FSAE tab when its bot starts/stops: same window behaviour, and the zone list tab is locked
+    void setFsaeRunning(boolean value) {
+        setFocusableWindowState(!value);
+        setAlwaysOnTop(value);
+        tabs.setEnabledAt(ZONE_TAB, !value);
         updateControls();
     }
 
     private void updateControls() {
         boolean paused = running && bot != null && bot.getIsPaused();
-        boolean idle = !running && !converting;
+        boolean idle = !running && !converting && (fsae == null || !fsae.isRunning());
 
         start_button.setEnabled(idle && plan != null && window_box.getItemCount() > 0);
         pause_button.setEnabled(running && !paused && bot != null && !bot.isPauseRequested());
@@ -532,6 +559,9 @@ public class BotWindow extends JFrame implements ConfigBot.Listener {
 
     //Old F-key start: starts this configurator, or resumes if it is paused
     public void hotkeyStart(Panel hotkey_panel) {
+        if(fsae.isRunning()) {
+            return;
+        }
         if(running) {
             if(bot != null && bot.getIsPaused()) {
                 resume(false);
@@ -547,6 +577,18 @@ public class BotWindow extends JFrame implements ConfigBot.Listener {
 
     public void hotkeyStop() {
         stop();
+        fsae.stopIfRunning();
+    }
+
+    //F6: FSAE resume / enter the next floor's logic, or start the FSAE tab's selected step
+    public void hotkeyFsae() {
+        if(running) {
+            return;
+        }
+        if(!fsae.isRunning()) {
+            tabs.setSelectedIndex(FSAE_TAB);
+        }
+        fsae.hotkey();
     }
 
     // ---------------------------------------------------------------- bot callbacks (bot thread)
@@ -736,6 +778,42 @@ public class BotWindow extends JFrame implements ConfigBot.Listener {
 
         //Blocks until the dialog closes. Returns the chosen file, null if cancelled, or FALLBACK.
         static File open(File start_dir) throws Exception {
+            return dialog(start_dir, "Select the zone list",
+                "Zone lists (*.xlsx;*.xlsm;*.csv)|*.xlsx;*.xlsm;*.csv|Excel workbooks (*.xlsx;*.xlsm)|*.xlsx;*.xlsm|CSV files (*.csv)|*.csv|All files (*.*)|*.*",
+                false);
+        }
+
+        //Open or Save As dialog for any file type, called off the EDT. filter uses the Windows "Name|*.ext|..." format.
+        //Falls back to the older native dialog if PowerShell can't show it. Returns null if cancelled.
+        static File show(java.awt.Frame parent, File start_dir, String title, String filter, boolean save) {
+            File picked;
+            try {
+                picked = dialog(start_dir, title, filter, save);
+            } catch (Exception e) {
+                System.out.println("Windows file browser unavailable (" + e.getMessage() + "), using the fallback dialog.");
+                picked = FALLBACK;
+            }
+            if(picked != FALLBACK) {
+                return picked;
+            }
+
+            File[] result = new File[1];
+            try {
+                SwingUtilities.invokeAndWait(() -> {
+                    FileDialog dialog = new FileDialog(parent, title, save ? FileDialog.SAVE : FileDialog.LOAD);
+                    dialog.setDirectory(start_dir.getAbsolutePath());
+                    dialog.setVisible(true);
+                    if(dialog.getFile() != null) {
+                        result[0] = new File(dialog.getDirectory(), dialog.getFile());
+                    }
+                });
+            } catch (Exception e) {
+                System.out.println("Could not show a file dialog: " + e.getMessage());
+            }
+            return result[0];
+        }
+
+        private static File dialog(File start_dir, String title, String filter, boolean save) throws Exception {
             String script = String.join("\n",
                 "$ErrorActionPreference = 'Stop'",
                 "$ProgressPreference = 'SilentlyContinue'",
@@ -744,9 +822,9 @@ public class BotWindow extends JFrame implements ConfigBot.Listener {
                 "[Windows.Forms.Application]::EnableVisualStyles()",
                 //Invisible topmost owner so the dialog opens in front of the bot window
                 "$owner = New-Object Windows.Forms.Form -Property @{ TopMost = $true; ShowInTaskbar = $false }",
-                "$dialog = New-Object Windows.Forms.OpenFileDialog",
-                "$dialog.Title = 'Select the zone list'",
-                "$dialog.Filter = 'Zone lists (*.xlsx;*.xlsm;*.csv)|*.xlsx;*.xlsm;*.csv|Excel workbooks (*.xlsx;*.xlsm)|*.xlsx;*.xlsm|CSV files (*.csv)|*.csv|All files (*.*)|*.*'",
+                "$dialog = New-Object Windows.Forms." + (save ? "SaveFileDialog" : "OpenFileDialog"),
+                "$dialog.Title = '" + title.replace("'", "''") + "'",
+                "$dialog.Filter = '" + filter.replace("'", "''") + "'",
                 "$dialog.InitialDirectory = '" + start_dir.getAbsolutePath().replace("'", "''") + "'",
                 "$dialog.RestoreDirectory = $true",
                 "if ($dialog.ShowDialog($owner) -eq [Windows.Forms.DialogResult]::OK) { [Console]::Out.Write($dialog.FileName) }",

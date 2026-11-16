@@ -11,6 +11,7 @@ import com.github.kwhat.jnativehook.keyboard.NativeKeyListener;
 
 //Opens the bot window and keeps the old global hotkeys working:
 //F2 FX400, F3 FX2000, F4 Flexnet, F5 FX4000 start (or resume) with the configurator in front, ` stops the run.
+//F6 drives the FSAE tab: resume / enter the next floor's logic, or start the selected FSAE step.
 public class Automation implements NativeKeyListener {
 
     private static volatile BotWindow window;
@@ -32,7 +33,7 @@ public class Automation implements NativeKeyListener {
             Logger.getLogger(GlobalScreen.class.getPackage().getName()).setLevel(Level.WARNING);
             GlobalScreen.registerNativeHook();
             GlobalScreen.addNativeKeyListener(new Automation());
-            System.out.println("Program ready. Use the window, or with the configurator in front press F2 FX400, F3 FX2000, F4 Flexnet, F5 FX4000. ` stops a run.");
+            System.out.println("Program ready. Use the window, or with the configurator in front press F2 FX400, F3 FX2000, F4 Flexnet, F5 FX4000, F6 FSAE. ` stops a run.");
         }
         catch (NativeHookException ex) {
             System.err.println("Hotkeys unavailable (" + ex.getMessage() + "). Use the window's buttons instead.");
@@ -60,6 +61,9 @@ public class Automation implements NativeKeyListener {
                 break;
             case NativeKeyEvent.VC_F5:
                 SwingUtilities.invokeLater(() -> w.hotkeyStart(BotWindow.Panel.FX_4000));
+                break;
+            case NativeKeyEvent.VC_F6:
+                SwingUtilities.invokeLater(w::hotkeyFsae);
                 break;
         }
     }
