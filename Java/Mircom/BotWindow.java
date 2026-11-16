@@ -1,4 +1,5 @@
 import java.awt.BorderLayout;
+import java.awt.FileDialog;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
@@ -26,7 +27,6 @@ import javax.swing.ButtonGroup;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
-import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -39,7 +39,6 @@ import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.AbstractTableModel;
 
 //Control window for the data entry bots: convert the zone list, pick the configurator,
@@ -109,6 +108,7 @@ public class BotWindow extends JFrame implements ConfigBot.Listener {
     private boolean running = false;
     private boolean user_paused = false;
     private boolean converting = false;
+    private File zone_dir; //folder of the last zone list converted, so the browser reopens there
 
     public BotWindow() {
         super("Mircom Data Entry");
@@ -574,20 +574,63 @@ public class BotWindow extends JFrame implements ConfigBot.Listener {
     // ---------------------------------------------------------------- Excel conversion
 
     private void convertZoneList() {
-        JFileChooser chooser = new JFileChooser(new File("assets"));
-        chooser.setFileFilter(new FileNameExtensionFilter("Zone list (*.xlsx, *.csv)", "xlsx", "csv"));
-        if(chooser.showOpenDialog(this) != JFileChooser.APPROVE_OPTION) {
+        converting = true;
+        updateControls();
+        status_label.setText("Opening file browser...");
+
+        //The Windows dialog runs in a separate process, so wait for it off the EDT
+        File start_dir = zone_dir != null && zone_dir.isDirectory() ? zone_dir : new File("assets").getAbsoluteFile();
+        new Thread(() -> {
+            File picked;
+            try {
+                picked = WindowsFileDialog.open(start_dir);
+            } catch (Exception e) {
+                System.out.println("Windows file browser unavailable (" + e.getMessage() + "), using the fallback dialog.");
+                picked = WindowsFileDialog.FALLBACK;
+            }
+            File result = picked;
+            SwingUtilities.invokeLater(() -> {
+                File source = result == WindowsFileDialog.FALLBACK ? pickWithAwtDialog(start_dir) : result;
+                if(source == null) {
+                    converting = false;
+                    status_label.setText("Ready");
+                    updateControls();
+                    return;
+                }
+                runConverter(source);
+            });
+        }, "pick-zone-list").start();
+    }
+
+    //Native (older-style) Windows dialog, used only if PowerShell can't show the modern one
+    private File pickWithAwtDialog(File start_dir) {
+        FileDialog dialog = new FileDialog(this, "Select the zone list", FileDialog.LOAD);
+        dialog.setDirectory(start_dir.getAbsolutePath());
+        dialog.setFile("*.xlsx;*.xlsm;*.csv"); //acts as the filter on Windows
+        dialog.setVisible(true);
+        if(dialog.getFile() == null) {
+            return null;
+        }
+        return new File(dialog.getDirectory(), dialog.getFile());
+    }
+
+    private void runConverter(File source) {
+        if(!WindowsFileDialog.isZoneList(source)) {
+            converting = false;
+            status_label.setText("Ready");
+            updateControls();
+            JOptionPane.showMessageDialog(this, source.getName() + " is not a zone list. Pick an .xlsx, .xlsm or .csv file.");
             return;
         }
-
-        File source = chooser.getSelectedFile();
         if(source.getAbsoluteFile().equals(new File(ZONE_FILE).getAbsoluteFile())) {
+            converting = false;
+            status_label.setText("Ready");
+            updateControls();
             JOptionPane.showMessageDialog(this, "That is the bot's own output file. Pick the original Excel/CSV zone list.");
             return;
         }
+        zone_dir = source.getAbsoluteFile().getParentFile();
 
-        converting = true;
-        updateControls();
         status_label.setText("Converting " + source.getName() + "...");
         System.out.println("Converting " + source.getAbsolutePath());
 
@@ -624,6 +667,57 @@ public class BotWindow extends JFrame implements ConfigBot.Listener {
                 updateControls();
             });
         }, "convert").start();
+    }
+
+    //Shows the standard Windows "Open" dialog (the same one Explorer/Office use: address bar,
+    //search, Quick access, OneDrive) through PowerShell's OpenFileDialog, since Swing/AWT only
+    //offer their own chooser or the older-style Windows dialog.
+    static final class WindowsFileDialog {
+        static final File FALLBACK = new File("<fallback>"); //returned when PowerShell couldn't show it
+        static final String[] EXTENSIONS = {".xlsx", ".xlsm", ".csv"};
+
+        static boolean isZoneList(File file) {
+            String name = file.getName().toLowerCase(Locale.ROOT);
+            for(String extension : EXTENSIONS) {
+                if(name.endsWith(extension)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        //Blocks until the dialog closes. Returns the chosen file, null if cancelled, or FALLBACK.
+        static File open(File start_dir) throws Exception {
+            String script = String.join("\n",
+                "$ErrorActionPreference = 'Stop'",
+                "$ProgressPreference = 'SilentlyContinue'",
+                "[Console]::OutputEncoding = New-Object Text.UTF8Encoding $false",
+                "Add-Type -AssemblyName System.Windows.Forms",
+                "[Windows.Forms.Application]::EnableVisualStyles()",
+                //Invisible topmost owner so the dialog opens in front of the bot window
+                "$owner = New-Object Windows.Forms.Form -Property @{ TopMost = $true; ShowInTaskbar = $false }",
+                "$dialog = New-Object Windows.Forms.OpenFileDialog",
+                "$dialog.Title = 'Select the zone list'",
+                "$dialog.Filter = 'Zone lists (*.xlsx;*.xlsm;*.csv)|*.xlsx;*.xlsm;*.csv|Excel workbooks (*.xlsx;*.xlsm)|*.xlsx;*.xlsm|CSV files (*.csv)|*.csv|All files (*.*)|*.*'",
+                "$dialog.InitialDirectory = '" + start_dir.getAbsolutePath().replace("'", "''") + "'",
+                "$dialog.RestoreDirectory = $true",
+                "if ($dialog.ShowDialog($owner) -eq [Windows.Forms.DialogResult]::OK) { [Console]::Out.Write($dialog.FileName) }",
+                "$owner.Dispose()");
+            String encoded = java.util.Base64.getEncoder().encodeToString(script.getBytes(StandardCharsets.UTF_16LE));
+
+            Process process = new ProcessBuilder("powershell.exe", "-NoProfile", "-NonInteractive", "-STA",
+                    "-ExecutionPolicy", "Bypass", "-EncodedCommand", encoded)
+                .redirectError(ProcessBuilder.Redirect.DISCARD) //PowerShell writes CLIXML progress noise there
+                .start();
+            process.getOutputStream().close();
+            String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8).replace("﻿", "").trim();
+            int exit_code = process.waitFor();
+            if(exit_code != 0) {
+                System.out.println("Windows file browser failed (PowerShell exit code " + exit_code + "), using the fallback dialog.");
+                return FALLBACK;
+            }
+            return output.isEmpty() ? null : new File(output);
+        }
     }
 
     // ---------------------------------------------------------------- log
