@@ -10,6 +10,7 @@ public class Zone {
     private boolean isMini = false;
     private String tag1;
     private String tag2;
+    private String overrides = ""; //raw Overrides cell from the zone list, e.g. "type=Relay;isMini"
 
     public Zone(double address, String tag1, String tag2) {
         this.address = address;
@@ -195,6 +196,14 @@ public class Zone {
 
     public subZone getSubAddress() {
         return subAddress;
+    }
+
+    public void setOverrides(String overrides) {
+        this.overrides = overrides == null ? "" : overrides;
+    }
+
+    public String getOverrides() {
+        return overrides;
     }
 }
 

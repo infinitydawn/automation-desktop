@@ -1,4 +1,6 @@
 import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
 import java.awt.FileDialog;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -24,6 +26,7 @@ import java.util.function.Supplier;
 
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
+import javax.swing.DefaultCellEditor;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -40,6 +43,7 @@ import javax.swing.JTextArea;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
 
 //Control window for the data entry bots: convert the zone list, pick the configurator,
 //choose where to start, and start/pause/resume/stop.
@@ -81,6 +85,14 @@ public class BotWindow extends JFrame implements ConfigBot.Listener {
     private static final String CONVERTER = "tools/excelReader.py";
     private static final int MAX_LOG_CHARS = 200_000;
 
+    //Zone table columns
+    private static final int COL_NUMBER = 0, COL_ADDRESS = 1, COL_TYPE = 2, COL_TAG1 = 3, COL_TAG2 = 4, COL_OVERRIDES = 5;
+    private static final String AUTO_TYPE = "(automatic from Tag 1)";
+    private static final String[] DEVICE_TYPES = { AUTO_TYPE, "Photo Detector", "Heat Detector", "Alarm Input", "Alarm Input Class A",
+        "Latched Supervisory", "Non-latched Supervisory", "Relay", "Telephone Module", "Speakers", "Blank Device" };
+    private static final Color SUB_ROW_BACKGROUND = new Color(242, 244, 247);
+    private static final Color OVERRIDE_FOREGROUND = new Color(0, 90, 180);
+
     private final JComboBox<Panel> panel_box = new JComboBox<>(Panel.values());
     private final JComboBox<DataEntryBot.WindowInfo> window_box = new JComboBox<>();
     private final JLabel zone_status = new JLabel(" ");
@@ -108,6 +120,8 @@ public class BotWindow extends JFrame implements ConfigBot.Listener {
     private boolean running = false;
     private boolean user_paused = false;
     private boolean converting = false;
+    private int pending_edits = 0; //table edits waiting to be saved to the zone list
+    private boolean last_edit_failed = false;
     private File zone_dir; //folder of the last zone list converted, so the browser reopens there
 
     public BotWindow() {
@@ -194,10 +208,20 @@ public class BotWindow extends JFrame implements ConfigBot.Listener {
         //Table of devices in the order the bot handles them
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.setFillsViewportHeight(true);
-        table.getColumnModel().getColumn(0).setMaxWidth(50);
-        table.getColumnModel().getColumn(1).setMaxWidth(80);
+        table.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE); //clicking elsewhere saves the edit
+        table.setDefaultRenderer(Object.class, new ZoneCellRenderer());
+        table.getColumnModel().getColumn(COL_NUMBER).setMaxWidth(50);
+        table.getColumnModel().getColumn(COL_ADDRESS).setMaxWidth(90);
+        table.getColumnModel().getColumn(COL_OVERRIDES).setPreferredWidth(160);
+        JComboBox<String> type_box = new JComboBox<>(DEVICE_TYPES);
+        type_box.setEditable(true);
+        DefaultCellEditor type_editor = new DefaultCellEditor(type_box);
+        type_editor.setClickCountToStart(2); //a single click only picks the start row, like the text cells
+        table.getColumnModel().getColumn(COL_TYPE).setCellEditor(type_editor);
+        table.getTableHeader().setToolTipText("<html>Double-click a Type, Tag 1, Tag 2 or Overrides cell to edit it. Edits are saved to " + ZONE_FILE + ".<br>"
+            + "Overrides: type=&lt;device type&gt;; " + String.join("; ", ZoneList.OVERRIDE_FLAGS) + " - put ! in front to turn one off.</html>");
         JScrollPane table_scroll = new JScrollPane(table);
-        table_scroll.setBorder(BorderFactory.createTitledBorder("Devices in the order the bot handles them - select where to start"));
+        table_scroll.setBorder(BorderFactory.createTitledBorder("Devices in the order the bot handles them - select where to start, double-click a cell to edit"));
 
         log.setEditable(false);
         log.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
@@ -274,7 +298,7 @@ public class BotWindow extends JFrame implements ConfigBot.Listener {
             zone_status.setText(String.format("%s - %d devices to insert, %d to update (saved %s)",
                 ZONE_FILE, plan.inserts.size(), plan.updates.size(), modified));
 
-            int keep = reset_start ? 0 : Math.max(0, table.getSelectedRow());
+            int keep = reset_start ? 0 : Math.max(0, selectedIndex());
             if(reset_start) {
                 insert_radio.setSelected(true);
             }
@@ -295,7 +319,12 @@ public class BotWindow extends JFrame implements ConfigBot.Listener {
         updateStartLabel();
     }
 
-    private void selectRow(int row) {
+    //Selects the device at this position in the bot's order
+    private void selectRow(int index) {
+        showTableRow(table_model.rowOf(index));
+    }
+
+    private void showTableRow(int row) {
         if(row >= 0 && row < table_model.getRowCount()) {
             table.setRowSelectionInterval(row, row);
             table.scrollRectToVisible(table.getCellRect(row, 0, true));
@@ -305,21 +334,27 @@ public class BotWindow extends JFrame implements ConfigBot.Listener {
         }
     }
 
-    private void updateStartLabel() {
+    //Position in the bot's order of the selected device (a .2 row counts as its .1 device), or -1
+    private int selectedIndex() {
         int row = table.getSelectedRow();
+        return row < 0 ? -1 : table_model.indexOf(row);
+    }
+
+    private void updateStartLabel() {
+        int index = selectedIndex();
         String phase_name = shown_phase == ConfigBot.Phase.INSERT ? "insert" : "update";
 
-        if(plan == null || row < 0) {
+        if(plan == null || index < 0) {
             start_label.setText(plan == null ? "No zone list loaded" : "Select a device to start from");
         }
         else {
-            Zone zone = table_model.zones.get(row);
-            start_label.setText(String.format("Start at %s #%d of %d:  %s", phase_name, row + 1,
-                table_model.getRowCount(), zone.getZoneinfo()));
+            Zone zone = table_model.zones.get(index);
+            start_label.setText(String.format("Start at %s #%d of %d:  %s", phase_name, index + 1,
+                table_model.zones.size(), zone.getZoneinfo()));
         }
 
         if(shown_phase == ConfigBot.Phase.INSERT) {
-            hint_label.setText(row > 0
+            hint_label.setText(index > 0
                 ? "Devices above the selected one must already be in the configurator. Tags/types are then entered for every device."
                 : "Inserts every device, then enters tags/types for every device.");
         }
@@ -370,6 +405,19 @@ public class BotWindow extends JFrame implements ConfigBot.Listener {
             return;
         }
 
+        //Save a cell still being edited first, so the bot reads the edited zone list
+        if(table.isEditing()) {
+            table.getCellEditor().stopCellEditing();
+        }
+        if(pending_edits > 0) {
+            SwingUtilities.invokeLater(() -> {
+                if(!last_edit_failed) {
+                    start(from_hotkey);
+                }
+            });
+            return;
+        }
+
         DataEntryBot.WindowInfo window = (DataEntryBot.WindowInfo) window_box.getSelectedItem();
         if(!from_hotkey && window == null) {
             JOptionPane.showMessageDialog(this, "No open " + panel().label + " window found.\nOpen the job in the configurator, then press Refresh.",
@@ -378,7 +426,7 @@ public class BotWindow extends JFrame implements ConfigBot.Listener {
         }
 
         ConfigBot.Phase phase = shown_phase;
-        int index = Math.max(0, table.getSelectedRow());
+        int index = Math.max(0, selectedIndex());
 
         ConfigBot new_bot = panel().factory.get();
         try {
@@ -764,18 +812,126 @@ public class BotWindow extends JFrame implements ConfigBot.Listener {
 
     // ---------------------------------------------------------------- table
 
-    private static class ZoneTableModel extends AbstractTableModel {
-        private static final String[] COLUMNS = { "#", "Address", "Type", "Tag 1", "Tag 2" };
-        List<Zone> zones = new ArrayList<>();
+    //Saves an edited cell to the zone list file, then reloads so the table shows what the bot will do
+    private void editZone(Zone zone, int column, String value) {
+        pending_edits--;
+        last_edit_failed = false;
+
+        value = value.trim();
+        if(column == COL_TYPE && value.equals(AUTO_TYPE)) {
+            value = "";
+        }
+        if(value.equals(String.valueOf(table_model.cell(zone, column)).trim())) {
+            return; //unchanged
+        }
+
+        double address = zone.getAddress();
+        String column_name = table_model.getColumnName(column);
+        try {
+            switch(column) {
+                case COL_TYPE:
+                    ZoneList.setTypeOverride(ZONE_FILE, address, value);
+                    break;
+                case COL_TAG1:
+                    ZoneList.editCell(ZONE_FILE, address, ZoneList.TAG1_COLUMN, value);
+                    break;
+                case COL_TAG2:
+                    ZoneList.editCell(ZONE_FILE, address, ZoneList.TAG2_COLUMN, value);
+                    break;
+                case COL_OVERRIDES:
+                    value = ZoneList.normalizeOverrides(value);
+                    ZoneList.editCell(ZONE_FILE, address, ZoneList.OVERRIDES_COLUMN, value);
+                    break;
+                default:
+                    return;
+            }
+        } catch (IllegalArgumentException e) {
+            last_edit_failed = true;
+            JOptionPane.showMessageDialog(this, e.getMessage(), "Can't use that " + column_name, JOptionPane.WARNING_MESSAGE);
+            return;
+        } catch (Exception e) {
+            last_edit_failed = true;
+            JOptionPane.showMessageDialog(this, "Could not save the change to " + ZONE_FILE + ":\n" + e.getMessage(),
+                "Edit not saved", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        String shown = value.isEmpty() ? (column == COL_TYPE ? "automatic" : "(blank)") : value;
+        System.out.println("Edited " + address + " " + column_name + ": " + shown);
+        loadPlan(false);
+        showTableRow(table_model.rowOfAddress(address)); //the edit can move the device, e.g. a new type changes the insert order
+        status_label.setText("Saved " + address + " to " + ZONE_FILE + ". Converting the Excel/CSV again replaces edits made here.");
+    }
+
+    //Shades .2 rows and highlights overrides
+    private class ZoneCellRenderer extends DefaultTableCellRenderer {
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean selected, boolean focused, int row, int column) {
+            super.getTableCellRendererComponent(table, value, selected, focused, row, column);
+            Zone zone = table_model.zoneAt(row);
+
+            boolean overridden = column == COL_OVERRIDES
+                || (column == COL_TYPE && zone.getOverrides().contains("type="));
+            if(!selected) {
+                setBackground(zone instanceof subZone ? SUB_ROW_BACKGROUND : table.getBackground());
+                setForeground(overridden ? OVERRIDE_FOREGROUND : table.getForeground());
+            }
+            if(overridden && !zone.getOverrides().isEmpty()) {
+                setFont(getFont().deriveFont(Font.BOLD));
+            }
+            setToolTipText(column == COL_OVERRIDES && !zone.getOverrides().isEmpty() ? zone.getOverrides() : null);
+            return this;
+        }
+    }
+
+    //One row per device in the bot's order, each followed by its .2 address (if it has one)
+    private class ZoneTableModel extends AbstractTableModel {
+        private final String[] COLUMNS = { "#", "Address", "Type", "Tag 1", "Tag 2", "Overrides" };
+        List<Zone> zones = new ArrayList<>(); //the bot's order
+        private final List<Zone> rows = new ArrayList<>();
+        private final List<Integer> row_index = new ArrayList<>(); //position in zones of each row's device
 
         void setZones(List<Zone> zones) {
             this.zones = zones;
+            rows.clear();
+            row_index.clear();
+            for(int i = 0; i < zones.size(); i++) {
+                Zone zone = zones.get(i);
+                rows.add(zone);
+                row_index.add(i);
+                if(zone.getSubAddress() != null) {
+                    rows.add(zone.getSubAddress());
+                    row_index.add(i);
+                }
+            }
             fireTableDataChanged();
+        }
+
+        Zone zoneAt(int row) {
+            return rows.get(row);
+        }
+
+        int indexOf(int row) {
+            return row_index.get(row);
+        }
+
+        //Table row of the device at this position in the bot's order, or -1
+        int rowOf(int index) {
+            return row_index.indexOf(index);
+        }
+
+        int rowOfAddress(double address) {
+            for(int row = 0; row < rows.size(); row++) {
+                if(rows.get(row).getAddress() == address) {
+                    return row;
+                }
+            }
+            return -1;
         }
 
         @Override
         public int getRowCount() {
-            return zones.size();
+            return rows.size();
         }
 
         @Override
@@ -790,14 +946,39 @@ public class BotWindow extends JFrame implements ConfigBot.Listener {
 
         @Override
         public Object getValueAt(int row, int column) {
-            Zone zone = zones.get(row);
-            switch(column) {
-                case 0: return row + 1;
-                case 1: return zone.getAddress();
-                case 2: return zone.getType();
-                case 3: return zone.getTag1();
-                default: return zone.getTag2();
+            Zone zone = rows.get(row);
+            if(column == COL_NUMBER) {
+                return zone instanceof subZone ? "" : row_index.get(row) + 1;
             }
+            if(column == COL_ADDRESS && zone instanceof subZone) {
+                return "  └ " + zone.getAddress();
+            }
+            return cell(zone, column);
+        }
+
+        Object cell(Zone zone, int column) {
+            switch(column) {
+                case COL_ADDRESS: return String.valueOf(zone.getAddress());
+                case COL_TYPE: return zone.getType();
+                case COL_TAG1: return zone.getTag1();
+                case COL_TAG2: return zone.getTag2();
+                case COL_OVERRIDES: return zone.getOverrides();
+                default: return "";
+            }
+        }
+
+        @Override
+        public boolean isCellEditable(int row, int column) {
+            return column >= COL_TYPE && !running && !converting;
+        }
+
+        @Override
+        public void setValueAt(Object value, int row, int column) {
+            //Saved after the editor closes - reloading the table while it is still open confuses JTable
+            Zone zone = rows.get(row);
+            String text = value == null ? "" : value.toString();
+            pending_edits++;
+            SwingUtilities.invokeLater(() -> editZone(zone, column, text));
         }
     }
 }
