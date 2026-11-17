@@ -50,7 +50,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 //choose where to start, and start/pause/resume/stop.
 public class BotWindow extends JFrame implements ConfigBot.Listener {
 
-    //Each configurator the bot can drive, how to recognise its window, and its old start hotkey
+    //Each configurator the bot can drive and how to recognise its window
     public enum Panel {
         FX_400("FX-400 (MGC-400 Configurator)", FX400::new, "MGC-400 Series Configurator", "mgc-400_config.exe", false),
         FX_2000("FX-2000", FX2000::new, "FX-2000 Configuration", "fxconfig.exe", false),
@@ -416,7 +416,7 @@ public class BotWindow extends JFrame implements ConfigBot.Listener {
 
     // ---------------------------------------------------------------- run control
 
-    //from_hotkey: started with the old F-key while the configurator is in front, so lock onto that window
+    //from_hotkey: started with the Start/Pause hotkey, so report problems in the log instead of a dialog
     private void start(boolean from_hotkey) {
         if(running || converting || fsae.isRunning()) {
             return;
@@ -436,10 +436,29 @@ public class BotWindow extends JFrame implements ConfigBot.Listener {
         }
 
         DataEntryBot.WindowInfo window = (DataEntryBot.WindowInfo) window_box.getSelectedItem();
-        if(!from_hotkey && window == null) {
+        if(window == null) {
+            if(from_hotkey) {
+                //Don't pop a dialog over the configurator - just say why nothing happened
+                Toolkit.getDefaultToolkit().beep();
+                System.out.println("Start hotkey: no open " + panel().label + " window found. Pick the configurator type in the window, open the job, then try again.");
+                return;
+            }
             JOptionPane.showMessageDialog(this, "No open " + panel().label + " window found.\nOpen the job in the configurator, then press Refresh.",
                 "No configurator window", JOptionPane.WARNING_MESSAGE);
             return;
+        }
+
+        String admin_problem = DataEntryBot.adminProblem(window);
+        if(admin_problem != null) {
+            if(from_hotkey) {
+                Toolkit.getDefaultToolkit().beep();
+                System.out.println(admin_problem.replace('\n', ' '));
+                return;
+            }
+            if(JOptionPane.showConfirmDialog(this, admin_problem + "\n\nStart anyway?", "Configurator is running as administrator",
+                    JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE) != JOptionPane.YES_OPTION) {
+                return;
+            }
         }
 
         ConfigBot.Phase phase = shown_phase;
@@ -462,9 +481,7 @@ public class BotWindow extends JFrame implements ConfigBot.Listener {
 
         new_bot.setStartPoint(phase, index);
         new_bot.setListener(this);
-        if(!from_hotkey) {
-            new_bot.setTargetWindow(window.hwnd());
-        }
+        new_bot.setTargetWindow(window.hwnd());
 
         bot = new_bot;
         user_paused = false;
@@ -474,11 +491,9 @@ public class BotWindow extends JFrame implements ConfigBot.Listener {
         status_label.setText("Starting...");
         setRunning(true);
 
-        //Bring the configurator forward (allowed because our window was just clicked), then start typing
+        //Bring the configurator forward (a no-op if the hotkey was pressed with it already in front), then start typing
         new Thread(() -> {
-            if(!from_hotkey) {
-                new_bot.focusTarget();
-            }
+            new_bot.focusTarget();
             new_bot.start();
         }, "bot-start").start();
     }
@@ -492,7 +507,7 @@ public class BotWindow extends JFrame implements ConfigBot.Listener {
         }
     }
 
-    //refocus: bring the configurator back to the front first (GUI button). Not needed from the F-key.
+    //refocus: bring the configurator back to the front first (GUI button). Not needed from the hotkey.
     private void resume(boolean refocus) {
         ConfigBot b = bot;
         if(b == null || !running || !b.getIsPaused()) {
@@ -557,20 +572,30 @@ public class BotWindow extends JFrame implements ConfigBot.Listener {
 
     // Hotkeys (from Automation)
 
-    //Old F-key start: starts this configurator, or resumes if it is paused
-    public void hotkeyStart(Panel hotkey_panel) {
-        if(fsae.isRunning()) {
-            return;
-        }
+    //Start/Pause hotkey: pauses or resumes whichever bot is running, otherwise starts the bot on the tab in front
+    //using the configurator and window picked in this window
+    public void hotkeyStartPause() {
         if(running) {
-            if(bot != null && bot.getIsPaused()) {
+            if(bot == null) {
+                return;
+            }
+            if(bot.getIsPaused()) {
                 resume(false);
+            }
+            else {
+                pause();
             }
             return;
         }
-
-        if(panel() != hotkey_panel) {
-            panel_box.setSelectedItem(hotkey_panel); //reloads the plan from the beginning
+        if(fsae.isRunning() || tabs.getSelectedIndex() == FSAE_TAB) {
+            fsae.hotkey();
+            return;
+        }
+        if(converting) {
+            return;
+        }
+        if(window_box.getItemCount() == 0) {
+            refreshWindows(); //the configurator may have been opened after the last Refresh
         }
         start(true);
     }
@@ -578,17 +603,6 @@ public class BotWindow extends JFrame implements ConfigBot.Listener {
     public void hotkeyStop() {
         stop();
         fsae.stopIfRunning();
-    }
-
-    //F6: FSAE resume / enter the next floor's logic, or start the FSAE tab's selected step
-    public void hotkeyFsae() {
-        if(running) {
-            return;
-        }
-        if(!fsae.isRunning()) {
-            tabs.setSelectedIndex(FSAE_TAB);
-        }
-        fsae.hotkey();
     }
 
     // ---------------------------------------------------------------- bot callbacks (bot thread)
