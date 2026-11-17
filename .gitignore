@@ -12,6 +12,5 @@ __pycache__/
 
 # DMP: job exports (encrypted or decrypted) hold customer data, IPs and codes
 DMP/**/*.xml
-# DMP: per-job settings files - only the example is kept
+# DMP: local job files
 DMP/jobs/*
-!DMP/jobs/example*.ini
