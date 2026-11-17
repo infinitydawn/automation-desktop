@@ -4,3 +4,4 @@
 **/\.vscode
 settings.ini
 *.env
+*.fsae
