@@ -34,45 +34,39 @@ public final class LinkRules {
         }
 
         public void check(Job job, Report report) {
-            duplicates(job.zone_links, "device-zone link", report);
-            duplicates(job.io_links, "input-output link", report);
+            duplicates(job.zone_links, "Device-zone link", report);
+            duplicates(job.io_links, "Input-output link", report);
             duplicates(job.led_input_links, "LED-input link", report);
             duplicates(job.led_output_links, "LED-output link", report);
 
             for (int[] l : job.zone_links) {
                 Circuit src = job.inputs.get(l[0]);
                 Circuit zone = job.inputs.get(l[1]);
-                String where = "Device-zone link " + l[0] + " -> " + l[1];
-                if (src == null) report.error(where, "The input circuit " + l[0] + " does not exist.");
-                if (zone == null) report.error(where, "The input zone circuit " + l[1] + " does not exist.");
+                if (src == null) report.error(Place.text("Device-zone link " + l[0] + " > " + l[1]), "Links from input circuit " + l[0] + ", which does not exist");
+                if (zone == null) report.error(src != null ? src : Place.text("Device-zone link " + l[0] + " > " + l[1]), "Links to input zone circuit " + l[1] + ", which does not exist");
                 if (src == null || zone == null) continue;
-                where = src.label() + " -> " + zone.label();
-                if (zone.kind != Kind.INPUT_ZONE) report.error(where, "Linked as an input zone, but the target is not an input zone.");
-                if (src.kind == Kind.INPUT_ZONE) report.warning(where, "An input zone is linked into another input zone.");
+                if (zone.kind != Kind.INPUT_ZONE) report.error(src, "Linked as an input zone to something that is not one: " + Place.brief(zone));
+                if (src.kind == Kind.INPUT_ZONE) report.warning(src, "Input zone linked into another input zone: " + Place.brief(zone));
             }
             for (int[] l : job.io_links) {
-                String where = "Input-output link " + l[0] + " -> " + l[1];
-                if (!job.inputs.containsKey(l[0])) report.error(where, "The input circuit " + l[0] + " does not exist.");
-                if (!job.outputs.containsKey(l[1])) report.error(where, "The output circuit " + l[1] + " does not exist.");
+                Circuit in = job.inputs.get(l[0]);
+                if (in == null) report.error(Place.text("Input-output link " + l[0] + " > " + l[1]), "Links from input circuit " + l[0] + ", which does not exist");
+                if (!job.outputs.containsKey(l[1])) report.error(in != null ? in : Place.text("Input-output link"), "Links to output circuit " + l[1] + ", which does not exist");
             }
             for (int[] l : job.led_input_links) {
-                String where = "LED-input link group " + l[0] + " -> input " + l[1];
-                if (!job.leds.containsKey(l[0])) report.error(where, "The LED group " + l[0] + " does not exist.");
-                if (!job.inputs.containsKey(l[1])) report.error(where, "The input circuit " + l[1] + " does not exist.");
+                if (!job.leds.containsKey(l[0])) report.error(Place.text("LED group " + l[0]), "LED group does not exist (linked to input " + l[1] + ")");
+                if (!job.inputs.containsKey(l[1])) report.error(job.leds.containsKey(l[0]) ? job.leds.get(l[0]) : Place.text("LED group " + l[0]), "Linked to input circuit " + l[1] + ", which does not exist");
             }
             for (int[] l : job.led_output_links) {
-                String where = "LED-output link group " + l[0] + " -> output " + l[1];
-                if (!job.leds.containsKey(l[0])) report.error(where, "The LED group " + l[0] + " does not exist.");
-                if (!job.outputs.containsKey(l[1])) report.error(where, "The output circuit " + l[1] + " does not exist.");
+                if (!job.leds.containsKey(l[0])) report.error(Place.text("LED group " + l[0]), "LED group does not exist (linked to output " + l[1] + ")");
+                if (!job.outputs.containsKey(l[1])) report.error(job.leds.containsKey(l[0]) ? job.leds.get(l[0]) : Place.text("LED group " + l[0]), "Linked to output circuit " + l[1] + ", which does not exist");
             }
             for (Job.Led led : job.leds.values()) {
-                if (led.slots.isEmpty()) report.warning("LED group " + led.group + " \"" + led.tag.trim() + "\"", "Defined but not placed on any display.");
+                if (led.slots.isEmpty()) report.warning(led, "LED defined but not placed on any display");
             }
             for (Job.Equation e : job.equations.values()) {
                 for (Map.Entry<Integer, Integer> in : e.inputs.entrySet()) {
-                    if (!job.inputs.containsKey(in.getValue())) {
-                        report.error(e.label(), "Term " + in.getKey() + " refers to input circuit " + in.getValue() + ", which does not exist.");
-                    }
+                    if (!job.inputs.containsKey(in.getValue())) report.error(e, "Logic refers to input circuit " + in.getValue() + ", which does not exist");
                 }
             }
             report.note(job.summary());
@@ -80,9 +74,9 @@ public final class LinkRules {
 
         private static void duplicates(List<int[]> links, String what, Report report) {
             Map<String, Integer> seen = new HashMap<>();
-            for (int[] l : links) seen.merge(l[0] + " -> " + l[1], 1, Integer::sum);
+            for (int[] l : links) seen.merge(l[0] + " > " + l[1], 1, Integer::sum);
             for (Map.Entry<String, Integer> e : seen.entrySet()) {
-                if (e.getValue() > 1) report.warning(what + " " + e.getKey(), "Listed " + e.getValue() + " times.");
+                if (e.getValue() > 1) report.warning(Place.text(what + " " + e.getKey()), "Listed " + e.getValue() + " times");
             }
         }
     }
@@ -120,7 +114,7 @@ public final class LinkRules {
                 if (c.kind == Kind.DEVICE) {
                     if (SKIPPED_LOOPS.contains(c.loop_type)) continue;
                     devices++;
-                    if (!linked) report.warning(c.label(), "Not in any input zone, output, LED or logic, so activating it does nothing.");
+                    if (!linked) report.warning(c, "Not correlated to anything").more("Not in any input zone, output, LED or logic, so activating it does nothing.");
                 } else if (c.kind == Kind.INPUT_ZONE) {
                     if (c.isPlaceholder()) {
                         placeholders++;
@@ -128,7 +122,7 @@ public final class LinkRules {
                     }
                     zones++;
                     if (job.sourcesOf(c).isEmpty() && job.equationsDriving(c).isEmpty()) {
-                        report.warning(c.label(), "No device feeds this input zone and no logic drives it, so it never activates.");
+                        report.warning(c, "Never activates").more("No device is in this input zone and no logic drives it.");
                     }
                 }
             }

@@ -52,7 +52,7 @@ public final class Roles {
         }
     }
 
-    private static final Pattern WATERFLOW = Pattern.compile("water\\s*flow|waterf|\\bps\\s*-?10\\b|\\bwf\\b");
+    private static final Pattern WATERFLOW = Pattern.compile("water\\s*flow|waterf|watr\\s*flo|wtr\\s*flo|ps\\s*-?10(?!\\d)|\\bwf\\b");
     private static final Pattern PULL = Pattern.compile("pull");
     private static final Pattern ANSUL = Pattern.compile("ansul");
     private static final Pattern LOW_HEAT = Pattern.compile("lo(w)?\\s*heat");
@@ -61,11 +61,12 @@ public final class Roles {
     private static final Pattern HEAT = Pattern.compile("heat|135");
     private static final Pattern PSU = Pattern.compile("inx|psu|power supply|\\bpsp\\b");
     private static final Pattern SUPERVISORY = Pattern.compile(
-        "valve|tamper|pump|jock|generator|gen\\b|radio|door open|damp|fan|power|pwr|fault|key|dry sys|air|rcv|intake|discharge|bypass|"
-        + "status|running|fail|trouble|monitor|elev|phase|low temp|hoistway|meter|riser");
+        "valv|tamper|pump|\\bpmp\\b|jock|generator|gen\\b|radio|door open|damp|fan|power|pwr|fault|key|dry sys|air|rcv|intake|discharge|bypass|"
+        + "status|running|\\brun\\b|purge|fail|trouble|troubl|monitor|elev|phase|phse|low temp|hoistway|meter|riser|active|shunt|open|closed|"
+        + "level|temp|tank|ups\\b|battery|line off|\\b24 ?v|shaft light|trigger|standpipe|sprnklr|sprinkler");
 
     public static Device device(Circuit c) {
-        String t = c.tag1().toLowerCase();
+        String t = Job.Circuit.splitWords(c.tag1()).toLowerCase();
         String type = c.device_type.toLowerCase();
         //FX6000 combo smoke/CO: the "B" input is the CO
         if (type.contains("fire-co") && c.sub == 2) return Device.CO;
@@ -75,8 +76,9 @@ public final class Roles {
         if (ANSUL.matcher(t).find()) return Device.ANSUL;
         if (LOW_HEAT.matcher(t).find()) return Device.LOW_HEAT;
         if (CO.matcher(t).find() && !t.contains("smoke")) return Device.CO;
-        if (PSU.matcher(t).find() && (t.contains("trouble") || t.contains("fault") || t.contains("fail"))) return Device.PSU_TROUBLE;
-        boolean monitor_module = type.contains("monit") || type.contains("input mod");
+        boolean monitor_module = type.contains("monit") || type.contains("input mod") || type.contains("ipt mod");
+        //INX-10 / power supply inputs are trouble inputs (cheat sheet: INX-10 Power Supply ... Trouble Input)
+        if (PSU.matcher(t).find() && (monitor_module || t.contains("trouble") || t.contains("fault") || t.contains("fail"))) return Device.PSU_TROUBLE;
         if (monitor_module && SUPERVISORY.matcher(t).find()) return Device.SUPERVISORY;
         if (SMOKE.matcher(t).find()) return Device.SMOKE;
         if (HEAT.matcher(t).find()) return Device.HEAT;
@@ -88,7 +90,32 @@ public final class Roles {
     private static final Pattern ELEVATOR = Pattern.compile("elev|\\bemr\\b|machine\\s*r|shaft|hoistway");
 
     public static boolean elevatorRelated(Circuit c) {
-        return ELEVATOR.matcher(c.cleanTag().toLowerCase()).find();
+        return ELEVATOR.matcher(c.words().toLowerCase()).find();
+    }
+
+    //A floor written in a tag: 1FL, 1 FL, 1F, 1st Fl, 1 Floor (not part of a longer number like 21FL or PS10)
+    private static final Pattern FLOOR = Pattern.compile("(?<![a-z0-9])(\\d{1,3})\\s*(?:st|nd|rd|th)?\\s*(?:fl|flr|floor|f)(?![a-z])");
+
+    private static final Pattern BELOW_GRADE = Pattern.compile("\\b(sub\\s*)?cel(l|lar)?\\b|subcel|basement|bsmt|\\bb\\d\\b|lower level");
+
+    //True when the tag places the device on the 1st floor, the usual alternate recall floor
+    public static boolean firstFloor(Circuit c) {
+        java.util.regex.Matcher m = FLOOR.matcher(c.words().toLowerCase());
+        while (m.find()) if (Integer.parseInt(m.group(1)) == 1) return true;
+        return false;
+    }
+
+    private static final Pattern OTHER_LEVEL = Pattern.compile("\\broof|\\bemr\\b|penthouse|\\bph\\b|bulkhead|blkhd|mezz|ground|lobby");
+
+    //True when the tag says which floor/level the device is on at all
+    public static boolean hasFloor(Circuit c) {
+        String t = c.words().toLowerCase();
+        return FLOOR.matcher(t).find() || BELOW_GRADE.matcher(t).find() || OTHER_LEVEL.matcher(t).find();
+    }
+
+    //True when the tag places the device below the 1st floor (cellar, sub-cellar, basement)
+    public static boolean belowGrade(Circuit c) {
+        return !firstFloor(c) && BELOW_GRADE.matcher(c.words().toLowerCase()).find();
     }
 
     //--------------------------------------------------------------------------------------------------
@@ -152,11 +179,19 @@ public final class Roles {
     private static final Pattern NOTIFICATION = Pattern.compile("strobe|horn|bell|chime|\\bnac\\b|audible|visual|signal circuit");
     private static final Pattern NOT_NOTIFICATION = Pattern.compile("sync|paging|page");
 
+    //Outputs that are recognised but have no cheat sheet rule (so they are not listed as unrecognised)
+    private static final Pattern KNOWN_OTHER = Pattern.compile(
+        "^base signal|sync|paging|\\bmic\\b|shutter|shuttr|\\bgas\\b|fuel|stove|oven|heat\\s*trac|water\\s*temp|generat\\w*\\s*(run|fail)");
+
+    public static boolean knownOther(Circuit c) {
+        return KNOWN_OTHER.matcher(c.words().toLowerCase()).find();
+    }
+
     //The first tag line says what the output is, the second where it is ("Fan Shutdown South" / "27FL Boiler Plant"),
     //so the first line decides and the whole tag is only used when the first line says nothing
     public static Output output(Circuit c) {
-        Output role = output(c, c.tag1().toLowerCase());
-        return role != Output.OTHER ? role : output(c, c.cleanTag().toLowerCase());
+        Output role = output(c, Job.Circuit.splitWords(c.tag1()).toLowerCase());
+        return role != Output.OTHER ? role : output(c, c.words().toLowerCase());
     }
 
     private static Output output(Circuit c, String t) {
@@ -164,22 +199,23 @@ public final class Roles {
         if (type.contains("sounder") || t.contains("sounder")) return Output.SOUNDER;
         if (t.contains("speaker") || type.contains("watt") || type.startsWith("control")) return Output.SPEAKER;
         if (t.contains("signal silence") || t.contains("sig sil")) return Output.SIGNAL_SILENCE;
-        if (t.contains("shaft light")) return Output.SHAFT_LIGHT;
+        if (t.contains("shaft light") || t.contains("hoistway light")) return Output.SHAFT_LIGHT;
         if (t.contains("recal") || t.contains("shunt")) { //"recal": tags get cut short, e.g. "ElevRecalSouthTowr"
             return t.startsWith("alt") || t.contains("alternate") ? Output.ALT_RECALL : Output.ELEV_RECALL;
         }
-        if (t.contains("music")) return Output.MUSIC_SHUTDOWN;
+        boolean shut = t.contains("shut") || t.contains("shtdwn") || t.contains("shtdn") || t.contains("shut dn");
+        if (t.contains("music") || (t.contains("audio") && shut)) return Output.MUSIC_SHUTDOWN;
         if (t.contains("door") && (t.contains("release") || t.contains("holder") || t.contains("mag"))) return Output.DOOR_RELEASE;
-        if (t.contains("generator") && t.contains("shut")) return Output.GENERATOR_SHUTDOWN;
-        if ((t.contains("boiler") || t.contains("hwh") || t.contains("water heater") || t.contains("laundry")) && t.contains("shut")) {
+        if (t.contains("generator") && shut) return Output.GENERATOR_SHUTDOWN;
+        if ((t.contains("boiler") || t.contains("boilr") || t.contains("hwh") || t.contains("water heater") || t.contains("laundry")) && shut) {
             return Output.BOILER_SHUTDOWN;
         }
         if ((t.contains("fan") || t.contains("ac ") || t.contains("a/c") || t.contains("hvac") || t.contains("ahu") || t.contains("rtu"))
-            && t.contains("shut")) {
+            && shut) {
             return Output.FAN_SHUTDOWN;
         }
         if (t.contains("damp") || t.contains("purge") || t.contains("fresh air") || t.contains("spf") || t.contains("epf")
-            || t.contains("fsd") || t.contains("exhaust") || t.contains("fan")) {
+            || t.contains("fsd") || t.contains("exhaust") || t.contains("fan") || t.contains("pressuriz")) {
             return Output.DAMPER;
         }
         //Signal circuits are also used for sync, paging-active and other non-notification jobs, so a Signal

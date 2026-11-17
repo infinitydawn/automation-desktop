@@ -55,6 +55,16 @@ public final class Place {
         return s.toString();
     }
 
+    //Shorter one line without CPU and type, e.g. Node 2 > IZ 24 "Elev Recall / Center"
+    public String brief() {
+        List<String> path = new ArrayList<>();
+        if (node >= 0) path.add("Node " + node);
+        if (!loop.isEmpty()) path.add(loop);
+        if (!address.isEmpty()) path.add(address);
+        String tags = tags();
+        return String.join(" > ", path) + (tags.isEmpty() ? "" : (path.isEmpty() ? "" : "  ") + "\"" + tags + "\"");
+    }
+
     public String tags() {
         if (location.isEmpty()) return tag;
         if (tag.isEmpty()) return location;

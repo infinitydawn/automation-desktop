@@ -74,14 +74,16 @@ public final class FsaeRules {
     static final Role[] ROLES = Role.values();
 
     //One floor: 4 consecutive input zones on the same node
-    public static class Group {
+    public static class Group implements Place.Placeable {
         int node;
         int addr; //address of the Normal zone
         final EnumMap<Role, Circuit> zones = new EnumMap<>(Role.class);
         String floor = ""; //Normal zone tag without the word "Normal", as typed
 
-        String label() {
-            return "N" + node + " IZ" + addr + "-" + (addr + 3) + " \"" + floor + "\"";
+        public Place place(Job job) {
+            Circuit normal = zones.get(Role.NORMAL);
+            String cpu = job.panel == Job.Panel.FX6000 ? Place.cpuName(job, normal.node, normal.cpu) : "";
+            return new Place(node, job.nodeName(node), cpu, "", "IZ " + addr + "-" + (addr + 3), "FSAE floor group", floor, "");
         }
 
         //Normalized location text of one of the group's zones, used to compare against other tags
@@ -197,8 +199,8 @@ public final class FsaeRules {
                 for (Role r : ROLES) {
                     Circuit z = g.zones.get(r);
                     if (z.process_type != r.process_type) {
-                        report.error(z.label(), r.label() + " zone is type \"" + z.process_name + "\"; FSAE " + r.label()
-                            + " zones are type " + processName(job, r) + ".");
+                        report.error(z, "Zone type is " + z.process_name + ", should be " + processName(job, r))
+                            .why("FSAE zones: Normal = Mon., Low Heat = Supv., High Heat and Smoke Det = Alarm");
                     }
                     if (r == Role.NORMAL) continue;
                     String own = g.floorOf(r);
@@ -206,18 +208,18 @@ public final class FsaeRules {
                     if (Text.similarity(own, normal) < 0.95) {
                         Group other = Text.best(own, groups.list, x -> x.floorOf(r));
                         if (other != g && Text.similarity(own, other.floorOf(r)) > Text.similarity(own, normal)) {
-                            report.warning(z.label(), "Sits in the group for \"" + g.floor + "\" but its tag reads like \"" + other.floor + "\".");
+                            report.warning(z, "Tag reads like another floor (" + other.floor + ")").more("It sits in the group for \"" + g.floor + "\".");
                         }
                     }
                 }
             }
             for (Circuit z : groups.strays) {
-                report.warning(z.label(), "Tagged like an FSAE zone but not part of a complete Normal / Low Heat / High Heat / Smoke Det group of 4 consecutive zones.");
+                report.warning(z, "Not in a complete FSAE group").more("Tagged like an FSAE zone, but not one of 4 consecutive Normal / Low Heat / High Heat / Smoke Det zones.");
             }
         }
 
         private static String processName(Job job, Role r) {
-            for (Circuit c : job.inputs.values()) if (c.process_type == r.process_type) return "\"" + c.process_name + "\"";
+            for (Circuit c : job.inputs.values()) if (c.process_type == r.process_type) return c.process_name;
             return String.valueOf(r.process_type);
         }
     }
@@ -268,7 +270,7 @@ public final class FsaeRules {
             for (Group g : groups.list) {
                 if (!job.sourcesOf(g.zones.get(Role.NORMAL)).isEmpty()) {
                     for (Circuit s : job.sourcesOf(g.zones.get(Role.NORMAL))) {
-                        report.warning(g.zones.get(Role.NORMAL).label(), "Normal is driven by logic, but " + s.label() + " is also linked to it.");
+                        report.warning(g.zones.get(Role.NORMAL), "Device linked to a Normal zone").items("Linked device", List.of(s)).more("Normal zones are driven by logic only.");
                     }
                 }
                 Set<String> devices = new LinkedHashSet<>();
@@ -277,33 +279,28 @@ public final class FsaeRules {
                     Circuit z = g.zones.get(r);
                     List<Circuit> src = job.sourcesOf(z);
                     if (src.isEmpty()) {
-                        report.error(z.label(), "No device is linked to this zone, so " + r.label() + " for \"" + g.floor + "\" never activates.");
+                        report.error(z, "No detector linked").more(r.label() + " for \"" + g.floor + "\" never activates.");
                         continue;
                     }
-                    if (src.size() > 1) {
-                        StringBuilder s = new StringBuilder();
-                        for (Circuit c : src) s.append("\n            ").append(c.label());
-                        report.warning(z.label(), src.size() + " device inputs are linked to this zone:" + s);
-                    }
+                    if (src.size() > 1) report.warning(z, src.size() + " device inputs linked").items("Linked inputs", src);
                     for (Circuit c : src) {
                         devices.add(c.deviceKey());
                         Integer want = expected_sub.get(r);
                         if (want != null && c.sub != want) {
-                            report.error(z.label(), "Linked from sub-address " + c.sub + " of " + c.label() + "; " + r.label()
-                                + " should come from sub-address " + want + ".");
+                            report.error(z, "Fed from sub-address " + c.sub + ", should be " + want).items("Linked input", List.of(c))
+                                .more("Most floors in this job feed " + r.label() + " from sub-address " + want + ".");
                         }
                         if (c.node != g.node) {
-                            report.warning(z.label(), "Fed by a device on node " + c.node + ": " + c.label());
+                            report.warning(z, "Fed by a device on node " + c.node).items("Linked input", List.of(c));
                         }
                         Group other = device_group.put(c.deviceKey(), g);
                         if (other != null && other != g) {
-                            report.error(c.label(), "This device feeds two FSAE floors: \"" + other.floor + "\" and \"" + g.floor + "\".");
+                            report.error(c, "Feeds two FSAE floors").more("\"" + other.floor + "\" and \"" + g.floor + "\".");
                         }
                     }
                 }
                 if (devices.size() > 1) {
-                    report.warning(g.label(), "Low Heat, High Heat and Smoke Det are fed by " + devices.size()
-                        + " different devices; normally one dual heat/smoke detector feeds all three.");
+                    report.warning(g, "Fed by " + devices.size() + " different devices").more("Normally one dual heat/smoke detector feeds Low Heat, High Heat and Smoke Det.");
                 }
             }
 
@@ -312,9 +309,7 @@ public final class FsaeRules {
             for (Circuit c : job.inputs.values()) {
                 if (c.kind != Kind.DEVICE || !device_types.contains(c.device_type) || !seen.add(c.deviceKey())) continue;
                 if (!device_group.containsKey(c.deviceKey())) {
-                    String t = c.tag.trim().replaceAll("\\s{2,}", " ");
-                    report.warning("N" + c.node + " C" + c.cpu + " L" + c.loop + "-" + c.addr + " " + c.device_type + (t.isEmpty() ? "" : " \"" + t + "\""),
-                        "Same device type as the FSAE detectors but not linked to any FSAE floor group.");
+                    report.warning(c, "Dual heat not in any FSAE group").more("Same device type as the FSAE detectors, but not linked to any FSAE floor.");
                 }
             }
         }
@@ -369,29 +364,25 @@ public final class FsaeRules {
                 Circuit high = g.zones.get(Role.HIGH_HEAT);
                 List<Equation> eqs = job.equationsDriving(normal);
                 if (eqs.isEmpty()) {
-                    report.error(normal.label(), "No logic equation drives this Normal zone, so it never turns on.");
+                    report.error(normal, "No Normal logic").more("No logic equation drives this Normal zone, so it never turns on.");
                     continue;
                 }
                 if (eqs.size() > 1) {
-                    report.error(normal.label(), eqs.size() + " logic equations drive this Normal zone.");
+                    report.error(normal, eqs.size() + " logic equations drive it");
                 }
                 for (Equation e : eqs) {
                     int problems = 0;
                     List<Integer> got = new ArrayList<>(e.inputs.values());
                     List<Integer> want = List.of(low.ckt, high.ckt, low.ckt, high.ckt);
                     if (!got.equals(want)) {
-                        StringBuilder s = new StringBuilder();
-                        for (int ckt : got) {
-                            Circuit c = job.inputs.get(ckt);
-                            s.append("\n            ").append(c == null ? "circuit " + ckt + " (missing)" : c.label());
-                        }
-                        report.error(e.label() + " for " + normal.label(), "Should check " + low.label() + " and " + high.label()
-                            + " (trouble, then input), but it checks:" + s);
+                        List<Object> checks = new ArrayList<>();
+                        for (int ckt : got) checks.add(job.inputs.containsKey(ckt) ? job.inputs.get(ckt) : Place.text("circuit " + ckt + " (missing)"));
+                        report.error(e, "Checks the wrong zones").items("It checks", checks)
+                            .more("Should check " + Place.brief(low) + " and " + Place.brief(high) + " (trouble, then input).");
                         problems++;
                     }
                     if (expected_signature != null && !e.signature().equals(expected_signature)) {
-                        report.warning(e.label() + " for " + normal.label(), "Written differently from the other FSAE Normal equations:\n            "
-                            + e.text.replaceAll("\\s+", " ").trim());
+                        report.warning(e, "Written differently from the other floors").more(e.text.replaceAll("\\s+", " ").trim());
                         problems++;
                     }
                     //The text should name the same zones as the compiled form
@@ -400,19 +391,19 @@ public final class FsaeRules {
                     while (m.find()) refs.add(Integer.parseInt(m.group(1)) + "/" + Integer.parseInt(m.group(2)));
                     Set<String> want_refs = Set.of(low.node + "/" + low.addr, high.node + "/" + high.addr);
                     if (!refs.isEmpty() && !refs.equals(want_refs)) {
-                        report.error(e.label() + " for " + normal.label(), "The equation text refers to IZ " + refs.toString().replaceAll("\\d+/", "")
-                            + " but this floor's Low/High Heat are IZ " + low.addr + " and IZ " + high.addr + ".");
+                        report.error(e, "Text refers to IZ " + String.join(", ", refs).replaceAll("\\d+/", ""))
+                            .more("This floor's Low/High Heat are IZ " + low.addr + " and IZ " + high.addr + ".");
                         problems++;
                     }
                     if (e.node != normal.node) {
-                        report.warning(e.label() + " for " + normal.label(), "The equation is on node " + e.node + " but the zone is on node " + normal.node + ".");
+                        report.warning(e, "Logic on node " + e.node + ", zone on node " + normal.node);
                     }
                     //Equation name should be about this floor
                     String name = Text.stripWord(e.tag, Role.NORMAL.allWords());
                     Equation closest = Text.best(name, all_fsae, x -> Text.stripWord(x.subjects.isEmpty() ? "" : x.subjects.get(0).tag, Role.NORMAL.allWords()));
                     if (closest != null && closest != e && Text.similarity(name, g.floorOf(Role.NORMAL)) < 0.95
                         && Text.similarity(name, Text.stripWord(closest.subjects.get(0).tag, Role.NORMAL.allWords())) >= 0.95) {
-                        report.warning(e.label() + " for " + normal.label(), "Named for a different floor: \"" + e.tag.trim() + "\".");
+                        report.warning(e, "Named for a different floor").more("This logic drives " + Place.brief(normal) + ".");
                         problems++;
                     }
                     if (problems == 0) ok++;
@@ -457,7 +448,7 @@ public final class FsaeRules {
                 for (int[] p : l.slots) annunciators.computeIfAbsent(p[0] + "/" + p[1], k -> new ArrayList<>()).add(l);
             }
             if (annunciators.isEmpty()) {
-                report.error("FSAE graphic adder", "None of the " + Report.plural(groups.list.size() * 4, "FSAE zone") + " is linked to an LED.");
+                report.error(Place.text("FSAE graphic adder"), "No FSAE zone has an LED").more(Report.plural(groups.list.size() * 4, "FSAE zone") + ", none linked to an LED.");
                 return;
             }
             int zone_count = groups.list.size() * ROLES.length;
@@ -472,17 +463,18 @@ public final class FsaeRules {
                     for (Circuit c : l.inputs) if (groups.role(c) != null) by_zone.computeIfAbsent(c.ckt, k -> new ArrayList<>()).add(l);
                 }
                 boolean full = by_zone.size() * 2 >= zone_count;
-                String name = "N" + a.getKey().replace("/", " C");
+                String[] nc = a.getKey().split("/");
+                String name = annunciator(job, a.getKey());
                 for (Group g : groups.list) {
                     for (Role r : ROLES) {
                         Circuit z = g.zones.get(r);
                         List<Led> shown = by_zone.getOrDefault(z.ckt, List.of());
                         if (shown.isEmpty() && full) {
-                            report.error(z.label(), "No LED on annunciator " + name + " is linked to this zone.");
+                            report.error(z, "No LED on " + name);
                         } else if (shown.size() > 1) {
-                            StringBuilder s = new StringBuilder();
-                            for (Led l : shown) s.append("\n            ").append(slotsOn(l, a.getKey())).append(" \"").append(l.tag.trim()).append("\"");
-                            report.error(z.label(), shown.size() + " LEDs on annunciator " + name + " are linked to this zone:" + s);
+                            List<Place> places = new ArrayList<>();
+                            for (Led l : shown) places.add(Place.of(job, l, Integer.parseInt(nc[0]), Integer.parseInt(nc[1])));
+                            report.error(z, shown.size() + " LEDs on " + name).items("LEDs linked to this zone", places);
                         }
                     }
                 }
@@ -500,21 +492,19 @@ public final class FsaeRules {
 
             for (Led l : fsae_leds.values()) {
                 if (l.inputs.size() > 1) {
-                    StringBuilder s = new StringBuilder();
-                    for (Circuit c : l.inputs) s.append("\n            ").append(c.label());
-                    report.warning(l.label(), "Linked to " + l.inputs.size() + " inputs:" + s);
+                    report.warning(l, "Linked to " + l.inputs.size() + " inputs").items("Linked inputs", l.inputs);
                 }
                 for (Circuit z : l.inputs) {
                     Role r = groups.role(z);
                     if (r == null) continue;
                     Group g = groups.by_zone.get(z.ckt);
                     if (l.led_type != r.led_type) {
-                        report.error(l.label(), "Shows " + z.label() + " but is set to \"" + l.led_type_name + "\"; " + r.label()
-                            + " LEDs should be " + ledTypeName(job, r) + ".");
+                        report.error(l, "Assignment is " + shortType(l.led_type_name) + ", should be " + shortType(ledTypeName(job, r)))
+                            .items("Shows", List.of(z)).why("Cheat sheet, Graphic Adder (FSAE): Normal = Monitor Stat, Low Heat = Supervisory, High Heat / Smoke Det = Alarm Stat");
                     }
                     String want_states = expected_states.get(r);
                     if (want_states != null && !l.states.toString().equals(want_states)) {
-                        report.warning(l.label(), "LED settings differ from the other " + r.label() + " LEDs: " + l.states + " vs " + want_states + ".");
+                        report.warning(l, "LED settings differ from other " + r.label() + " LEDs").more("This LED: " + l.states + "\nOthers: " + want_states);
                     }
                     //Does the LED's own tag point at a different floor than the zone it is linked to?
                     String led_floor = Text.stripWord(l.tag, r.allWords());
@@ -523,10 +513,9 @@ public final class FsaeRules {
                     if (closest != null && closest != g) {
                         double other = Text.similarity(led_floor, closest.floorOf(r));
                         if (other > linked + 0.05) {
-                            String msg = "Tagged for \"" + closest.floor + "\" but linked to " + z.label()
-                                + ". The " + r.label() + " zone for that floor is " + closest.zones.get(r).label() + ".";
-                            if (other >= 0.95 && linked < 0.95) report.error(l.label(), msg);
-                            else report.warning(l.label(), msg);
+                            String summary = "Tagged " + closest.floor + ", linked to " + g.floor;
+                            Report.Finding f = other >= 0.95 && linked < 0.95 ? report.error(l, summary) : report.warning(l, summary);
+                            f.items("Linked to, then the zone its tag matches", List.of(z, closest.zones.get(r)));
                         }
                     }
                 }
@@ -550,7 +539,7 @@ public final class FsaeRules {
                 if (fsaeZones(groups, e.getValue()).equals(fsaeZones(groups, other))) same++;
                 else differ.add(e.getKey());
             }
-            String na = "N" + a.replace("/", " C"), nb = "N" + b.replace("/", " C");
+            String na = annunciator(job, a), nb = annunciator(job, b);
             if (same + differ.size() == 0) return;
             if (same < 4 * differ.size()) {
                 report.note("Annunciators " + na + " and " + nb + " are laid out differently, so they are not compared position by position.");
@@ -559,8 +548,9 @@ public final class FsaeRules {
             report.note("Annunciators " + na + " and " + nb + " share a layout: " + same + " of " + (same + differ.size()) + " positions match");
             for (String pos : differ) {
                 Led la = pos_a.get(pos), lb = pos_b.get(pos);
-                report.warning("F" + pos.replace("/", " LED"), na + " shows " + zoneNames(groups, la) + "; " + nb + " shows " + zoneNames(groups, lb)
-                    + " at the same position.");
+                String[] fa = a.split("/");
+                report.warning(Place.of(job, la, Integer.parseInt(fa[0]), Integer.parseInt(fa[1])), "Annunciators disagree here")
+                    .items(na + ", then " + nb, List.of(la.inputs.isEmpty() ? Place.text("nothing") : la.inputs.get(0), lb.inputs.isEmpty() ? Place.text("nothing") : lb.inputs.get(0)));
             }
         }
 
@@ -576,37 +566,33 @@ public final class FsaeRules {
             return set;
         }
 
-        private static String zoneNames(Groups groups, Led l) {
-            List<String> names = new ArrayList<>();
-            for (Circuit c : l.inputs) names.add(c.label());
-            return names.isEmpty() ? "nothing" : String.join(" + ", names);
-        }
-
         private static Role fsaeRole(Groups groups, Led l) {
             for (Circuit c : l.inputs) if (groups.role(c) != null) return groups.role(c);
             return null;
         }
 
-        private static String slotsOn(Led l, String annunciator) {
-            List<String> s = new ArrayList<>();
-            for (int[] p : l.slots) if ((p[0] + "/" + p[1]).equals(annunciator)) s.add("F" + p[2] + " LED" + p[3]);
-            return String.join(", ", s);
-        }
-
         private static String annunciatorName(Job job, String key, List<Led> leds) {
-            String[] nc = key.split("/");
             Set<String> types = new LinkedHashSet<>();
             for (Led l : leds) {
                 for (int[] p : l.slots) {
                     if ((p[0] + "/" + p[1]).equals(key)) types.add(job.frameType(p[0], p[1], p[2]));
                 }
             }
-            return "N" + nc[0] + " C" + nc[1] + " (" + String.join(", ", types) + ")";
+            return annunciator(job, key) + " (" + String.join(", ", types) + ")";
         }
 
         private static String ledTypeName(Job job, Role r) {
-            for (Led l : job.leds.values()) if (l.led_type == r.led_type) return "\"" + l.led_type_name + "\"";
+            for (Led l : job.leds.values()) if (l.led_type == r.led_type) return l.led_type_name;
             return "type " + r.led_type;
+        }
+
+        private static String shortType(String led_type_name) {
+            return led_type_name.replaceFirst("^.*/\\s*", "");
+        }
+
+        private static String annunciator(Job job, String key) {
+            String[] nc = key.split("/");
+            return "Node " + nc[0] + " " + Place.cpuName(job, Integer.parseInt(nc[0]), Integer.parseInt(nc[1]));
         }
     }
 }

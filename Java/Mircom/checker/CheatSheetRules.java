@@ -15,13 +15,10 @@ import checker.Roles.Output;
 import checker.Roles.Zone;
 
 //Checks from the FlexNet & FX6000 "Device & Zone Cheat Sheet" (FX4000 has the same requirements).
-//Each check names the cheat sheet line it comes from in its message.
+//Findings say what is wrong in a few words; the cheat sheet line they come from is attached with why().
 public final class CheatSheetRules {
 
     private CheatSheetRules() {}
-
-    //How many example devices to list when many are missing from one output
-    static final int EXAMPLES = 6;
 
     //Device inputs the cheat sheet rules look at: real devices, not panel/telephone/amplifier circuits or spares
     static List<Circuit> devices(Job job) {
@@ -29,6 +26,7 @@ public final class CheatSheetRules {
         for (Circuit c : job.inputs.values()) {
             if (c.kind != Kind.DEVICE || c.isSpare()) continue;
             if (c.loop_type.equals("Telephone") || c.loop_type.equals("Amplifiers") || c.loop_type.equals("Switches")) continue;
+            if (c.device_type.toLowerCase().contains("phone")) continue; //firephone / telephone modules
             list.add(c);
         }
         return list;
@@ -46,18 +44,13 @@ public final class CheatSheetRules {
         return false;
     }
 
-    static String list(Iterable<Circuit> circuits) {
-        StringBuilder s = new StringBuilder();
-        int n = 0, total = 0;
-        for (Circuit c : circuits) {
-            total++;
-            if (n < EXAMPLES) {
-                s.append("\n            ").append(c.label());
-                n++;
-            }
-        }
-        if (total > n) s.append("\n            ... and ").append(total - n).append(" more");
-        return s.toString();
+    static boolean reachesAny(Job job, Circuit device, List<Circuit> outputs) {
+        for (Circuit o : job.outputsReachedBy(device)) if (outputs.contains(o)) return true;
+        return false;
+    }
+
+    static String sheet(String line) {
+        return "Device & Zone Cheat Sheet: " + line;
     }
 
     //---------------------------------------------------------------------------------------------------
@@ -88,20 +81,20 @@ public final class CheatSheetRules {
                 checked++;
                 Family is = Roles.family(c);
                 if (is != role.expected && !(role == Device.SUPERVISORY && is == Family.TROUBLE)) {
-                    String want = role.expected == Family.ALARM ? "an alarm type (Alarm Input)"
+                    String want = role.expected == Family.ALARM ? "Alarm Input"
                         : role.expected == Family.LATCHED ? "Latched Supv" : role.expected == Family.TROUBLE ? "Trouble Input" : "Non-Latch Supv";
                     boolean serious = is == Family.ALARM || role.expected == Family.ALARM;
-                    String msg = "Tagged as a " + role.label + " but its type is \"" + c.process_name + "\"; the cheat sheet sets it to " + want + ".";
+                    String more = "Tagged as a " + role.label + ".";
                     //Combo smoke/CO (sounder base) detectors inside apartments are sometimes set up as supervisory on purpose
                     if (c.device_type.toLowerCase().contains("fire-co") && role == Device.SMOKE) {
                         serious = false;
-                        msg += " (Combo smoke/CO: fine if this is an in-unit detector meant to be supervisory.)";
+                        more += " Combo smoke/CO: fine if this is an in-unit detector meant to be supervisory.";
                     }
-                    if (serious) report.error(c.label(), msg);
-                    else report.warning(c.label(), msg);
+                    String summary = "Type is " + c.process_name + ", should be " + want;
+                    (serious ? report.error(c, summary) : report.warning(c, summary)).more(more).why(sheet("Devices table, " + role.label));
                 }
                 if (role == Device.WATERFLOW && c.silenceable) {
-                    report.error(c.label(), "Waterflows should have NS (non-silenceable) set.");
+                    report.error(c, "Waterflow without NS").why(sheet("Devices, Waterflow - waterflow should have NS"));
                 }
             }
             report.note(checked + " recognised device inputs checked");
@@ -142,17 +135,17 @@ public final class CheatSheetRules {
                     Family f = Roles.family(z);
                     switch (e.getKey()) {
                         case GENERAL_ALARM: case AUTOMATIC_ALARM: case WATERFLOW: case ELEV_RECALL: case ALT_RECALL:
-                            if (f != Family.ALARM) report.error(z.label(), e.getKey().label + " zones should be type Alarm, not \"" + z.process_name + "\".");
+                            if (f != Family.ALARM) report.error(z, "Zone type is " + z.process_name + ", should be Alarm").why(sheet("Zones, " + e.getKey().label + " - Alarm"));
                             break;
                         case NON_LATCHED: case LATCHED:
                             if (f != Family.SUPERVISORY && f != Family.LATCHED) {
-                                report.error(z.label(), e.getKey().label + " zones should be a supervisory type, not \"" + z.process_name + "\".");
+                                report.error(z, "Zone type is " + z.process_name + ", should be Supervisory").why(sheet("Zones, " + e.getKey().label + " - Supv."));
                             }
                             break;
                         default:
                     }
-                    if (e.getKey() == Zone.WATERFLOW && z.silenceable) report.error(z.label(), "The Waterflow zone should have F1 NS (non-silenceable).");
-                    if (e.getKey() == Zone.LATCHED && Boolean.FALSE.equals(z.co_flag)) report.warning(z.label(), "The Latched Supervisory (CO) zone should have the F4 CO flag.");
+                    if (e.getKey() == Zone.WATERFLOW && z.silenceable) report.error(z, "Waterflow zone without F1 NS").why(sheet("Zones, Waterflow - F1 NS"));
+                    if (e.getKey() == Zone.LATCHED && Boolean.FALSE.equals(z.co_flag)) report.warning(z, "Missing F4 CO flag").why(sheet("Zones, Supervisory (Latched) - F4 CO"));
                 }
             }
 
@@ -163,10 +156,9 @@ public final class CheatSheetRules {
                 if (zones.containsKey(z)) alarm_zones.addAll(zones.get(z));
             }
 
-            List<Circuit> devices = devices(job);
             int alarms = 0, supv = 0, latch = 0, waterflows = 0;
             List<Circuit> no_ga = new ArrayList<>(), no_auto = new ArrayList<>(), no_nls = new ArrayList<>(), no_latched = new ArrayList<>(), no_wf = new ArrayList<>();
-            for (Circuit c : devices) {
+            for (Circuit c : devices(job)) {
                 Family f = Roles.family(c);
                 Device role = Roles.device(c);
                 if (f == Family.ALARM) {
@@ -174,15 +166,13 @@ public final class CheatSheetRules {
                     if (ga != null && !inAny(job, c, ga)) no_ga.add(c);
                     if (auto != null && role != Device.PULL && !inAny(job, c, auto)) no_auto.add(c);
                     if (role == Device.PULL && inAny(job, c, auto)) {
-                        report.error(c.label(), "Pull stations must not be in Automatic Alarm (cheat sheet: Automatic Alarm = all alarm inputs besides pull stations).");
+                        report.error(c, "Pull station in Automatic Alarm").why(sheet("Zones, Automatic Alarm - all alarm inputs besides pull station"));
                     }
                     if (role == Device.WATERFLOW) {
                         waterflows++;
                         if (wf != null && !inAny(job, c, wf)) no_wf.add(c);
                     }
-                    if (inAny(job, c, nls) || inAny(job, c, latched)) {
-                        report.warning(c.label(), "An alarm input is in a supervisory zone.");
-                    }
+                    if (inAny(job, c, nls) || inAny(job, c, latched)) report.warning(c, "Alarm input in a supervisory zone");
                 } else if (f == Family.SUPERVISORY || f == Family.LATCHED) {
                     if (f == Family.SUPERVISORY) {
                         supv++;
@@ -192,31 +182,26 @@ public final class CheatSheetRules {
                         if (latched != null && !inAny(job, c, latched)) no_latched.add(c);
                     }
                     for (Circuit z : job.zonesOf(c)) {
-                        if (alarm_zones.contains(z)) report.error(c.label(), "A supervisory input is in " + z.label() + "; supervisory devices must not set off alarm zones.");
+                        if (alarm_zones.contains(z)) report.error(c, "Supervisory input in " + z.cleanTag()).more("Supervisory devices must not set off alarm zones.");
                     }
                 }
             }
-            missing(report, "General Alarm", ga, alarms, no_ga, "Correlate to all signals and inputs", true);
-            missing(report, "Automatic Alarm", auto, alarms, no_auto, "Correlate to all alarm inputs besides pull station", true);
-            missing(report, "Non-Latched Supervisory", nls, supv, no_nls, "Correlate to all non-latched devices", true);
-            missing(report, "Latched Supervisory", latched, latch, no_latched, "For CO detectors", true);
-            missing(report, "Waterflow", wf, waterflows, no_wf, "Correlate all waterflows to an input zone", true);
+            missing(report, "General Alarm", ga, alarms, no_ga, "Zones, General Alarm - correlate to all signals and inputs");
+            missing(report, "Automatic Alarm", auto, alarms, no_auto, "Zones, Automatic Alarm - all alarm inputs besides pull station");
+            missing(report, "Non-Latched Supv", nls, supv, no_nls, "Zones, Supervisory (Non-Latched) - all non-latched devices");
+            missing(report, "Latched Supv", latched, latch, no_latched, "Zones, Supervisory (Latched) - for CO detectors");
+            missing(report, "Waterflow", wf, waterflows, no_wf, "Zones, Waterflow - for all waterflows");
         }
 
-        //One finding per device that is missing from a zone it belongs in
-        private static void missing(Report report, String zone, List<Circuit> zones, int expected, List<Circuit> devices, String sheet, boolean error) {
+        private static void missing(Report report, String zone, List<Circuit> zones, int expected, List<Circuit> devices, String sheet) {
             if (zones == null) {
                 if (expected > 0) {
-                    report.warning("Input zones", "No " + zone + " input zone found (by tag), but " + Report.plural(expected, "device")
-                        + " would belong in it. Cheat sheet: " + sheet + ".");
+                    report.warning(Place.text("Input zones"), "No " + zone + " zone found")
+                        .more(Report.plural(expected, "device") + " would belong in it. Zones are found by their tag.").why(sheet(sheet));
                 }
                 return;
             }
-            for (Circuit c : devices) {
-                String msg = "Not in the " + zone + " zone. Cheat sheet: " + sheet + ".";
-                if (error) report.error(c.label(), msg);
-                else report.warning(c.label(), msg);
-            }
+            for (Circuit c : devices) report.error(c, "Not in " + zone).why(sheet(sheet));
         }
     }
 
@@ -241,9 +226,8 @@ public final class CheatSheetRules {
         }
 
         public void check(Job job, Report report) {
-            List<Circuit> devices = devices(job);
             List<Circuit> alarms = new ArrayList<>(), automatic = new ArrayList<>(), waterflows = new ArrayList<>();
-            for (Circuit c : devices) {
+            for (Circuit c : devices(job)) {
                 if (Roles.family(c) != Family.ALARM) continue;
                 alarms.add(c);
                 Device role = Roles.device(c);
@@ -252,9 +236,7 @@ public final class CheatSheetRules {
             }
 
             Map<Output, Integer> counts = new EnumMap<>(Output.class);
-            List<Circuit> recalls = new ArrayList<>(); //main and alt
-            List<Circuit> main_recalls = new ArrayList<>(); //main recall and shunt trip
-            List<Circuit> shaft_lights = new ArrayList<>();
+            List<Circuit> mains = new ArrayList<>(), alts = new ArrayList<>(), shaft_lights = new ArrayList<>();
             for (Circuit o : job.outputs.values()) {
                 if (o.isSpare() || o.kind == Kind.OUTPUT_ZONE) continue;
                 Output role = Roles.output(o);
@@ -262,45 +244,46 @@ public final class CheatSheetRules {
                 Set<Circuit> reach = job.devicesReaching(o);
                 switch (role) {
                     case NOTIFICATION:
-                        need(report, o, reach, alarms, "Strobes correlate to all alarms");
-                        noSupervisory(report, o, reach, true, "Do not correlate any supervisory to strobes");
+                        need(report, o, reach, alarms, "alarm inputs", "Correlations - strobes correlate to all alarms");
+                        noSupervisory(report, o, reach, true, "Correlations - do not correlate any supervisory to strobes");
                         break;
                     case DOOR_RELEASE:
-                        need(report, o, reach, automatic, "Door release gets all alarms (General Alarm, or Automatic Alarm without pull stations)");
-                        noSupervisory(report, o, reach, false, "Door release is for alarms");
+                        need(report, o, reach, automatic, "alarm inputs", "Correlations - door release gets all alarms");
+                        noSupervisory(report, o, reach, false, "Devices, Door Release - correlated to all alarms");
                         break;
                     case MUSIC_SHUTDOWN:
-                        need(report, o, reach, alarms, "Music Shutdown: correlate to General Alarm");
+                        need(report, o, reach, alarms, "alarm inputs", "Devices, Music Shutdown - correlate to General Alarm");
                         break;
-                    case FAN_SHUTDOWN:
-                        need(report, o, reach, automatic, "Fan/AC Shutdowns get all alarms but not pull stations");
-                        for (Circuit c : reach) {
-                            if (Roles.device(c) == Device.PULL) {
-                                report.warning(o.label(), "Activated by pull station " + c.label() + ". Cheat sheet: Fan/AC Shutdowns get all alarms but not pull stations.");
-                            }
+                    case FAN_SHUTDOWN: {
+                        need(report, o, reach, automatic, "automatic alarms", "Correlations - Fan/AC shutdowns get all alarms but not pull stations");
+                        List<Circuit> pulls = new ArrayList<>();
+                        for (Circuit c : reach) if (Roles.device(c) == Device.PULL) pulls.add(c);
+                        if (!pulls.isEmpty()) {
+                            report.warning(o, "Activated by " + Report.plural(pulls.size(), "pull station"))
+                                .items("Pull stations", pulls).why(sheet("Correlations - Fan/AC shutdowns get all alarms but not pull stations"));
                         }
-                        noSupervisory(report, o, reach, false, "Fan/AC Shutdowns get all alarms");
-                        if (!o.aux_reset) report.warning(o.label(), "Fan/AC shutdown relays should have F3 AR (auxiliary reset).");
+                        noSupervisory(report, o, reach, false, "Correlations - Fan/AC shutdowns get all alarms");
+                        if (!o.aux_reset) report.warning(o, "Missing F3 AR").why(sheet("Devices, AC/Fan Shutdown - F3 AR"));
                         break;
+                    }
                     case ELEV_RECALL:
-                        recalls.add(o);
-                        main_recalls.add(o);
-                        noSupervisory(report, o, reach, false, "Elevator recall is for elevator smokes/heats and waterflows");
+                        mains.add(o);
+                        noSupervisory(report, o, reach, false, "Correlations - elev recall gets elevator smokes and waterflows");
                         break;
                     case ALT_RECALL:
-                        recalls.add(o);
-                        noSupervisory(report, o, reach, false, "Elevator recall is for elevator smokes/heats and waterflows");
+                        alts.add(o);
+                        noSupervisory(report, o, reach, false, "Correlations - elev recall gets elevator smokes and waterflows");
                         break;
                     case BOILER_SHUTDOWN: {
                         boolean co = false;
                         for (Circuit c : reach) if (Roles.device(c) == Device.CO) co = true;
-                        if (!co) report.error(o.label(), "No CO detector activates this. Cheat sheet: Boiler/HWH/Laundry Shutdown gets the CO detector(s) in the same room.");
+                        if (!co) report.error(o, "No CO detector activates it").why(sheet("Correlations - Boiler/HWH/Laundry shutdown gets the CO detector(s) in the same room"));
                         break;
                     }
                     case GENERATOR_SHUTDOWN: {
                         boolean heat = false;
                         for (Circuit c : reach) if (Roles.device(c) == Device.HEAT) heat = true;
-                        if (!heat) report.warning(o.label(), "No heat detector activates this. Cheat sheet: Generator Shutdown correlates to the heat detector in the same room.");
+                        if (!heat) report.warning(o, "No heat detector activates it").why(sheet("Devices, Generator Shutdown - correlate to heat detector in same room"));
                         break;
                     }
                     case SHAFT_LIGHT:
@@ -310,59 +293,8 @@ public final class CheatSheetRules {
                 }
             }
 
-            //Waterflows and elevator recall. One recall relay: it gets every waterflow. Several (towers, car lifts):
-            //"correlate only to their associated devices", so each waterflow needs at least one recall relay and
-            //each recall relay at least one waterflow.
-            if (main_recalls.size() == 1) {
-                Circuit o = main_recalls.get(0);
-                need(report, o, job.devicesReaching(o), waterflows, "Elev recall/shunt trip relays get all waterflows");
-            } else if (main_recalls.size() > 1 && !waterflows.isEmpty()) {
-                for (Circuit c : waterflows) {
-                    boolean any = false;
-                    for (Circuit o : job.outputsReachedBy(c)) if (main_recalls.contains(o)) any = true;
-                    if (!any) report.error(c.label(), "This waterflow activates none of the " + main_recalls.size()
-                        + " elevator recall / shunt trip relays. Cheat sheet: Elev recall/shunt trip relays get all waterflows.");
-                }
-                for (Circuit o : main_recalls) {
-                    boolean any = false;
-                    for (Circuit c : job.devicesReaching(o)) if (Roles.device(c) == Device.WATERFLOW) any = true;
-                    if (!any) report.warning(o.label(), "No waterflow activates this recall / shunt trip relay. Cheat sheet: Elev recall/shunt trip relays get all waterflows "
-                        + "(with several recalls, the waterflows associated with this one).");
-                }
-            }
-
-            //Elevator lobby / EMR / top of shaft smokes and heats should recall the elevator
-            if (!recalls.isEmpty()) {
-                List<Circuit> no_recall = new ArrayList<>();
-                for (Circuit c : automatic) {
-                    Device role = Roles.device(c);
-                    if ((role == Device.SMOKE || role == Device.HEAT) && Roles.elevatorRelated(c)) {
-                        boolean any = false;
-                        for (Circuit o : job.outputsReachedBy(c)) if (recalls.contains(o)) any = true;
-                        if (!any) no_recall.add(c);
-                    }
-                }
-                for (Circuit c : no_recall) {
-                    report.warning(c.label(), "Looks like an elevator lobby / EMR / shaft detector but activates no elevator recall relay. "
-                        + "Cheat sheet: elev recall relays are correlated to elev lobby smokes, top of shaft smokes and smokes in the EMR.");
-                }
-            }
-
-            //Shaft light relays follow elevator recall (main and alt)
-            if (!shaft_lights.isEmpty()) {
-                Map<Zone, List<Circuit>> zones = zonesByRole(job);
-                List<Circuit> recall_zones = new ArrayList<>();
-                if (zones.containsKey(Zone.ELEV_RECALL)) recall_zones.addAll(zones.get(Zone.ELEV_RECALL));
-                if (zones.containsKey(Zone.ALT_RECALL)) recall_zones.addAll(zones.get(Zone.ALT_RECALL));
-                for (Circuit light : shaft_lights) {
-                    List<Circuit> from = job.directInputs(light);
-                    for (Circuit z : recall_zones) {
-                        if (z.node == light.node && !from.contains(z)) {
-                            report.warning(light.label(), "Not correlated to " + z.label() + ". Cheat sheet: FSAE Shaft Lights correlate to elevator recall (including alt).");
-                        }
-                    }
-                }
-            }
+            elevatorRecall(job, report, waterflows, automatic, mains, alts);
+            shaftLights(job, report, shaft_lights);
 
             List<String> parts = new ArrayList<>();
             for (Map.Entry<Output, Integer> e : counts.entrySet()) {
@@ -371,14 +303,79 @@ public final class CheatSheetRules {
             report.note("Outputs recognised: " + (parts.isEmpty() ? "none" : String.join(", ", parts)));
         }
 
-        //Report the devices of a required set that do not activate this output, as one finding
-        private static void need(Report report, Circuit output, Set<Circuit> reach, List<Circuit> required, String sheet) {
+        //Elevator recall. Waterflows on 1FL and below (cellar, sub-cellar, basement) go to the alternate recall when
+        //there is one, everything else to the main recall (main recall relays and shunt trips). With several recalls of
+        //a kind (towers, car lifts) each device needs at least one of them, since "if there are multiple recalls,
+        //correlate only to their associated devices".
+        private static void elevatorRecall(Job job, Report report, List<Circuit> waterflows, List<Circuit> automatic,
+                                           List<Circuit> mains, List<Circuit> alts) {
+            if (mains.isEmpty() && alts.isEmpty()) return;
+            String why_main = sheet("Correlations - elev recall/shunt trip relays get all waterflows; main recalls get everything but 1FL");
+            String why_alt = sheet("Correlations - alt recalls get 1FL and below (the alternate recall floor)");
+
+            List<Circuit> any_recall = new ArrayList<>(mains);
+            any_recall.addAll(alts);
+            for (Circuit w : waterflows) {
+                boolean first = Roles.firstFloor(w), below = Roles.belowGrade(w);
+                boolean alt_floor = first || below;
+                String floor = first ? "1FL waterflow" : below ? "Below-grade waterflow" : "Waterflow";
+                boolean to_alt = alt_floor && !alts.isEmpty();
+                List<Circuit> want = to_alt ? alts : mains;
+                if (want.isEmpty()) continue;
+                if (!reachesAny(job, w, want)) {
+                    String which = to_alt ? "alt elevator recall" : "main elevator recall";
+                    report.error(w, floor + " not on " + which)
+                        .items("Expected " + (want.size() == 1 ? "" : "one of the ") + which + " relays", want).why(to_alt ? why_alt : why_main);
+                }
+                if (!alt_floor && reachesAny(job, w, alts)) {
+                    report.warning(w, "Above 1FL, but on alt elevator recall").why(why_alt);
+                }
+            }
+            //Recall relays no waterflow reaches
+            for (Circuit o : mains) {
+                boolean any = false;
+                for (Circuit c : job.devicesReaching(o)) if (Roles.device(c) == Device.WATERFLOW) any = true;
+                if (!any && !waterflows.isEmpty()) report.warning(o, "No waterflow activates it").why(why_main);
+            }
+
+            //Elevator lobby / EMR / top of shaft smokes and heats: any recall will do (car lifts, towers and the alt floor
+            //each have their own), but they must recall something
+            for (Circuit c : automatic) {
+                Device role = Roles.device(c);
+                if ((role != Device.SMOKE && role != Device.HEAT) || !Roles.elevatorRelated(c)) continue;
+                if (reachesAny(job, c, any_recall)) continue;
+                report.warning(c, "Elevator detector not on any elevator recall")
+                    .more("Its tag mentions an elevator lobby, EMR or shaft.")
+                    .why(sheet("Correlations - elev recall relays get elev lobby smokes, top of shaft smokes and smokes in the EMR"));
+            }
+        }
+
+        //Shaft light relays follow elevator recall (main and alt) on their node
+        private static void shaftLights(Job job, Report report, List<Circuit> shaft_lights) {
+            if (shaft_lights.isEmpty()) return;
+            Map<Zone, List<Circuit>> zones = zonesByRole(job);
+            List<Circuit> recall_zones = new ArrayList<>();
+            if (zones.containsKey(Zone.ELEV_RECALL)) recall_zones.addAll(zones.get(Zone.ELEV_RECALL));
+            if (zones.containsKey(Zone.ALT_RECALL)) recall_zones.addAll(zones.get(Zone.ALT_RECALL));
+            for (Circuit light : shaft_lights) {
+                List<Circuit> missing = new ArrayList<>();
+                for (Circuit z : recall_zones) if (z.node == light.node && !job.directInputs(light).contains(z)) missing.add(z);
+                if (!missing.isEmpty()) {
+                    report.warning(light, "Not on " + Report.plural(missing.size(), "elevator recall zone"))
+                        .items("Recall zones it is not correlated to", missing)
+                        .why(sheet("Devices, FSAE Shaft Lights - correlate to elevator recall (including alt)"));
+                }
+            }
+        }
+
+        //One finding per output listing the required devices that do not activate it
+        private static void need(Report report, Circuit output, Set<Circuit> reach, List<Circuit> required, String what, String sheet) {
             Set<Circuit> missing = new LinkedHashSet<>();
             for (Circuit c : required) if (!reach.contains(c)) missing.add(c);
             if (missing.isEmpty()) return;
-            String what = missing.size() == required.size() ? "None of the " + Report.plural(required.size(), "device") + " it needs activate it"
-                : Report.plural(missing.size(), "device") + " of " + required.size() + " do not activate it";
-            report.error(output.label(), what + ". Cheat sheet: " + sheet + "." + list(missing));
+            String summary = missing.size() == required.size() ? "None of the " + required.size() + " " + what + " activate it"
+                : "Missing " + missing.size() + " of " + required.size() + " " + what;
+            report.error(output, summary).items("Not activating it", missing).why(sheet(sheet));
         }
 
         private static void noSupervisory(Report report, Circuit output, Set<Circuit> reach, boolean error, String sheet) {
@@ -388,9 +385,8 @@ public final class CheatSheetRules {
                 if (f == Family.SUPERVISORY || f == Family.LATCHED) supv.add(c);
             }
             if (supv.isEmpty()) return;
-            String msg = "Activated by " + Report.plural(supv.size(), "supervisory input") + ". Cheat sheet: " + sheet + "." + list(supv);
-            if (error) report.error(output.label(), msg);
-            else report.warning(output.label(), msg);
+            String summary = "Activated by " + Report.plural(supv.size(), "supervisory input");
+            (error ? report.error(output, summary) : report.warning(output, summary)).items("Supervisory inputs", supv).why(sheet(sheet));
         }
     }
 
@@ -421,10 +417,9 @@ public final class CheatSheetRules {
                 if (o.isSpare() || o.kind == Kind.OUTPUT_ZONE) continue;
                 if (o.process_type == 13 || o.process_type == 14 || o.process_type == 15) outputs.add(o);
             }
+            String why = sheet("Correlations - correlate all relays to Zone Bypass; Zone Bypass - all relays, signals, strobes");
             if (groups.isEmpty()) {
-                if (!outputs.isEmpty()) {
-                    report.error("Base Control", "No Mixed / Zone Bypass switch found. Cheat sheet: correlate all relays, signals and strobes to Zone Bypass.");
-                }
+                if (!outputs.isEmpty()) report.error(Place.text("Base Control"), "No Zone Bypass switch").why(why);
                 return;
             }
             Set<Circuit> bypassed = new LinkedHashSet<>();
@@ -432,9 +427,7 @@ public final class CheatSheetRules {
                 bypassed.addAll(g.outputs);
                 report.note(g.label() + ": " + Report.plural(g.outputs.size(), "output"));
             }
-            for (Circuit o : outputs) {
-                if (!bypassed.contains(o)) report.warning(o.label(), "Not on the Zone Bypass switch. Cheat sheet: correlate all relays to Zone Bypass.");
-            }
+            for (Circuit o : outputs) if (!bypassed.contains(o)) report.warning(o, "Not on Zone Bypass").why(why);
         }
     }
 }

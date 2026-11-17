@@ -59,6 +59,14 @@ public class Job {
     public int version;
     public String description = "";
     public String version_description = "";
+    public String job_guid = ""; //the configurator's ID for the job; the same in every version and in exports
+
+    //A stable name for this job across versions and files: its GUID, or its description when it has none
+    public String identity() {
+        String g = job_guid.replace("-", "").replace("{", "").replace("}", "");
+        if (!g.isEmpty() && !g.matches("0+")) return job_guid.replaceAll("[{}]", "").toLowerCase();
+        return "job-" + description.trim().replaceAll("[^A-Za-z0-9]+", "_");
+    }
 
     public final Map<Integer, Circuit> inputs = new TreeMap<>(); //by CktNo
     public final Map<Integer, Circuit> outputs = new TreeMap<>(); //by CktNo
@@ -136,6 +144,20 @@ public class Job {
         //Second tag line, usually the location
         public String tag2() {
             return tag.length() > 20 ? tag.substring(20).trim() : "";
+        }
+
+        //Both tag lines with a space between, for reading words: a full first line runs straight into the second
+        //("Waterflow SouthTower" + "14FL Stair D"), which would otherwise hide words like 14FL
+        //Squashed tags are split into words too: "DrySysPS10WatrFlo1FL" -> "Dry Sys PS 10 Watr Flo 1 FL"
+        public String words() {
+            return splitWords(tag1() + " " + tag2());
+        }
+
+        public static String splitWords(String text) {
+            String t = text.trim();
+            t = t.replaceAll("(?<=[a-z])(?=[A-Z])", " "); //camelCase
+            t = t.replaceAll("(?<=[A-Za-z])(?=\\d)|(?<=\\d)(?=[A-Za-z])", " "); //letters and digits
+            return t.replaceAll("\\s+", " ");
         }
 
         //Same for every input of one physical device
@@ -424,7 +446,13 @@ public class Job {
         version = pick[1];
 
         Table jobs = db.getTable("Jobs");
-        if (jobs != null) for (Row r : jobs) if (num(r, "JobID") == job_id) description = str(r, "Description");
+        if (jobs != null) {
+            for (Row r : jobs) {
+                if (num(r, "JobID") != job_id) continue;
+                description = str(r, "Description");
+                job_guid = str(r, "JobGUID").trim();
+            }
+        }
         for (Row r : db.getTable("JobVersions")) {
             if (num(r, "JobID") == job_id && num(r, "VersionNo") == version) version_description = str(r, "Description");
         }

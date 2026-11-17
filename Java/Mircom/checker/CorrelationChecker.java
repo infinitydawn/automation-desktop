@@ -30,7 +30,9 @@ public class CorrelationChecker {
         new FsaeRules.Zones(),
         new FsaeRules.Devices(),
         new FsaeRules.Logic(),
-        new FsaeRules.Display());
+        new FsaeRules.Display(),
+        new TagRules.Unrecognised(),
+        new Acceptances.Review()); //last: it marks the accepted findings of every check above
 
     public static void main(String[] args) throws Exception {
         PrintStream out = new PrintStream(System.out, true, StandardCharsets.UTF_8);
@@ -39,6 +41,7 @@ public class CorrelationChecker {
         File csv = null;
         List<String> only = null;
         boolean info = false, list = false;
+        String compare = null; //"job/version" (same file) or a path to another job file
 
         for (int i = 0; i < args.length; i++) {
             String a = args[i];
@@ -49,6 +52,7 @@ public class CorrelationChecker {
                 case "--rules": only = Arrays.asList(args[++i].toUpperCase(Locale.ROOT).split(",")); break;
                 case "--info": info = true; break;
                 case "--list": list = true; break;
+                case "--compare": compare = args[++i]; break;
                 case "--help": case "-h": case "/?": usage(out); return;
                 default:
                     if (a.startsWith("--")) {
@@ -89,6 +93,36 @@ public class CorrelationChecker {
             return;
         }
 
+        if (compare != null) {
+            Job old;
+            try {
+                if (compare.matches("\\d+/\\d+")) {
+                    String[] jv = compare.split("/");
+                    old = Job.load(file, Integer.parseInt(jv[0]), Integer.parseInt(jv[1]));
+                } else {
+                    old = Job.load(new File(compare), null, null);
+                }
+            } catch (Exception e) {
+                out.println("Could not read " + compare + ": " + e.getMessage());
+                System.exit(2);
+                return;
+            }
+            Compare c = new Compare(old, job);
+            out.println("Changes from job " + old.job_id + "-" + String.format("%02d", old.version) + " to job " + job.job_id + "-"
+                + String.format("%02d", job.version) + ": " + Report.plural(c.diffs.size(), "change"));
+            for (String cat : Compare.CATEGORIES) {
+                if (c.count(cat) == 0) continue;
+                out.println();
+                out.println("[" + cat + "] " + c.count(cat));
+                for (Compare.Diff d : c.diffs) {
+                    if (!d.category.equals(cat)) continue;
+                    out.println(String.format("  %-8s %s", d.change, d.place.text()));
+                    out.println("           " + d.what + (d.change == Compare.Change.CHANGED ? ": " + d.before + "  ->  " + d.after : ""));
+                }
+            }
+            return;
+        }
+
         out.println("Correlation check: " + file.getName());
         out.println("Job " + job.job_id + "-" + String.format("%02d", job.version) + ": " + job.description
             + (job.version_description.isEmpty() ? "" : " (" + job.version_description + ")") + " - " + job.panel.label);
@@ -111,7 +145,7 @@ public class CorrelationChecker {
 
     //Runs the rules that support the job's panel (all of them, or only the ids listed)
     public static Report run(Job job, List<String> only) {
-        Report report = new Report();
+        Report report = new Report(job);
         for (Rule rule : RULES) {
             if (only != null && only.stream().noneMatch(id -> rule.id().startsWith(id))) continue;
             if (!rule.supports(job.panel)) {
@@ -141,9 +175,10 @@ public class CorrelationChecker {
         out.println("Usage: checker.bat [job.mdb] [--job N] [--version V] [--rules ID,ID] [--csv report.csv] [--info] [--list]");
         out.println("  job.mdb     exported job, or the configurator's configurator.mdb (then --job is needed)");
         out.println("  --list      list the jobs and versions in the file");
+        out.println("  --compare   J/V or other.mdb: list what changed from that job version (or file) to this one");
+        out.println("  --info      also show details: devices involved and the guideline each finding comes from");
         out.println("  --rules     only run these rules (prefix match, e.g. FSAE runs every FSAE rule)");
         out.println("  --csv       also save the findings to a CSV file");
-        out.println("  --info      also show informational notes");
         out.println("Rules:");
         for (Rule r : RULES) out.println(String.format("  %-13s %s", r.id(), r.title()));
     }
