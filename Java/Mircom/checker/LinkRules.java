@@ -26,7 +26,7 @@ public final class LinkRules {
         }
 
         public boolean supports(Job.Panel panel) {
-            return panel == Job.Panel.FX4000;
+            return panel.isMgc();
         }
 
         public void check(Job job, Report report) {
@@ -98,7 +98,7 @@ public final class LinkRules {
         }
 
         public boolean supports(Job.Panel panel) {
-            return panel == Job.Panel.FX4000;
+            return panel.isMgc();
         }
 
         public void check(Job job, Report report) {
@@ -106,7 +106,7 @@ public final class LinkRules {
             for (int[] l : job.io_links) used_inputs.add(l[0]);
             for (Job.Equation e : job.equations.values()) used_inputs.addAll(e.inputs.values());
 
-            int devices = 0, zones = 0;
+            int devices = 0, zones = 0, placeholders = 0;
             for (Circuit c : job.inputs.values()) {
                 boolean linked = !job.zonesOf(c).isEmpty() || used_inputs.contains(c.ckt) || !job.ledsOf(c).isEmpty();
                 if (c.kind == Kind.DEVICE) {
@@ -114,6 +114,10 @@ public final class LinkRules {
                     devices++;
                     if (!linked) report.warning(c.label(), "Not in any input zone, output, LED or logic, so activating it does nothing.");
                 } else if (c.kind == Kind.INPUT_ZONE) {
+                    if (c.isPlaceholder()) {
+                        placeholders++;
+                        continue;
+                    }
                     zones++;
                     if (job.sourcesOf(c).isEmpty() && job.equationsDriving(c).isEmpty()) {
                         report.warning(c.label(), "No device feeds this input zone and no logic drives it, so it never activates.");
@@ -121,6 +125,9 @@ public final class LinkRules {
                 }
             }
             report.note(devices + " device inputs and " + zones + " input zones checked");
+            if (placeholders > 0) {
+                report.note(Report.plural(placeholders, "blank / XXXX separator input zone") + " skipped (checklist: delete empty input zones before sending)");
+            }
         }
     }
 }

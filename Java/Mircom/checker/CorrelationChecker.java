@@ -23,6 +23,10 @@ public class CorrelationChecker {
     public static final List<Rule> RULES = List.of(
         new LinkRules.Integrity(),
         new LinkRules.Coverage(),
+        new CheatSheetRules.DeviceSetup(),
+        new CheatSheetRules.DeviceZones(),
+        new CheatSheetRules.Outputs(),
+        new CheatSheetRules.Bypass(),
         new FsaeRules.Zones(),
         new FsaeRules.Devices(),
         new FsaeRules.Logic(),

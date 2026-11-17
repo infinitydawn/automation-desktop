@@ -5,8 +5,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 import com.healthmarketscience.jackcess.Database;
@@ -16,12 +18,19 @@ import com.healthmarketscience.jackcess.Table;
 
 //One job version read from a configurator database: an exported job .mdb, or the configurator's own
 //configurator.mdb (which holds every job, so a job number is needed). Read-only; nothing is ever written.
-//Only the MGC-4000 (FX4000) layout is loaded for now. FX400/FX2000 keep correlations in one IOCorrs table
-//keyed by loop/address and will get their own loader.
+//
+//Two layouts are understood:
+//  FX4000 (MGC-4000 Configurator): devices in DeviceConfig, one circuit row per sub-address, input zones on a virtual CPU.
+//  FX6000/FlexNet (MGC Configurator): no DeviceConfig; each circuit row carries node/loop/address, the extra inputs of a
+//    multi-input device are their own rows ("B", "C" device types) pointing back with PrimDevAddr, input zones are
+//    "Input Zone" device type rows.
+//Both keep correlations, LEDs, logic and manual controls in the same tables, so the rules work on either.
+//FX400/FX2000 keep correlations in one IOCorrs table keyed by loop/address and will get their own loader.
 public class Job {
 
     public enum Panel {
         FX4000("FX4000 (MGC-4000 Configurator)"),
+        FX6000("FX6000 / FlexNet (MGC Configurator)"),
         FX400("FX400 (MGC-400 Series Configurator)"),
         FX2000("FX2000 (FX-2000 Configuration Utility)"),
         UNKNOWN("unknown panel");
@@ -31,11 +40,18 @@ public class Job {
         Panel(String label) {
             this.label = label;
         }
+
+        //Panels with input zones, logic and the MGC correlation tables
+        public boolean isMgc() {
+            return this == FX4000 || this == FX6000;
+        }
     }
 
     //Loop types the MGC-4000 configurator uses for its virtual input/output zone lists (SYSLoopTypes)
     static final int LOOP_TYPE_INPUT_ZONE = 126;
     static final int LOOP_TYPE_OUTPUT_ZONE = 127;
+    //Manual control group type used by the Mixed / Zone Bypass switch
+    static final int CTRL_TYPE_BYPASS = 1;
 
     public final File file;
     public Panel panel = Panel.UNKNOWN;
@@ -48,18 +64,22 @@ public class Job {
     public final Map<Integer, Circuit> outputs = new TreeMap<>(); //by CktNo
     public final Map<Integer, Led> leds = new TreeMap<>(); //by LedGrp
     public final Map<Integer, Equation> equations = new TreeMap<>(); //by EquationNo
+    public final Map<Integer, ControlGroup> controls = new TreeMap<>(); //by CtrlGrp
 
     //Raw link rows, kept as-is so integrity checks can see dangling or duplicate rows
     public final List<int[]> zone_links = new ArrayList<>(); //IptZoneCorrs: {input ckt, input zone ckt}
     public final List<int[]> io_links = new ArrayList<>(); //IOCorrs: {input ckt, output ckt}
     public final List<int[]> led_input_links = new ArrayList<>(); //LedIpts: {led group, input ckt}
     public final List<int[]> led_output_links = new ArrayList<>(); //LedOpts: {led group, output ckt}
+    public final List<int[]> status_links = new ArrayList<>(); //StatusCorrs: {status, output ckt}
 
     public final Map<String, String> frame_types = new HashMap<>(); //"node/cpu/frame" -> frame type name
 
     //Lookups built from the link rows once loading is done
     private final Map<Integer, List<Circuit>> zones_of = new HashMap<>(); //device input ckt -> its input zones
     private final Map<Integer, List<Circuit>> sources_of = new HashMap<>(); //input zone ckt -> device inputs feeding it
+    private final Map<Integer, List<Circuit>> direct_outputs = new HashMap<>(); //input ckt -> outputs in IOCorrs
+    private final Map<Integer, List<Circuit>> direct_inputs = new HashMap<>(); //output ckt -> inputs in IOCorrs
     private final Map<Integer, List<Led>> leds_of_input = new HashMap<>();
     private final Map<Integer, List<Equation>> equations_of_subject = new HashMap<>();
 
@@ -79,27 +99,57 @@ public class Job {
         public int ckt;
         public boolean output;
         public Kind kind = Kind.DEVICE;
-        public int node, cpu, loop, addr, sub;
-        public String loop_type = ""; //SYSLoopTypes name, e.g. S200, Telephone, IptZone
+        public int node, cpu, loop, addr, sub = 1;
+        public int primary_addr = -1; //FX6000: address of the device's first input, for its "B"/"C" rows
+        public String loop_type = ""; //SYSLoopTypes name, e.g. S200, S500, Telephone, IptZone
         public String device_type = "";
         public int process_type;
         public String process_name = "";
         public String tag = "";
+        public boolean silenceable = true; //false = NS (non-silenceable) flag
+        public boolean aux_reset; //outputs: AR flag
+        public Boolean co_flag; //FX6000 input zones: CO flag (F4). Null when the panel does not store it.
 
-        //Short, unambiguous name for reports, e.g. N1 IZ61 "Low Heat 13FL SouthT" or N1 L1-109.2 HeatPhoto (2351TAP) "..."
+        //Short, unambiguous name for reports, e.g. N1 IZ61 "Low Heat 13FL SouthT" or N1 C1 L1-109.2 HeatPhoto (2351TAP) "..."
         public String label() {
-            String t = tag.trim().replaceAll("\\s{2,}", " ");
+            String t = cleanTag();
             switch (kind) {
-                case INPUT_ZONE: return "N" + node + " IZ" + addr + " \"" + t + "\"";
+                case INPUT_ZONE: return "N" + node + (cpu > 0 && cpu < 66 ? " C" + cpu : "") + " IZ" + addr + " \"" + t + "\"";
                 case OUTPUT_ZONE: return "N" + node + " OZ" + addr + " \"" + t + "\"";
                 default:
-                    return "N" + node + " C" + cpu + " L" + loop + "-" + addr + "." + sub + " " + device_type
-                        + (t.isEmpty() ? "" : " \"" + t + "\"");
+                    return "N" + node + " C" + cpu + " L" + loop + "-" + addr + (sub > 1 || primary_addr >= 0 ? "." + sub : "")
+                        + " " + device_type + (t.isEmpty() ? "" : " \"" + t + "\"");
             }
         }
 
+        public String cleanTag() {
+            return tag.trim().replaceAll("\\s{2,}", " ");
+        }
+
+        //First tag line (the configurator stores two 20-character lines in one field)
+        public String tag1() {
+            return (tag.length() > 20 ? tag.substring(0, 20) : tag).trim();
+        }
+
+        //Second tag line, usually the location
+        public String tag2() {
+            return tag.length() > 20 ? tag.substring(20).trim() : "";
+        }
+
+        //Same for every input of one physical device
         public String deviceKey() {
-            return node + "/" + cpu + "/" + loop + "/" + addr;
+            return node + "/" + cpu + "/" + loop + "/" + (primary_addr >= 0 ? primary_addr : addr);
+        }
+
+        //Blank or XXXX-tagged input zones are separators / placeholders (checklist: remove before sending)
+        public boolean isPlaceholder() {
+            String t = tag.trim();
+            return t.isEmpty() || t.matches("[Xx]+");
+        }
+
+        public boolean isSpare() {
+            String t = tag.toLowerCase();
+            return t.isBlank() || t.contains("spare") || t.contains("not used") || t.contains("unused");
         }
     }
 
@@ -126,7 +176,7 @@ public class Job {
 
     public static class Equation {
         public int number;
-        public int node;
+        public int node = -1;
         public String tag = "";
         public String text = "";
         public String comments = "";
@@ -143,6 +193,24 @@ public class Job {
             StringBuilder s = new StringBuilder();
             for (int[] r : sequence) s.append(r[1]).append(':').append(r[2]).append(':').append(r[3]).append(' ');
             return s.toString();
+        }
+    }
+
+    //A manual control (switch) and the outputs it controls, e.g. the Mixed / Zone Bypass switch
+    public static class ControlGroup {
+        public int group;
+        public int type;
+        public final List<int[]> switches = new ArrayList<>(); //{node, cpu, frame, switch}
+        public final Set<Circuit> outputs = new LinkedHashSet<>();
+
+        public boolean isBypass() {
+            return type == CTRL_TYPE_BYPASS;
+        }
+
+        public String label() {
+            List<String> s = new ArrayList<>();
+            for (int[] p : switches) s.add("N" + p[0] + " C" + p[1] + " F" + p[2] + " SW" + p[3]);
+            return (isBypass() ? "Bypass switch " : "Control group " + group + " ") + (s.isEmpty() ? "(no switch)" : String.join(", ", s));
         }
     }
 
@@ -165,18 +233,53 @@ public class Job {
         return equations_of_subject.getOrDefault(zone.ckt, List.of());
     }
 
+    //Outputs correlated straight to this input or input zone
+    public List<Circuit> directOutputs(Circuit input) {
+        return direct_outputs.getOrDefault(input.ckt, List.of());
+    }
+
+    //Inputs and input zones correlated straight to this output
+    public List<Circuit> directInputs(Circuit output) {
+        return direct_inputs.getOrDefault(output.ckt, List.of());
+    }
+
+    //Every output this device input turns on: correlated directly, or through an input zone it is in
+    public Set<Circuit> outputsReachedBy(Circuit input) {
+        Set<Circuit> set = new LinkedHashSet<>(directOutputs(input));
+        for (Circuit z : zonesOf(input)) set.addAll(directOutputs(z));
+        return set;
+    }
+
+    //Every device input that turns this output on (the inverse of outputsReachedBy)
+    public Set<Circuit> devicesReaching(Circuit output) {
+        Set<Circuit> set = new LinkedHashSet<>();
+        for (Circuit c : directInputs(output)) {
+            if (c.kind == Kind.INPUT_ZONE) set.addAll(sourcesOf(c));
+            else set.add(c);
+        }
+        return set;
+    }
+
     public List<Circuit> inputZones() {
         List<Circuit> list = new ArrayList<>();
         for (Circuit c : inputs.values()) if (c.kind == Kind.INPUT_ZONE) list.add(c);
-        list.sort((a, b) -> a.node != b.node ? Integer.compare(a.node, b.node) : Integer.compare(a.addr, b.addr));
+        list.sort((a, b) -> a.node != b.node ? Integer.compare(a.node, b.node)
+            : a.cpu != b.cpu ? Integer.compare(a.cpu, b.cpu) : Integer.compare(a.addr, b.addr));
         return list;
     }
 
-    public Circuit inputZone(int node, int addr) {
+    //The input zone at this address in the same input zone list (node and CPU) as the given zone
+    public Circuit inputZoneNear(Circuit zone, int addr) {
         for (Circuit c : inputs.values()) {
-            if (c.kind == Kind.INPUT_ZONE && c.node == node && c.addr == addr) return c;
+            if (c.kind == Kind.INPUT_ZONE && c.node == zone.node && c.cpu == zone.cpu && c.addr == addr) return c;
         }
         return null;
+    }
+
+    public List<ControlGroup> bypassGroups() {
+        List<ControlGroup> list = new ArrayList<>();
+        for (ControlGroup g : controls.values()) if (g.isBypass()) list.add(g);
+        return list;
     }
 
     public String frameType(int node, int cpu, int frame) {
@@ -194,7 +297,7 @@ public class Job {
     //-------------------------------------------------------------------------------------------------
     //Loading
 
-    //Lists the job versions in a database as "job/version  description", newest last
+    //Lists the job versions in a database as "job/version  description"
     public static List<String> listVersions(File file) throws IOException {
         List<String> list = new ArrayList<>();
         try (Database db = open(file)) {
@@ -203,6 +306,7 @@ public class Job {
             if (jobs != null) for (Row r : jobs) names.put(num(r, "JobID"), str(r, "Description"));
             for (Row r : db.getTable("JobVersions")) {
                 int j = num(r, "JobID");
+                if (j < 0) continue; //built-in templates
                 list.add(j + "/" + num(r, "VersionNo") + "  " + names.getOrDefault(j, "") + "  (" + str(r, "Description") + ")");
             }
         }
@@ -216,8 +320,9 @@ public class Job {
         try (Database db = open(file)) {
             job.panel = detectPanel(db);
             job.pickVersion(db, job_id, version);
-            if (job.panel != Panel.FX4000) return job; //only the FX4000 layout is understood so far
-            job.loadFx4000(db);
+            if (!job.panel.isMgc()) return job; //FX400/FX2000 layouts are not read yet
+            job.loadCircuits(db);
+            job.loadShared(db);
         }
         job.index();
         return job;
@@ -231,14 +336,23 @@ public class Job {
         if (db.getTableNames().contains("DeviceConfig")) return Panel.FX4000;
         Table ipt = db.getTable("InputCircuits");
         if (ipt == null) return Panel.UNKNOWN;
-        if (ipt.getColumn("PrimDevAddr") != null) return Panel.FX400;
-        if (ipt.getColumn("CrossZnCount") != null) return Panel.FX2000;
+        if (has(ipt, "NodeNo") && has(ipt, "CktNoCPU")) return Panel.FX6000;
+        if (has(ipt, "PrimDevAddr")) return Panel.FX400;
+        if (has(ipt, "CrossZnCount")) return Panel.FX2000;
         return Panel.UNKNOWN;
+    }
+
+    private static boolean has(Table t, String column) {
+        try {
+            return t.getColumn(column) != null;
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
     }
 
     private void pickVersion(Database db, Integer want_job, Integer want_version) throws IOException {
         List<int[]> versions = new ArrayList<>();
-        for (Row r : db.getTable("JobVersions")) versions.add(new int[] { num(r, "JobID"), num(r, "VersionNo") });
+        for (Row r : db.getTable("JobVersions")) if (num(r, "JobID") >= 0) versions.add(new int[] { num(r, "JobID"), num(r, "VersionNo") });
         if (versions.isEmpty()) throw new IOException("The database has no jobs.");
 
         int[] pick = null;
@@ -269,21 +383,27 @@ public class Job {
         return num(r, "JobID") == job_id && num(r, "VersionNo") == version;
     }
 
-    private void loadFx4000(Database db) throws IOException {
+    //Circuits differ between the two layouts; everything after this is shared
+    private void loadCircuits(Database db) throws IOException {
         Map<Integer, String> device_types = lookup(db, "SYSDevTypes", "DevType", "Tag");
         Map<Integer, String> process_types = lookup(db, "SYSProcTypes", "ProcessType", "Tag");
-        Map<Integer, String> frame_type_names = lookup(db, "SYSFrameTypes", "FrameType", "Tag");
         Map<Integer, String> loop_type_names = lookup(db, "SYSLoopTypes", "LoopType", "Tag");
-        Map<Integer, String> led_type_names = new HashMap<>();
-        for (Row r : db.getTable("SYSLedTypes")) led_type_names.put(num(r, "LedType"), str(r, "DisplayType") + " / " + str(r, "Description"));
 
-        Map<String, Integer> loop_types = new HashMap<>(); //"node/cpu/loop" -> loop type
+        Map<String, Integer> loop_types = new HashMap<>(); //FX4000 "node/cpu/loop", FX6000 "node/loop" -> loop type
+        Map<String, Integer> loop_cpu = new HashMap<>(); //FX6000 "node/loop" -> cpu
         for (Row r : db.getTable("LoopConfig")) {
-            if (mine(r)) loop_types.put(num(r, "NodeNo") + "/" + num(r, "CPUNo") + "/" + num(r, "LoopNo"), num(r, "LoopType"));
+            if (!mine(r)) continue;
+            int node = num(r, "NodeNo"), cpu = num(r, "CPUNo"), loop = num(r, "LoopNo"), type = num(r, "LoopType");
+            if (panel == Panel.FX4000) {
+                loop_types.put(node + "/" + cpu + "/" + loop, type);
+            } else {
+                loop_types.put(node + "/" + loop, type);
+                loop_cpu.put(node + "/" + loop, cpu);
+            }
         }
 
         Map<Integer, Row> devices = new HashMap<>();
-        for (Row r : db.getTable("DeviceConfig")) if (mine(r)) devices.put(num(r, "DevNo"), r);
+        if (panel == Panel.FX4000) for (Row r : db.getTable("DeviceConfig")) if (mine(r)) devices.put(num(r, "DevNo"), r);
 
         for (String table : new String[] { "InputCircuits", "OutputCircuits" }) {
             boolean output = table.startsWith("Output");
@@ -292,31 +412,68 @@ public class Job {
                 Circuit c = new Circuit();
                 c.ckt = num(r, "CktNo");
                 c.output = output;
-                c.sub = num(r, "SubAddr");
                 c.process_type = num(r, "ProcessType");
                 c.process_name = process_types.getOrDefault(c.process_type, "type " + c.process_type);
                 c.tag = str(r, "Tag");
-                Row d = devices.get(num(r, "DevNo"));
-                if (d != null) {
+                c.silenceable = bool(r, "Silenceable", true);
+                c.aux_reset = bool(r, "AuxReset", false);
+                int loop_type = -1;
+                int dev_type;
+                if (panel == Panel.FX4000) {
+                    c.sub = num(r, "SubAddr");
+                    Row d = devices.get(num(r, "DevNo"));
+                    if (d == null) {
+                        (output ? outputs : inputs).put(c.ckt, c);
+                        continue;
+                    }
                     c.node = num(d, "NodeNo");
                     c.cpu = num(d, "CPUNo");
                     c.loop = num(d, "LoopNo");
                     c.addr = num(d, "DevAddr");
-                    c.device_type = device_types.getOrDefault(num(d, "DevType"), "type " + num(d, "DevType"));
-                    int loop_type = loop_types.getOrDefault(c.node + "/" + c.cpu + "/" + c.loop, -1);
-                    c.loop_type = loop_type_names.getOrDefault(loop_type, "");
-                    if (loop_type == LOOP_TYPE_INPUT_ZONE) c.kind = Kind.INPUT_ZONE;
-                    else if (loop_type == LOOP_TYPE_OUTPUT_ZONE) c.kind = Kind.OUTPUT_ZONE;
-                    else if (c.cpu == 0) c.kind = Kind.PANEL;
+                    dev_type = num(d, "DevType");
+                    loop_type = loop_types.getOrDefault(c.node + "/" + c.cpu + "/" + c.loop, -1);
+                } else {
+                    c.node = num(r, "NodeNo");
+                    c.loop = num(r, "LoopNo");
+                    c.addr = num(r, "DevAddr");
+                    c.cpu = loop_cpu.getOrDefault(c.node + "/" + c.loop, 0);
+                    dev_type = num(r, "DevType");
+                    loop_type = loop_types.getOrDefault(c.node + "/" + c.loop, -1);
+                    int primary = num(r, "PrimDevAddr");
+                    if (primary >= 0 && primary != c.addr) c.primary_addr = primary;
+                    if (r.containsKey("COFlag")) c.co_flag = bool(r, "COFlag", false);
                 }
+                c.device_type = device_types.getOrDefault(dev_type, "type " + dev_type);
+                c.loop_type = loop_type_names.getOrDefault(loop_type, "");
+                if (panel == Panel.FX6000) c.sub = subFromDeviceType(c.device_type);
+
+                if (loop_type == LOOP_TYPE_INPUT_ZONE && panel == Panel.FX4000) c.kind = Kind.INPUT_ZONE;
+                else if (loop_type == LOOP_TYPE_OUTPUT_ZONE && panel == Panel.FX4000) c.kind = Kind.OUTPUT_ZONE;
+                else if (panel == Panel.FX6000 && c.device_type.equalsIgnoreCase("Input Zone")) c.kind = Kind.INPUT_ZONE;
+                else if (c.cpu == 0 && (panel == Panel.FX4000 || "Conventional".equals(c.loop_type))) c.kind = Kind.PANEL;
                 (output ? outputs : inputs).put(c.ckt, c);
             }
         }
+    }
 
-        for (Row r : db.getTable("IptZoneCorrs")) if (mine(r)) zone_links.add(new int[] { num(r, "IptCkt"), num(r, "IptZone") });
-        for (Row r : db.getTable("IOCorrs")) if (mine(r)) io_links.add(new int[] { num(r, "IptCkt"), num(r, "OptCkt") });
+    //FX6000 names the extra inputs of one device Dual Monitor "B" (AP), Dual Heat Photo "C" (AP), ...
+    private static int subFromDeviceType(String type) {
+        if (type.contains("\"B\"")) return 2;
+        if (type.contains("\"C\"")) return 3;
+        if (type.contains("\"D\"")) return 4;
+        return 1;
+    }
 
-        for (Row r : db.getTable("DisplayFrames")) {
+    private void loadShared(Database db) throws IOException {
+        Map<Integer, String> frame_type_names = lookup(db, "SYSFrameTypes", "FrameType", "Tag");
+        Map<Integer, String> led_type_names = new HashMap<>();
+        for (Row r : db.getTable("SYSLedTypes")) led_type_names.put(num(r, "LedType"), str(r, "DisplayType") + " / " + str(r, "Description"));
+
+        for (Row r : rows(db, "IptZoneCorrs")) if (mine(r)) zone_links.add(new int[] { num(r, "IptCkt"), num(r, "IptZone") });
+        for (Row r : rows(db, "IOCorrs")) if (mine(r)) io_links.add(new int[] { num(r, "IptCkt"), num(r, "OptCkt") });
+        for (Row r : rows(db, "StatusCorrs")) if (mine(r)) status_links.add(new int[] { num(r, "Status"), num(r, "OptCkt") });
+
+        for (Row r : rows(db, "DisplayFrames")) {
             if (mine(r)) {
                 frame_types.put(num(r, "NodeNo") + "/" + num(r, "CPUNo") + "/" + num(r, "FrameNo"),
                     frame_type_names.getOrDefault(num(r, "FrameType"), "type " + num(r, "FrameType")));
@@ -324,7 +481,7 @@ public class Job {
         }
 
         String[] state_columns = { "AllActive", "Alert", "SomeActive", "PreAlarm", "Unbypass", "ManCtrl0", "ManCtrl1", "ManCtrl2", "Trouble" };
-        for (Row r : db.getTable("LedDefinitions")) {
+        for (Row r : rows(db, "LedDefinitions")) {
             if (!mine(r)) continue;
             Led l = new Led();
             l.group = num(r, "LedGrp");
@@ -334,37 +491,55 @@ public class Job {
             for (String s : state_columns) l.states.put(s, num(r, s));
             leds.put(l.group, l);
         }
-        for (Row r : db.getTable("LedLookup")) {
+        for (Row r : rows(db, "LedLookup")) {
             if (!mine(r)) continue;
             Led l = leds.get(num(r, "LedGrp"));
             if (l != null) l.slots.add(new int[] { num(r, "NodeNo"), num(r, "CPUNo"), num(r, "FrameNo"), num(r, "LedNo") });
         }
-        for (Row r : db.getTable("LedIpts")) if (mine(r)) led_input_links.add(new int[] { num(r, "LedGrp"), num(r, "IptCkt") });
-        for (Row r : db.getTable("LedOpts")) if (mine(r)) led_output_links.add(new int[] { num(r, "LedGrp"), num(r, "OptCkt") });
+        for (Row r : rows(db, "LedIpts")) if (mine(r)) led_input_links.add(new int[] { num(r, "LedGrp"), num(r, "IptCkt") });
+        for (Row r : rows(db, "LedOpts")) if (mine(r)) led_output_links.add(new int[] { num(r, "LedGrp"), num(r, "OptCkt") });
 
-        for (Row r : db.getTable("Equations")) {
+        for (Row r : rows(db, "Equations")) {
             if (!mine(r)) continue;
             Equation e = new Equation();
             e.number = num(r, "EquationNo");
-            e.node = num(r, "NodeNo");
+            if (r.containsKey("NodeNo")) e.node = num(r, "NodeNo");
             e.tag = str(r, "Tag");
             e.text = str(r, "Equation");
             e.comments = str(r, "Comments");
             equations.put(e.number, e);
         }
-        for (Row r : db.getTable("EquationInput")) {
+        for (Row r : rows(db, "EquationInput")) {
             Equation e = mine(r) ? equations.get(num(r, "EquationNo")) : null;
             if (e != null) e.inputs.put(num(r, "Sequence"), num(r, "IptCkt"));
         }
-        for (Row r : db.getTable("EquationSequence")) {
+        for (Row r : rows(db, "EquationSequence")) {
             Equation e = mine(r) ? equations.get(num(r, "EquationNo")) : null;
             if (e != null) e.sequence.add(new int[] { num(r, "Sequence"), num(r, "Term"), num(r, "Value"), num(r, "Mask") });
         }
         for (Equation e : equations.values()) e.sequence.sort((a, b) -> Integer.compare(a[0], b[0]));
-        for (Row r : db.getTable("EquationSubjIpt")) {
+        for (Row r : rows(db, "EquationSubjIpt")) {
             Equation e = mine(r) ? equations.get(num(r, "EquationNo")) : null;
             Circuit c = inputs.get(num(r, "IptCkt"));
             if (e != null && c != null) e.subjects.add(c);
+        }
+        for (Equation e : equations.values()) if (e.node < 0 && !e.subjects.isEmpty()) e.node = e.subjects.get(0).node;
+
+        for (Row r : rows(db, "ManCtrlGroups")) {
+            if (!mine(r)) continue;
+            ControlGroup g = new ControlGroup();
+            g.group = num(r, "CtrlGrp");
+            g.type = num(r, "CtrlType");
+            controls.put(g.group, g);
+        }
+        for (Row r : rows(db, "SwManCtrl")) {
+            ControlGroup g = mine(r) ? controls.get(num(r, "CtrlGrp")) : null;
+            if (g != null) g.switches.add(new int[] { num(r, "NodeNo"), num(r, "CPUNo"), num(r, "FrameNo"), num(r, "SwitchNo") });
+        }
+        for (Row r : rows(db, "ManCtrlOpts")) {
+            ControlGroup g = mine(r) ? controls.get(num(r, "CtrlGrp")) : null;
+            Circuit c = outputs.get(num(r, "OptCkt"));
+            if (g != null && c != null) g.outputs.add(c);
         }
     }
 
@@ -375,6 +550,13 @@ public class Job {
             if (src == null || zone == null) continue;
             zones_of.computeIfAbsent(src.ckt, k -> new ArrayList<>()).add(zone);
             sources_of.computeIfAbsent(zone.ckt, k -> new ArrayList<>()).add(src);
+        }
+        for (int[] link : io_links) {
+            Circuit in = inputs.get(link[0]);
+            Circuit out = outputs.get(link[1]);
+            if (in == null || out == null) continue;
+            direct_outputs.computeIfAbsent(in.ckt, k -> new ArrayList<>()).add(out);
+            direct_inputs.computeIfAbsent(out.ckt, k -> new ArrayList<>()).add(in);
         }
         for (int[] link : led_input_links) {
             Led l = leds.get(link[0]);
@@ -393,10 +575,15 @@ public class Job {
         }
     }
 
+    //Rows of a table, or none if this configurator version does not have it
+    private static Iterable<Row> rows(Database db, String table) throws IOException {
+        Table t = db.getTable(table);
+        return t == null ? List.of() : t;
+    }
+
     private static Map<Integer, String> lookup(Database db, String table, String key, String value) throws IOException {
         Map<Integer, String> map = new HashMap<>();
-        Table t = db.getTable(table);
-        if (t != null) for (Row r : t) map.put(num(r, key), str(r, value));
+        for (Row r : rows(db, table)) map.put(num(r, key), str(r, value));
         return map;
     }
 
@@ -412,6 +599,13 @@ public class Job {
             }
         }
         return -1;
+    }
+
+    static boolean bool(Row r, String column, boolean fallback) {
+        Object o = r.get(column);
+        if (o instanceof Boolean) return (Boolean) o;
+        if (o instanceof Number) return ((Number) o).intValue() != 0;
+        return fallback;
     }
 
     static String str(Row r, String column) {

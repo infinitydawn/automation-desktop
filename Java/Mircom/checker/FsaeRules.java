@@ -121,7 +121,7 @@ public final class FsaeRules {
             g.addr = normal.addr;
             g.zones.put(Role.NORMAL, normal);
             for (int i = 1; i < ROLES.length; i++) {
-                Circuit z = job.inputZone(normal.node, normal.addr + i);
+                Circuit z = job.inputZoneNear(normal, normal.addr + i);
                 if (z == null || !ROLES[i].startsZoneTag(z.tag)) {
                     g = null;
                     break;
@@ -174,7 +174,7 @@ public final class FsaeRules {
         }
 
         public boolean supports(Job.Panel panel) {
-            return panel == Job.Panel.FX4000;
+            return panel.isMgc();
         }
 
         public void check(Job job, Report report) {
@@ -231,7 +231,7 @@ public final class FsaeRules {
         }
 
         public boolean supports(Job.Panel panel) {
-            return panel == Job.Panel.FX4000;
+            return panel.isMgc();
         }
 
         public void check(Job job, Report report) {
@@ -334,7 +334,7 @@ public final class FsaeRules {
         }
 
         public boolean supports(Job.Panel panel) {
-            return panel == Job.Panel.FX4000;
+            return panel.isMgc();
         }
 
         public void check(Job job, Report report) {
@@ -423,7 +423,7 @@ public final class FsaeRules {
         }
 
         public boolean supports(Job.Panel panel) {
-            return panel == Job.Panel.FX4000;
+            return panel.isMgc();
         }
 
         public void check(Job job, Report report) {
