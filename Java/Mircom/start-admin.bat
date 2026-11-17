@@ -8,7 +8,9 @@ set "BOT_DIR=%~dp0"
 set "BOT_USER_SITE="
 for /f "delims=" %%p in ('python -m site --user-site 2^>nul') do set "BOT_USER_SITE=%%p"
 
-powershell -NoProfile -Command "Start-Process -FilePath ($env:BOT_DIR + 'start.bat') -ArgumentList ([char]34 + $env:BOT_USER_SITE + [char]34) -Verb RunAs"
+rem Runs "cmd /c call "...\start.bat" "<site>"" elevated. Starting the .bat directly makes Windows run
+rem cmd /C "...\start.bat" "<site>", and cmd strips the outer quotes, breaking this folder's path at its first space.
+powershell -NoProfile -Command "$q = [char]34; Start-Process -FilePath cmd.exe -ArgumentList ('/c call ' + $q + $env:BOT_DIR + 'start.bat' + $q + ' ' + $q + $env:BOT_USER_SITE + $q) -Verb RunAs"
 if errorlevel 1 (
     echo Could not start the bot as administrator.
     pause
