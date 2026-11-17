@@ -9,10 +9,13 @@ import com.github.kwhat.jnativehook.NativeHookException;
 import com.github.kwhat.jnativehook.keyboard.NativeKeyEvent;
 import com.github.kwhat.jnativehook.keyboard.NativeKeyListener;
 
-//Opens the bot window and keeps the old global hotkeys working:
-//F2 FX400, F3 FX2000, F4 Flexnet, F5 FX4000 start (or resume) with the configurator in front, ` stops the run.
-//F6 drives the FSAE tab: resume / enter the next floor's logic, or start the selected FSAE step.
+//Opens the bot window and listens for the global hotkeys:
+//F8 starts, pauses or resumes the bot on the tab in front (configurator picked in the window), ` stops a run.
 public class Automation implements NativeKeyListener {
+
+    //Change these to move the hotkeys (NativeKeyEvent.VC_...)
+    private static final int START_PAUSE_KEY = NativeKeyEvent.VC_F8;
+    private static final int STOP_KEY = NativeKeyEvent.VC_BACKQUOTE;
 
     private static volatile BotWindow window;
 
@@ -33,7 +36,8 @@ public class Automation implements NativeKeyListener {
             Logger.getLogger(GlobalScreen.class.getPackage().getName()).setLevel(Level.WARNING);
             GlobalScreen.registerNativeHook();
             GlobalScreen.addNativeKeyListener(new Automation());
-            System.out.println("Program ready. Use the window, or with the configurator in front press F2 FX400, F3 FX2000, F4 Flexnet, F5 FX4000, F6 FSAE. ` stops a run.");
+            System.out.println("Program ready. Use the window, or press " + NativeKeyEvent.getKeyText(START_PAUSE_KEY)
+                + " to start/pause/resume the selected configurator. " + NativeKeyEvent.getKeyText(STOP_KEY) + " stops a run.");
         }
         catch (NativeHookException ex) {
             System.err.println("Hotkeys unavailable (" + ex.getMessage() + "). Use the window's buttons instead.");
@@ -46,25 +50,12 @@ public class Automation implements NativeKeyListener {
             return;
         }
 
-        switch (e.getKeyCode()) {
-            case NativeKeyEvent.VC_BACKQUOTE:
-                SwingUtilities.invokeLater(w::hotkeyStop);
-                break;
-            case NativeKeyEvent.VC_F2:
-                SwingUtilities.invokeLater(() -> w.hotkeyStart(BotWindow.Panel.FX_400));
-                break;
-            case NativeKeyEvent.VC_F3:
-                SwingUtilities.invokeLater(() -> w.hotkeyStart(BotWindow.Panel.FX_2000));
-                break;
-            case NativeKeyEvent.VC_F4:
-                SwingUtilities.invokeLater(() -> w.hotkeyStart(BotWindow.Panel.FLEXNET));
-                break;
-            case NativeKeyEvent.VC_F5:
-                SwingUtilities.invokeLater(() -> w.hotkeyStart(BotWindow.Panel.FX_4000));
-                break;
-            case NativeKeyEvent.VC_F6:
-                SwingUtilities.invokeLater(w::hotkeyFsae);
-                break;
+        int key = e.getKeyCode();
+        if(key == STOP_KEY) {
+            SwingUtilities.invokeLater(w::hotkeyStop);
+        }
+        else if(key == START_PAUSE_KEY) {
+            SwingUtilities.invokeLater(w::hotkeyStartPause);
         }
     }
 }

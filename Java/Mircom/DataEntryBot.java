@@ -361,7 +361,7 @@ public class DataEntryBot extends Robot {
             return;
         }
 
-        System.out.println("Check the configurator, then press Resume (or click back into it and press the start F-key). Press ` or Stop to quit.");
+        System.out.println("Check the configurator, then press Resume (or click back into it and press F8). Press ` or Stop to quit.");
         System.out.println("----------------------------------------------------------------");
 
         pause_handler.setIsPaused(true);
@@ -372,6 +372,23 @@ public class DataEntryBot extends Robot {
         while(pause_handler.getIsPaused() && !stopped) {
             this.delay(100);
         }
+    }
+
+    //Windows silently drops keys a normal program sends to a program running as administrator (UIPI).
+    //Returns why the bot can't type into this window's program, or null if it can.
+    public static String adminProblem(WindowInfo window) {
+        if(Win32.isElevated(ProcessHandle.current().pid()) == Boolean.TRUE) {
+            return null; //the bot is administrator too
+        }
+        Boolean target = Win32.isElevated(window.pid());
+        if(target == Boolean.FALSE) {
+            return null;
+        }
+
+        return (target == Boolean.TRUE ? "The configurator is running as administrator"
+                : "The configurator looks like it is running as administrator (or as another user)")
+            + ", so Windows blocks this bot from typing into it.\n"
+            + "Close the bot and start it with start-admin.bat instead.";
     }
 
     //A top level window, for picking the configurator in the GUI
@@ -409,6 +426,8 @@ public class DataEntryBot extends Robot {
     static final class Win32 {
         private static final Linker LINKER = Linker.nativeLinker();
         private static final SymbolLookup USER32 = SymbolLookup.libraryLookup("user32", Arena.global());
+        private static final SymbolLookup KERNEL32 = SymbolLookup.libraryLookup("kernel32", Arena.global());
+        private static final SymbolLookup ADVAPI32 = SymbolLookup.libraryLookup("advapi32", Arena.global());
 
         private static final MethodHandle GET_FOREGROUND_WINDOW = function("GetForegroundWindow",
             FunctionDescriptor.of(ADDRESS));
@@ -433,13 +452,62 @@ public class DataEntryBot extends Robot {
         private static final MethodHandle SET_FOREGROUND_WINDOW = function("SetForegroundWindow",
             FunctionDescriptor.of(JAVA_INT, ADDRESS));
 
+        private static final MethodHandle OPEN_PROCESS = function(KERNEL32, "OpenProcess",
+            FunctionDescriptor.of(ADDRESS, JAVA_INT, JAVA_INT, JAVA_INT));
+        private static final MethodHandle CLOSE_HANDLE = function(KERNEL32, "CloseHandle",
+            FunctionDescriptor.of(JAVA_INT, ADDRESS));
+        private static final MethodHandle OPEN_PROCESS_TOKEN = function(ADVAPI32, "OpenProcessToken",
+            FunctionDescriptor.of(JAVA_INT, ADDRESS, JAVA_INT, ADDRESS));
+        private static final MethodHandle GET_TOKEN_INFORMATION = function(ADVAPI32, "GetTokenInformation",
+            FunctionDescriptor.of(JAVA_INT, ADDRESS, JAVA_INT, ADDRESS, JAVA_INT, ADDRESS));
+
+        private static final int PROCESS_QUERY_LIMITED_INFORMATION = 0x1000;
+        private static final int TOKEN_QUERY = 0x0008;
+        private static final int TOKEN_ELEVATION = 20; //TOKEN_INFORMATION_CLASS.TokenElevation
+
         private static final int WM_NULL = 0x0000;
         private static final int SMTO_NORMAL = 0x0000; //not SMTO_ABORTIFHUNG: a long busy spell would count as hung and return early
         private static final int GW_OWNER = 4;
         private static final int SW_RESTORE = 9;
 
         private static MethodHandle function(String name, FunctionDescriptor descriptor) {
-            return LINKER.downcallHandle(USER32.find(name).orElseThrow(), descriptor);
+            return function(USER32, name, descriptor);
+        }
+
+        private static MethodHandle function(SymbolLookup library, String name, FunctionDescriptor descriptor) {
+            return LINKER.downcallHandle(library.find(name).orElseThrow(), descriptor);
+        }
+
+        //True if the process runs as administrator, false if not, null if Windows won't say
+        //(usually a process started by another account, e.g. an admin login).
+        static Boolean isElevated(long pid) {
+            try (Arena arena = Arena.ofConfined()) {
+                MemorySegment process = (MemorySegment) OPEN_PROCESS.invokeExact(PROCESS_QUERY_LIMITED_INFORMATION, 0, (int) pid);
+                if(process.address() == 0) {
+                    return null;
+                }
+                try {
+                    MemorySegment token_out = arena.allocate(ADDRESS);
+                    if((int) OPEN_PROCESS_TOKEN.invokeExact(process, TOKEN_QUERY, token_out) == 0) {
+                        return null;
+                    }
+                    MemorySegment token = token_out.get(ADDRESS, 0);
+                    try {
+                        MemorySegment elevation = arena.allocate(JAVA_INT);
+                        MemorySegment length = arena.allocate(JAVA_INT);
+                        if((int) GET_TOKEN_INFORMATION.invokeExact(token, TOKEN_ELEVATION, elevation, 4, length) == 0) {
+                            return null;
+                        }
+                        return elevation.get(JAVA_INT, 0) != 0;
+                    } finally {
+                        int ignored = (int) CLOSE_HANDLE.invokeExact(token);
+                    }
+                } finally {
+                    int ignored = (int) CLOSE_HANDLE.invokeExact(process);
+                }
+            } catch (Throwable t) {
+                return null;
+            }
         }
 
         private static MemorySegment hwnd(long address) {

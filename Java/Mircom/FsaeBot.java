@@ -172,7 +172,7 @@ public class FsaeBot extends Thread implements DataEntryBot.PauseHandler {
             FsaePlan.Logic l = logic.get(i);
             report(i, logic.size(), "Logic: " + l.describe());
             String ask = "Open Advanced Logic for " + plan.izName(l.floor, l.address) + " (" + l.floor.floor.name
-                + "), click into the Equation box, then press Enter logic (or F6).";
+                + "), click into the Equation box, then press Enter logic (or F8).";
 
             for(int attempt = 1; is_running; attempt++) {
                 waitForUser(ask);

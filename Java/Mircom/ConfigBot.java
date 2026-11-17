@@ -189,7 +189,7 @@ public abstract class ConfigBot extends Thread implements DataEntryBot.PauseHand
                 for(String s : setup) {
                     System.out.println(s);
                 }
-                System.out.println("Please make necessary changes, then press Resume (or the start F-key) to continue.");
+                System.out.println("Please make necessary changes, then press Resume (or F8) to continue.");
                 System.out.println("----------------------------------------------------------------");
 
                 setIsPaused(true);

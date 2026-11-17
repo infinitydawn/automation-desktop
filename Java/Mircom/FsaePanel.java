@@ -758,7 +758,7 @@ public class FsaePanel extends JPanel implements FsaeBot.Listener {
                     + " The bot pauses wherever the next zone isn't right below (new node or gap)." + status + "</html>");
                 break;
             case LOGIC:
-                hint_label.setText("<html>Press Start, then for each floor: open Advanced Logic for its Normal zone, click into Equation, and press Enter logic (or F6)."
+                hint_label.setText("<html>Press Start, then for each floor: open Advanced Logic for its Normal zone, click into Equation, and press Enter logic (or F8)."
                     + status + "</html>");
                 break;
             case GRAPHIC_ADDER:
@@ -870,6 +870,12 @@ public class FsaePanel extends JPanel implements FsaeBot.Listener {
         if(target == null) {
             JOptionPane.showMessageDialog(this, "Pick the " + plan.panel.name() + " configurator window first (open the job, then press Refresh).",
                 "No configurator window", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        String admin_problem = DataEntryBot.adminProblem(target);
+        if(admin_problem != null && JOptionPane.showConfirmDialog(this, admin_problem + "\n\nStart anyway?",
+                "Configurator is running as administrator", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE) != JOptionPane.YES_OPTION) {
             return;
         }
 
@@ -989,11 +995,14 @@ public class FsaePanel extends JPanel implements FsaeBot.Listener {
         stop();
     }
 
-    //F6: resume / enter the next floor's logic, or start the selected step
+    //Start/Pause hotkey: pause, resume / enter the next floor's logic, or start the selected step
     public void hotkey() {
         if(running) {
             if(bot != null && bot.getIsPaused()) {
                 resume();
+            }
+            else if(shown_step != FsaeBot.Step.LOGIC) { //logic can't be paused partway, same as the Pause button
+                pause();
             }
         }
         else if(!blocked && !picking) {
