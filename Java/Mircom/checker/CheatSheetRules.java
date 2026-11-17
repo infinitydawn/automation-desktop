@@ -68,6 +68,10 @@ public final class CheatSheetRules {
             return "SHEET-DEVICES";
         }
 
+        public String name() {
+            return "Device setup";
+        }
+
         public String title() {
             return "Cheat sheet device setup: input type and NS flag for each kind of device";
         }
@@ -110,6 +114,10 @@ public final class CheatSheetRules {
 
         public String id() {
             return "SHEET-ZONES";
+        }
+
+        public String name() {
+            return "Standard zones";
         }
 
         public String title() {
@@ -218,6 +226,10 @@ public final class CheatSheetRules {
 
         public String id() {
             return "SHEET-OUTPUTS";
+        }
+
+        public String name() {
+            return "Relays & strobes";
         }
 
         public String title() {
@@ -388,6 +400,10 @@ public final class CheatSheetRules {
 
         public String id() {
             return "SHEET-BYPASS";
+        }
+
+        public String name() {
+            return "Zone bypass";
         }
 
         public String title() {

@@ -169,6 +169,10 @@ public final class FsaeRules {
             return "FSAE-ZONES";
         }
 
+        public String name() {
+            return "FSAE zones";
+        }
+
         public String title() {
             return "FSAE floor groups: Normal, Low Heat, High Heat, Smoke Det input zones";
         }
@@ -224,6 +228,10 @@ public final class FsaeRules {
 
         public String id() {
             return "FSAE-DEVICES";
+        }
+
+        public String name() {
+            return "FSAE detectors";
         }
 
         public String title() {
@@ -329,6 +337,10 @@ public final class FsaeRules {
             return "FSAE-LOGIC";
         }
 
+        public String name() {
+            return "FSAE Normal logic";
+        }
+
         public String title() {
             return "FSAE Normal logic: each Normal zone is on when its Low/High Heat are not in alarm or trouble";
         }
@@ -416,6 +428,10 @@ public final class FsaeRules {
 
         public String id() {
             return "FSAE-DISPLAY";
+        }
+
+        public String name() {
+            return "FSAE graphic adder";
         }
 
         public String title() {

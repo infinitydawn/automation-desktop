@@ -74,6 +74,8 @@ public class Job {
     public final List<int[]> status_links = new ArrayList<>(); //StatusCorrs: {status, output ckt}
 
     public final Map<String, String> frame_types = new HashMap<>(); //"node/cpu/frame" -> frame type name
+    public final Map<Integer, String> node_names = new HashMap<>(); //node -> its tag, e.g. "FCC 2FL (Cell-13FL)"
+    public final Map<String, String> cpu_types = new HashMap<>(); //"node/cpu" -> card type, e.g. "S200 QLA"
 
     //Lookups built from the link rows once loading is done
     private final Map<Integer, List<Circuit>> zones_of = new HashMap<>(); //device input ckt -> its input zones
@@ -282,6 +284,14 @@ public class Job {
         return list;
     }
 
+    public String nodeName(int node) {
+        return node_names.getOrDefault(node, "");
+    }
+
+    public String cpuType(int node, int cpu) {
+        return cpu_types.getOrDefault(node + "/" + cpu, "");
+    }
+
     public String frameType(int node, int cpu, int frame) {
         return frame_types.getOrDefault(node + "/" + cpu + "/" + frame, "?");
     }
@@ -300,17 +310,58 @@ public class Job {
     //Lists the job versions in a database as "job/version  description"
     public static List<String> listVersions(File file) throws IOException {
         List<String> list = new ArrayList<>();
+        for (Version v : versions(file)) {
+            list.add(v.job + "/" + v.version + "  " + v.description + "  (" + v.version_description + ")");
+        }
+        return list;
+    }
+
+    //One saved version of a job in a database
+    public static class Version {
+        public final int job, version;
+        public final String description, version_description;
+        public final String created; //sortable yyyy-MM-ddTHH:mm, "" if unknown
+
+        Version(int job, int version, String description, String version_description, String created) {
+            this.job = job;
+            this.version = version;
+            this.description = description;
+            this.version_description = version_description;
+            this.created = created;
+        }
+
+        @Override
+        public String toString() {
+            return "Job " + job + "-" + String.format("%02d", version) + "   " + description
+                + (version_description.isBlank() ? "" : "   (" + version_description.trim() + ")")
+                + (created.isEmpty() ? "" : "   " + created.replace('T', ' '));
+        }
+    }
+
+    //Every job version in the database, sorted by job then version (built-in templates left out)
+    public static List<Version> versions(File file) throws IOException {
+        List<Version> list = new ArrayList<>();
         try (Database db = open(file)) {
             Map<Integer, String> names = new HashMap<>();
             Table jobs = db.getTable("Jobs");
             if (jobs != null) for (Row r : jobs) names.put(num(r, "JobID"), str(r, "Description"));
             for (Row r : db.getTable("JobVersions")) {
                 int j = num(r, "JobID");
-                if (j < 0) continue; //built-in templates
-                list.add(j + "/" + num(r, "VersionNo") + "  " + names.getOrDefault(j, "") + "  (" + str(r, "Description") + ")");
+                if (j < 0) continue;
+                list.add(new Version(j, num(r, "VersionNo"), names.getOrDefault(j, ""), str(r, "Description").replaceAll("\\s+", " "),
+                    timestamp(r.get("CreationDate"))));
             }
         }
+        list.sort((a, b) -> a.job != b.job ? Integer.compare(a.job, b.job) : Integer.compare(a.version, b.version));
         return list;
+    }
+
+    private static String timestamp(Object o) {
+        if (o instanceof java.time.LocalDateTime) return ((java.time.LocalDateTime) o).withSecond(0).withNano(0).toString();
+        if (o instanceof java.util.Date) {
+            return java.time.LocalDateTime.ofInstant(((java.util.Date) o).toInstant(), java.time.ZoneId.systemDefault()).withSecond(0).withNano(0).toString();
+        }
+        return "";
     }
 
     //job/version may be null: an exported job holds one version, which is picked automatically.
@@ -466,6 +517,14 @@ public class Job {
 
     private void loadShared(Database db) throws IOException {
         Map<Integer, String> frame_type_names = lookup(db, "SYSFrameTypes", "FrameType", "Tag");
+        Map<Integer, String> cpu_type_names = lookup(db, "SYSCPUTypes", "CPUType", "Tag");
+        for (Row r : rows(db, "NodeConfig")) if (mine(r)) node_names.put(num(r, "NodeNo"), str(r, "Tag").trim());
+        for (Row r : rows(db, "CPUConfig")) {
+            if (!mine(r)) continue;
+            String tag = str(r, "Tag").trim();
+            String type = cpu_type_names.getOrDefault(num(r, "CPUType"), "");
+            cpu_types.put(num(r, "NodeNo") + "/" + num(r, "CPUNo"), type + (tag.isEmpty() ? "" : " " + tag));
+        }
         Map<Integer, String> led_type_names = new HashMap<>();
         for (Row r : db.getTable("SYSLedTypes")) led_type_names.put(num(r, "LedType"), str(r, "DisplayType") + " / " + str(r, "Description"));
 

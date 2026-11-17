@@ -15,7 +15,7 @@ import java.util.Locale;
 //
 //  checker.bat [job.mdb] [--job N] [--version V] [--rules FSAE-DISPLAY,LINKS] [--csv report.csv] [--info] [--list]
 //
-//With no file, a file browser opens. An exported job holds one version and needs no --job. The configurator's own
+//With no arguments the checker window opens (CheckerWindow). An exported job holds one version and needs no --job. The configurator's own
 //configurator.mdb holds every job: give --job (newest version is used unless --version is given).
 public class CorrelationChecker {
 
@@ -59,6 +59,11 @@ public class CorrelationChecker {
                     file = new File(a);
             }
         }
+        //No arguments: open the checker window
+        if (args.length == 0 && !GraphicsEnvironment.isHeadless()) {
+            CheckerWindow.open(null);
+            return;
+        }
         if (file == null) file = browse();
         if (file == null) {
             usage(out);
@@ -89,6 +94,9 @@ public class CorrelationChecker {
             + (job.version_description.isEmpty() ? "" : " (" + job.version_description + ")") + " - " + job.panel.label);
 
         Report report = run(job, only);
+        if (!report.skipped.isEmpty()) {
+            out.println("Not checked on " + job.panel.label + " yet: " + String.join(", ", report.skipped));
+        }
         if (report.rulesRun() == 0) {
             out.println("Nothing was checked: there are no " + (only == null ? "" : "matching ") + "checks for " + job.panel.label + " yet.");
             System.exit(2);
@@ -104,18 +112,14 @@ public class CorrelationChecker {
     //Runs the rules that support the job's panel (all of them, or only the ids listed)
     public static Report run(Job job, List<String> only) {
         Report report = new Report();
-        List<String> skipped = new ArrayList<>();
         for (Rule rule : RULES) {
             if (only != null && only.stream().noneMatch(id -> rule.id().startsWith(id))) continue;
             if (!rule.supports(job.panel)) {
-                skipped.add(rule.id());
+                report.skipped.add(rule.id());
                 continue;
             }
             report.begin(rule);
             rule.check(job, report);
-        }
-        if (!skipped.isEmpty()) {
-            System.out.println("Not checked on " + job.panel.label + " yet: " + String.join(", ", skipped));
         }
         return report;
     }

@@ -70,6 +70,25 @@ public class Report {
         return rules.size();
     }
 
+    //Rules that ran, in report order
+    public List<Rule> rules() {
+        return new ArrayList<>(rules.values());
+    }
+
+    //Summary lines a rule wrote, e.g. "73 floor groups found"
+    public List<String> notes(String rule_id) {
+        return notes.getOrDefault(rule_id, List.of());
+    }
+
+    //Ids of rules that do not support this job's panel, so did not run
+    public final List<String> skipped = new ArrayList<>();
+
+    public int count(String rule_id, Severity severity) {
+        int n = 0;
+        for (Finding f : findings) if (f.severity == severity && f.rule.equals(rule_id)) n++;
+        return n;
+    }
+
     public int count(Severity severity) {
         int n = 0;
         for (Finding f : findings) if (f.severity == severity) n++;

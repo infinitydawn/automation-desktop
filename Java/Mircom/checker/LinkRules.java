@@ -21,6 +21,10 @@ public final class LinkRules {
             return "LINKS";
         }
 
+        public String name() {
+            return "Link integrity";
+        }
+
         public String title() {
             return "Correlation rows point at real circuits, LEDs and zones";
         }
@@ -91,6 +95,10 @@ public final class LinkRules {
 
         public String id() {
             return "COVERAGE";
+        }
+
+        public String name() {
+            return "Unused devices & zones";
         }
 
         public String title() {
