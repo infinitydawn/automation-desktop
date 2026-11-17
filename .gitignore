@@ -5,3 +5,13 @@
 settings.ini
 *.env
 *.fsae
+
+# Python
+__pycache__/
+*.py[cod]
+
+# DMP: job exports (encrypted or decrypted) hold customer data, IPs and codes
+DMP/**/*.xml
+# DMP: per-job settings files - only the example is kept
+DMP/jobs/*
+!DMP/jobs/example*.ini
