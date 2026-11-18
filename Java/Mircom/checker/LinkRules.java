@@ -30,7 +30,7 @@ public final class LinkRules {
         }
 
         public boolean supports(Job.Panel panel) {
-            return panel.isMgc();
+            return panel.isReadable();
         }
 
         public void check(Job job, Report report) {
@@ -100,7 +100,7 @@ public final class LinkRules {
         }
 
         public boolean supports(Job.Panel panel) {
-            return panel.isMgc();
+            return panel.isReadable();
         }
 
         public void check(Job job, Report report) {
@@ -112,9 +112,15 @@ public final class LinkRules {
             for (Circuit c : job.inputs.values()) {
                 boolean linked = !job.zonesOf(c).isEmpty() || used_inputs.contains(c.ckt) || !job.ledsOf(c).isEmpty();
                 if (c.kind == Kind.DEVICE) {
-                    if (SKIPPED_LOOPS.contains(c.loop_type)) continue;
+                    if (SKIPPED_LOOPS.contains(c.loop_type) || c.isSpare()) continue;
                     devices++;
-                    if (!linked) report.warning(c, "Not correlated to anything").more("Not in any input zone, output, LED or logic, so activating it does nothing.");
+                    if (linked) continue;
+                    if (job.panel.hasZones()) {
+                        report.warning(c, "Not correlated to anything").more("Not in any input zone, output, LED or logic, so activating it does nothing.");
+                    } else if (Roles.family(c) == Roles.Family.ALARM) {
+                        //FX400/FX2000: supervisory inputs only report, but an alarm input should set off strobes and relays
+                        report.warning(c, "Alarm input not correlated to anything").more("It activates no output or LED. Strobes correlate to all alarms.");
+                    }
                 } else if (c.kind == Kind.INPUT_ZONE) {
                     if (c.isPlaceholder()) {
                         placeholders++;

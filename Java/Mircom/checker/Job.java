@@ -45,6 +45,16 @@ public class Job {
         public boolean isMgc() {
             return this == FX4000 || this == FX6000;
         }
+
+        //Panels whose jobs this checker can read (devices, correlations, LEDs, bypass)
+        public boolean isReadable() {
+            return this != UNKNOWN;
+        }
+
+        //Panels that correlate devices to input zones (FX400/FX2000 correlate devices straight to outputs)
+        public boolean hasZones() {
+            return isMgc();
+        }
     }
 
     //Loop types the MGC-4000 configurator uses for its virtual input/output zone lists (SYSLoopTypes)
@@ -84,6 +94,7 @@ public class Job {
     public final Map<String, String> frame_types = new HashMap<>(); //"node/cpu/frame" -> frame type name
     public final Map<Integer, String> node_names = new HashMap<>(); //node -> its tag, e.g. "FCC 2FL (Cell-13FL)"
     public final Map<String, String> cpu_types = new HashMap<>(); //"node/cpu" -> card type, e.g. "S200 QLA"
+    public final Map<Integer, String> status_names = new HashMap<>(); //system status -> name, e.g. "Common Trouble"
 
     //Lookups built from the link rows once loading is done
     private final Map<Integer, List<Circuit>> zones_of = new HashMap<>(); //device input ckt -> its input zones
@@ -119,6 +130,7 @@ public class Job {
         public boolean silenceable = true; //false = NS (non-silenceable) flag
         public boolean aux_reset; //outputs: AR flag
         public Boolean co_flag; //FX6000 input zones: CO flag (F4). Null when the panel does not store it.
+        public Boolean class_a; //FX400 inputs: Class-A option. Null when the panel does not store it.
 
         //Short, unambiguous name for reports, e.g. N1 IZ61 "Low Heat 13FL SouthT" or N1 C1 L1-109.2 HeatPhoto (2351TAP) "..."
         public String label() {
@@ -226,14 +238,16 @@ public class Job {
         public int type;
         public final List<int[]> switches = new ArrayList<>(); //{node, cpu, frame, switch}
         public final Set<Circuit> outputs = new LinkedHashSet<>();
+        public String name = ""; //FX400 bypass groups have a name, e.g. "Bypass Relays"
 
         public boolean isBypass() {
             return type == CTRL_TYPE_BYPASS;
         }
 
         public String label() {
+            if (!name.isEmpty()) return "Bypass group \"" + name + "\"";
             List<String> s = new ArrayList<>();
-            for (int[] p : switches) s.add("N" + p[0] + " C" + p[1] + " F" + p[2] + " SW" + p[3]);
+            for (int[] p : switches) s.add("Node " + p[0] + " CPU " + p[1] + " frame " + p[2] + " switch " + p[3]);
             return (isBypass() ? "Bypass switch " : "Control group " + group + " ") + (s.isEmpty() ? "(no switch)" : String.join(", ", s));
         }
     }
@@ -393,7 +407,7 @@ public class Job {
         try (Database db = open(file)) {
             job.panel = detectPanel(db);
             job.pickVersion(db, job_id, version);
-            if (!job.panel.isMgc()) return job; //FX400/FX2000 layouts are not read yet
+            if (!job.panel.isReadable()) return job;
             job.loadCircuits(db);
             job.loadShared(db);
         }
@@ -472,7 +486,7 @@ public class Job {
         Map<String, Integer> loop_cpu = new HashMap<>(); //FX6000 "node/loop" -> cpu
         for (Row r : db.getTable("LoopConfig")) {
             if (!mine(r)) continue;
-            int node = num(r, "NodeNo"), cpu = num(r, "CPUNo"), loop = num(r, "LoopNo"), type = num(r, "LoopType");
+            int node = nodeOf(r), cpu = num(r, "CPUNo"), loop = num(r, "LoopNo"), type = num(r, "LoopType");
             if (panel == Panel.FX4000) {
                 loop_types.put(node + "/" + cpu + "/" + loop, type);
             } else {
@@ -512,15 +526,23 @@ public class Job {
                     dev_type = num(d, "DevType");
                     loop_type = loop_types.getOrDefault(c.node + "/" + c.cpu + "/" + c.loop, -1);
                 } else {
-                    c.node = num(r, "NodeNo");
+                    //FX6000 / FX400 / FX2000: each circuit row carries its own loop and address (FX400/FX2000 have one node)
+                    c.node = nodeOf(r);
                     c.loop = num(r, "LoopNo");
                     c.addr = num(r, "DevAddr");
                     c.cpu = loop_cpu.getOrDefault(c.node + "/" + c.loop, 0);
                     dev_type = num(r, "DevType");
                     loop_type = loop_types.getOrDefault(c.node + "/" + c.loop, -1);
-                    int primary = num(r, "PrimDevAddr");
-                    if (primary >= 0 && primary != c.addr) c.primary_addr = primary;
+                    int primary = r.containsKey("PrimDevAddr") ? num(r, "PrimDevAddr") : -1;
+                    if (panel == Panel.FX6000) {
+                        if (primary >= 0 && primary != c.addr) c.primary_addr = primary;
+                    } else if (panel == Panel.FX400 && c.addr > FX400_MAX_ADDRESS && primary >= 0) {
+                        //FX400 keeps the second input/relay of a dual module at a pseudo address (241+) pointing back
+                        c.primary_addr = primary;
+                        c.sub = 2;
+                    }
                     if (r.containsKey("COFlag")) c.co_flag = bool(r, "COFlag", false);
+                    if (panel == Panel.FX400 && !output && r.containsKey("ClassA")) c.class_a = bool(r, "ClassA", false);
                 }
                 c.device_type = device_types.getOrDefault(dev_type, "type " + dev_type);
                 c.loop_type = loop_type_names.getOrDefault(loop_type, "");
@@ -535,6 +557,14 @@ public class Job {
         }
     }
 
+    //Highest real address on an FX400 loop; higher ones are the second halves of dual modules
+    static final int FX400_MAX_ADDRESS = 240;
+
+    //FX4000/FX6000 tables have NodeNo; FX400/FX2000 jobs are one node, numbered 1 here
+    static int nodeOf(Row r) {
+        return r.containsKey("NodeNo") ? num(r, "NodeNo") : 1;
+    }
+
     //FX6000 names the extra inputs of one device Dual Monitor "B" (AP), Dual Heat Photo "C" (AP), ...
     private static int subFromDeviceType(String type) {
         if (type.contains("\"B\"")) return 2;
@@ -546,12 +576,13 @@ public class Job {
     private void loadShared(Database db) throws IOException {
         Map<Integer, String> frame_type_names = lookup(db, "SYSFrameTypes", "FrameType", "Tag");
         Map<Integer, String> cpu_type_names = lookup(db, "SYSCPUTypes", "CPUType", "Tag");
-        for (Row r : rows(db, "NodeConfig")) if (mine(r)) node_names.put(num(r, "NodeNo"), str(r, "Tag").trim());
+        status_names.putAll(lookup(db, "SYSStatusTypes", "Status", "Tag"));
+        for (Row r : rows(db, "NodeConfig")) if (mine(r) && r.containsKey("Tag")) node_names.put(nodeOf(r), str(r, "Tag").trim());
         for (Row r : rows(db, "CPUConfig")) {
             if (!mine(r)) continue;
             String tag = str(r, "Tag").trim();
             String type = cpu_type_names.getOrDefault(num(r, "CPUType"), "");
-            cpu_types.put(num(r, "NodeNo") + "/" + num(r, "CPUNo"), type + (tag.isEmpty() ? "" : " " + tag));
+            cpu_types.put(nodeOf(r) + "/" + num(r, "CPUNo"), type + (tag.isEmpty() ? "" : " " + tag));
         }
         Map<Integer, String> led_type_names = new HashMap<>();
         for (Row r : db.getTable("SYSLedTypes")) led_type_names.put(num(r, "LedType"), str(r, "DisplayType") + " / " + str(r, "Description"));
@@ -562,7 +593,7 @@ public class Job {
 
         for (Row r : rows(db, "DisplayFrames")) {
             if (mine(r)) {
-                frame_types.put(num(r, "NodeNo") + "/" + num(r, "CPUNo") + "/" + num(r, "FrameNo"),
+                frame_types.put(nodeOf(r) + "/" + num(r, "CPUNo") + "/" + num(r, "FrameNo"),
                     frame_type_names.getOrDefault(num(r, "FrameType"), "type " + num(r, "FrameType")));
             }
         }
@@ -581,7 +612,7 @@ public class Job {
         for (Row r : rows(db, "LedLookup")) {
             if (!mine(r)) continue;
             Led l = leds.get(num(r, "LedGrp"));
-            if (l != null) l.slots.add(new int[] { num(r, "NodeNo"), num(r, "CPUNo"), num(r, "FrameNo"), num(r, "LedNo") });
+            if (l != null) l.slots.add(new int[] { nodeOf(r), num(r, "CPUNo"), num(r, "FrameNo"), num(r, "LedNo") });
         }
         for (Row r : rows(db, "LedIpts")) if (mine(r)) led_input_links.add(new int[] { num(r, "LedGrp"), num(r, "IptCkt") });
         for (Row r : rows(db, "LedOpts")) if (mine(r)) led_output_links.add(new int[] { num(r, "LedGrp"), num(r, "OptCkt") });
@@ -621,11 +652,29 @@ public class Job {
         }
         for (Row r : rows(db, "SwManCtrl")) {
             ControlGroup g = mine(r) ? controls.get(num(r, "CtrlGrp")) : null;
-            if (g != null) g.switches.add(new int[] { num(r, "NodeNo"), num(r, "CPUNo"), num(r, "FrameNo"), num(r, "SwitchNo") });
+            if (g != null) g.switches.add(new int[] { nodeOf(r), num(r, "CPUNo"), num(r, "FrameNo"), num(r, "SwitchNo") });
         }
         for (Row r : rows(db, "ManCtrlOpts")) {
             ControlGroup g = mine(r) ? controls.get(num(r, "CtrlGrp")) : null;
             Circuit c = outputs.get(num(r, "OptCkt"));
+            if (g != null && c != null) g.outputs.add(c);
+        }
+
+        //FX400: named bypass groups instead of a bypass switch (kept apart from control group numbers)
+        Map<Integer, ControlGroup> bypass_groups = new HashMap<>();
+        for (Row r : rows(db, "BypGrps")) {
+            if (!mine(r)) continue;
+            ControlGroup g = new ControlGroup();
+            g.group = 10000 + num(r, "BypGrpNo");
+            g.type = CTRL_TYPE_BYPASS;
+            g.name = str(r, "Tag").trim();
+            if (g.name.isEmpty()) g.name = "Group " + num(r, "BypGrpNo");
+            bypass_groups.put(num(r, "BypGrpNo"), g);
+            controls.put(g.group, g);
+        }
+        for (Row r : rows(db, "BypOptCkts")) {
+            ControlGroup g = mine(r) ? bypass_groups.get(num(r, "BypGrpNo")) : null;
+            Circuit c = outputs.get(num(r, "CktNo"));
             if (g != null && c != null) g.outputs.add(c);
         }
     }

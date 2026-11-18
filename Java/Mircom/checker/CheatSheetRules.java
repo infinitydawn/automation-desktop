@@ -49,8 +49,19 @@ public final class CheatSheetRules {
         return false;
     }
 
+    //Which cheat sheet the guideline comes from, set by each check for the job's panel
+    private static final ThreadLocal<String> SOURCE = ThreadLocal.withInitial(() -> "Device & Zone Cheat Sheet");
+
+    static String source(Job.Panel panel) {
+        switch (panel) {
+            case FX400: return "FX-400 Device Cheat Sheet";
+            case FX2000: return "FX-2000 Device Cheat Sheet";
+            default: return "FlexNet & FX6000 Device & Zone Cheat Sheet";
+        }
+    }
+
     static String sheet(String line) {
-        return "Device & Zone Cheat Sheet: " + line;
+        return SOURCE.get() + ": " + line;
     }
 
     //---------------------------------------------------------------------------------------------------
@@ -70,10 +81,11 @@ public final class CheatSheetRules {
         }
 
         public boolean supports(Job.Panel panel) {
-            return panel.isMgc();
+            return panel.isReadable();
         }
 
         public void check(Job job, Report report) {
+            SOURCE.set(source(job.panel));
             int checked = 0;
             for (Circuit c : devices(job)) {
                 Device role = Roles.device(c);
@@ -95,6 +107,9 @@ public final class CheatSheetRules {
                 }
                 if (role == Device.WATERFLOW && c.silenceable) {
                     report.error(c, "Waterflow without NS").why(sheet("Devices, Waterflow - waterflow should have NS"));
+                }
+                if (role == Device.PULL && Boolean.FALSE.equals(c.class_a)) {
+                    report.warning(c, "Pull station not Class-A").why(sheet("Devices, Pull Station - Options: Class-A"));
                 }
             }
             report.note(checked + " recognised device inputs checked");
@@ -118,10 +133,11 @@ public final class CheatSheetRules {
         }
 
         public boolean supports(Job.Panel panel) {
-            return panel.isMgc();
+            return panel.hasZones();
         }
 
         public void check(Job job, Report report) {
+            SOURCE.set(source(job.panel));
             Map<Zone, List<Circuit>> zones = zonesByRole(job);
             List<String> found = new ArrayList<>();
             for (Map.Entry<Zone, List<Circuit>> e : zones.entrySet()) {
@@ -222,10 +238,11 @@ public final class CheatSheetRules {
         }
 
         public boolean supports(Job.Panel panel) {
-            return panel.isMgc();
+            return panel.isReadable();
         }
 
         public void check(Job job, Report report) {
+            SOURCE.set(source(job.panel));
             List<Circuit> alarms = new ArrayList<>(), automatic = new ArrayList<>(), waterflows = new ArrayList<>();
             for (Circuit c : devices(job)) {
                 if (Roles.family(c) != Family.ALARM) continue;
@@ -244,6 +261,9 @@ public final class CheatSheetRules {
                 Set<Circuit> reach = job.devicesReaching(o);
                 switch (role) {
                     case NOTIFICATION:
+                        //NS is for strobes (visual); horn, bell and NAC circuits may silence
+                        boolean strobe = o.process_type == 14 || o.words().toLowerCase().contains("strobe");
+                        if (strobe && o.silenceable) report.warning(o, "Strobe circuit without NS").why(sheet("Checklist, Loop 0 - strobes are NS"));
                         need(report, o, reach, alarms, "alarm inputs", "Correlations - strobes correlate to all alarms");
                         noSupervisory(report, o, reach, true, "Correlations - do not correlate any supervisory to strobes");
                         break;
@@ -289,6 +309,14 @@ public final class CheatSheetRules {
                     case SHAFT_LIGHT:
                         shaft_lights.add(o);
                         break;
+                    case TROUBLE_TRIP: {
+                        boolean trouble = false;
+                        for (int[] l : job.status_links) {
+                            if (l[1] == o.ckt && job.status_names.getOrDefault(l[0], "").toLowerCase().contains("trouble")) trouble = true;
+                        }
+                        if (!trouble) report.warning(o, "Not on the Common Trouble status").why(sheet("Devices, Trouble Trip Relay - correlate to Common Trouble Status"));
+                        break;
+                    }
                     default:
                 }
             }
@@ -315,6 +343,9 @@ public final class CheatSheetRules {
 
             List<Circuit> any_recall = new ArrayList<>(mains);
             any_recall.addAll(alts);
+            //Only the waterflow -> recall direction is checked. A recall relay without a waterflow is normal: not every
+            //job has waterflows, or one on the floors that recall belongs to.
+            boolean only_one = waterflows.size() == 1;
             for (Circuit w : waterflows) {
                 boolean first = Roles.firstFloor(w), below = Roles.belowGrade(w);
                 boolean alt_floor = first || below;
@@ -322,20 +353,27 @@ public final class CheatSheetRules {
                 boolean to_alt = alt_floor && !alts.isEmpty();
                 List<Circuit> want = to_alt ? alts : mains;
                 if (want.isEmpty()) continue;
+                boolean on_main = reachesAny(job, w, mains);
                 if (!reachesAny(job, w, want)) {
                     String which = to_alt ? "alt elevator recall" : "main elevator recall";
-                    report.error(w, floor + " not on " + which)
-                        .items("Expected " + (want.size() == 1 ? "" : "one of the ") + which + " relays", want).why(to_alt ? why_alt : why_main);
+                    if (to_alt && on_main && only_one) {
+                        //The building's only waterflow is often the main riser and may be meant for the main recall
+                        report.warning(w, "Only waterflow is on the main recall, not the alt")
+                            .more("It is on " + (first ? "1FL" : "a below-grade floor") + ", which normally goes to the alternate recall. "
+                                + "As the job's only waterflow it may be meant for the main recall; accept it if so.")
+                            .items("Alt elevator recall relays", alts).why(why_alt);
+                    } else {
+                        report.error(w, floor + " not on " + which)
+                            .items("Expected " + (want.size() == 1 ? "" : "one of the ") + which + " relays", want).why(to_alt ? why_alt : why_main);
+                    }
+                } else if (to_alt && on_main) {
+                    report.warning(w, floor + " also on the main recall")
+                        .more("Main recalls normally get everything but 1FL and below." + (only_one ? " It is the job's only waterflow, so this may be intended." : ""))
+                        .why(why_main);
                 }
                 if (!alt_floor && reachesAny(job, w, alts)) {
                     report.warning(w, "Above 1FL, but on alt elevator recall").why(why_alt);
                 }
-            }
-            //Recall relays no waterflow reaches
-            for (Circuit o : mains) {
-                boolean any = false;
-                for (Circuit c : job.devicesReaching(o)) if (Roles.device(c) == Device.WATERFLOW) any = true;
-                if (!any && !waterflows.isEmpty()) report.warning(o, "No waterflow activates it").why(why_main);
             }
 
             //Elevator lobby / EMR / top of shaft smokes and heats: any recall will do (car lifts, towers and the alt floor
@@ -407,10 +445,11 @@ public final class CheatSheetRules {
         }
 
         public boolean supports(Job.Panel panel) {
-            return panel.isMgc();
+            return panel.isReadable();
         }
 
         public void check(Job job, Report report) {
+            SOURCE.set(source(job.panel));
             List<Job.ControlGroup> groups = job.bypassGroups();
             List<Circuit> outputs = new ArrayList<>();
             for (Circuit o : job.outputs.values()) {
@@ -419,7 +458,10 @@ public final class CheatSheetRules {
             }
             String why = sheet("Correlations - correlate all relays to Zone Bypass; Zone Bypass - all relays, signals, strobes");
             if (groups.isEmpty()) {
-                if (!outputs.isEmpty()) report.error(Place.text("Base Control"), "No Zone Bypass switch").why(why);
+                if (outputs.isEmpty()) return;
+                //Many existing FX400 jobs predate the bypass group checklist, so there it is a warning
+                if (job.panel == Job.Panel.FX400) report.warning(Place.text("Bypass groups"), "No bypass groups").why(why);
+                else report.error(Place.text("Base Control"), "No Zone Bypass switch").why(why);
                 return;
             }
             Set<Circuit> bypassed = new LinkedHashSet<>();
@@ -428,6 +470,40 @@ public final class CheatSheetRules {
                 report.note(g.label() + ": " + Report.plural(g.outputs.size(), "output"));
             }
             for (Circuit o : outputs) if (!bypassed.contains(o)) report.warning(o, "Not on Zone Bypass").why(why);
+            if (job.panel == Job.Panel.FX400) fx400Groups(job, report, groups, outputs);
+        }
+
+        //FX400 checklist, Bypass Group: one group with all relays and signals, one with only relays, one with only
+        //signals, one with only elevator recalls
+        private static void fx400Groups(Job job, Report report, List<Job.ControlGroup> groups, List<Circuit> outputs) {
+            List<Circuit> relays = new ArrayList<>(), signals = new ArrayList<>(), recalls = new ArrayList<>();
+            for (Circuit o : outputs) {
+                if (o.process_type == 15) relays.add(o);
+                else signals.add(o);
+                Output role = Roles.output(o);
+                if (role == Output.ELEV_RECALL || role == Output.ALT_RECALL) recalls.add(o);
+            }
+            boolean all = false, only_relays = false, only_signals = false, only_recalls = false;
+            for (Job.ControlGroup g : groups) {
+                if (g.outputs.isEmpty()) continue;
+                if (g.outputs.containsAll(relays) && g.outputs.containsAll(signals)) all = true;
+                //What kind of group it is goes by everything in it, spares included (a spare signal makes it a mixed group)
+                boolean relays_only = true, signals_only = true, recalls_only = true;
+                for (Circuit c : g.outputs) {
+                    if (c.process_type != 13 && c.process_type != 14 && c.process_type != 15) continue;
+                    if (c.process_type == 15) signals_only = false;
+                    else relays_only = false;
+                    if (!recalls.contains(c)) recalls_only = false;
+                }
+                if (relays_only) only_relays = true;
+                if (signals_only) only_signals = true;
+                if (recalls_only) only_recalls = true;
+            }
+            String why = "FX-400 checklist, Bypass Group: groups for all relays and signals, only relays, only signals, only elevator recalls";
+            if (!all) report.warning(Place.text("Bypass groups"), "No bypass group with all relays and signals").why(why);
+            if (!only_relays && !relays.isEmpty()) report.warning(Place.text("Bypass groups"), "No bypass group with only relays").why(why);
+            if (!only_signals && !signals.isEmpty()) report.warning(Place.text("Bypass groups"), "No bypass group with only signals").why(why);
+            if (!only_recalls && !recalls.isEmpty()) report.warning(Place.text("Bypass groups"), "No bypass group with only elevator recalls").why(why);
         }
     }
 }

@@ -223,7 +223,7 @@ public final class Acceptances {
         }
 
         public boolean supports(Job.Panel panel) {
-            return panel.isMgc();
+            return panel.isReadable();
         }
 
         public void check(Job job, Report report) {

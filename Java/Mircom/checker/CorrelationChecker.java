@@ -129,7 +129,7 @@ public class CorrelationChecker {
 
         Report report = run(job, only);
         if (!report.skipped.isEmpty()) {
-            out.println("Not checked on " + job.panel.label + " yet: " + String.join(", ", report.skipped));
+            out.println("Not used on " + job.panel.label + ": " + String.join(", ", report.skipped));
         }
         if (report.rulesRun() == 0) {
             out.println("Nothing was checked: there are no " + (only == null ? "" : "matching ") + "checks for " + job.panel.label + " yet.");

@@ -76,12 +76,16 @@ public class CheckerPanel extends JPanel {
     //The configurators' own databases, offered as shortcuts when they exist on this PC
     static final File FX4000_DB = new File("C:\\ProgramData\\Mircom Group of Companies\\MGC-4000 Configurator V2\\Database\\configurator.mdb");
     static final File FX6000_DB = new File("C:\\ProgramData\\Mircom Group of Companies\\MGC-Config_v14\\Database\\configurator.mdb");
+    static final File FX400_DB = new File("C:\\ProgramData\\Mircom Group of Companies\\MGC-400 Series Configuration Tools\\configurator.mdb");
+    static final File FX2000_DB = new File("C:\\Program Files (x86)\\Mircom Technologies\\FX-2000 Configuration Tools\\configurator.mdb");
 
     //Location columns shared by the findings and the comparison tables
     static final String[] PLACE_COLUMNS = { "Node", "CPU", "Loop", "Address", "Type", "Tag", "Location" };
 
     private final Preferences prefs = Preferences.userNodeForPackage(CheckerPanel.class);
     private final Map<String, Job> loaded = new LinkedHashMap<>(); //recently loaded job versions, by file/job/version
+    private final Map<File, Long> stamps = new java.util.HashMap<>(); //when each open file was last read (its modified time then)
+    private final JButton reload_button = new JButton("Reload");
 
     //Left: open files > jobs > versions
     private final DefaultMutableTreeNode tree_root = new DefaultMutableTreeNode("Files");
@@ -177,7 +181,7 @@ public class CheckerPanel extends JPanel {
         right.setResizeWeight(0.72);
         right.setBorder(null);
         JSplitPane main = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, jobsPanel(), right);
-        main.setResizeWeight(0.2);
+        main.setResizeWeight(0); //extra width goes to the results
         main.setBorder(null);
         add(main, BorderLayout.CENTER);
 
@@ -186,6 +190,23 @@ public class CheckerPanel extends JPanel {
         add(hint, BorderLayout.SOUTH);
         clearCheck();
         clearCompare();
+
+        getInputMap(WHEN_IN_FOCUSED_WINDOW).put(javax.swing.KeyStroke.getKeyStroke("F5"), "reload");
+        getActionMap().put("reload", new javax.swing.AbstractAction() {
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                if (reload_button.isEnabled()) reload();
+            }
+        });
+        //Notice when the configurator saves to an open file, and point at Reload
+        new javax.swing.Timer(3000, e -> watchFiles()).start();
+    }
+
+    private void watchFiles() {
+        boolean changed = false;
+        for (Map.Entry<File, Long> e : stamps.entrySet()) if (e.getKey().lastModified() != e.getValue()) changed = true;
+        reload_button.setText(changed ? "Reload (changed)" : "Reload");
+        reload_button.setForeground(changed ? CHANGED_COLOR : null);
+        reload_button.setFont(reload_button.getFont().deriveFont(changed ? Font.BOLD : Font.PLAIN));
     }
 
     //-------------------------------------------------------------------------------------------------
@@ -203,10 +224,16 @@ public class CheckerPanel extends JPanel {
         fx6000.addActionListener(e -> openFile(FX6000_DB));
         fx6000.setVisible(FX6000_DB.isFile());
 
+        reload_button.setToolTipText("Read the open files again (F5), e.g. after saving in the configurator. Keeps the selected job and re-runs the check.");
+        reload_button.addActionListener(e -> reload());
+        reload_button.setEnabled(false);
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
+        buttons.add(reload_button);
         buttons.add(open);
         buttons.add(fx4000);
         buttons.add(fx6000);
+        buttons.add(shortcut("FX400 configurator", "Every job in the MGC-400 Series configurator on this PC", FX400_DB));
+        buttons.add(shortcut("FX2000 configurator", "Every job in the FX-2000 configuration utility on this PC", FX2000_DB));
 
         busy.setIndeterminate(true);
         busy.setVisible(false);
@@ -219,6 +246,14 @@ public class CheckerPanel extends JPanel {
         p.add(buttons, BorderLayout.WEST);
         p.add(right, BorderLayout.CENTER);
         return p;
+    }
+
+    private JButton shortcut(String text, String tip, File db) {
+        JButton b = new JButton(text);
+        b.setToolTipText(tip);
+        b.addActionListener(e -> openFile(db));
+        b.setVisible(db.isFile());
+        return b;
     }
 
     private JPanel jobsPanel() {
@@ -254,8 +289,9 @@ public class CheckerPanel extends JPanel {
         p.setBorder(BorderFactory.createTitledBorder("Jobs"));
         p.add(scroll, BorderLayout.CENTER);
         p.add(south, BorderLayout.SOUTH);
-        p.setPreferredSize(new Dimension(290, 400));
-        p.setMinimumSize(new Dimension(240, 200));
+        p.setPreferredSize(new Dimension(200, 400));
+        p.setMinimumSize(new Dimension(150, 200));
+        javax.swing.ToolTipManager.sharedInstance().registerComponent(tree);
         updateButtons();
         return p;
     }
@@ -266,8 +302,8 @@ public class CheckerPanel extends JPanel {
         rule_table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         rule_table.setRowHeight(rule_table.getRowHeight() + 6);
         rule_table.setDefaultRenderer(Object.class, new RuleRenderer());
-        rule_table.getColumnModel().getColumn(0).setPreferredWidth(130);
-        rule_table.getColumnModel().getColumn(1).setPreferredWidth(110);
+        rule_table.getColumnModel().getColumn(0).setPreferredWidth(122);
+        rule_table.getColumnModel().getColumn(1).setPreferredWidth(88);
         rule_table.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 filterFindings();
@@ -275,8 +311,8 @@ public class CheckerPanel extends JPanel {
             }
         });
         JScrollPane rule_scroll = new JScrollPane(rule_table);
-        rule_scroll.setPreferredSize(new Dimension(250, 200));
-        rule_scroll.setMinimumSize(new Dimension(240, 100));
+        rule_scroll.setPreferredSize(new Dimension(212, 200));
+        rule_scroll.setMinimumSize(new Dimension(180, 100));
 
         show_errors.setForeground(ERROR_COLOR);
         show_warnings.setForeground(WARNING_COLOR);
@@ -319,7 +355,7 @@ public class CheckerPanel extends JPanel {
         findings.setMinimumSize(new Dimension(300, 100)); //the filter bar must not push the check list closed
 
         JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, rule_scroll, findings);
-        split.setResizeWeight(0.18);
+        split.setResizeWeight(0); //extra width goes to the findings, not the list of checks
         split.setBorder(null);
         JPanel p = new JPanel(new BorderLayout());
         p.add(header, BorderLayout.NORTH);
@@ -333,8 +369,8 @@ public class CheckerPanel extends JPanel {
         category_table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         category_table.setRowHeight(category_table.getRowHeight() + 6);
         category_table.setDefaultRenderer(Object.class, new CategoryRenderer());
-        category_table.getColumnModel().getColumn(0).setPreferredWidth(170);
-        category_table.getColumnModel().getColumn(1).setPreferredWidth(60);
+        category_table.getColumnModel().getColumn(0).setPreferredWidth(150);
+        category_table.getColumnModel().getColumn(1).setPreferredWidth(50);
         category_table.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 filterDiffs();
@@ -342,8 +378,8 @@ public class CheckerPanel extends JPanel {
             }
         });
         JScrollPane category_scroll = new JScrollPane(category_table);
-        category_scroll.setPreferredSize(new Dimension(250, 200));
-        category_scroll.setMinimumSize(new Dimension(240, 100));
+        category_scroll.setPreferredSize(new Dimension(205, 200));
+        category_scroll.setMinimumSize(new Dimension(180, 100));
 
         show_added.setForeground(ADDED_COLOR);
         show_removed.setForeground(REMOVED_COLOR);
@@ -364,7 +400,7 @@ public class CheckerPanel extends JPanel {
         diffs.add(new JScrollPane(diff_table), BorderLayout.CENTER);
 
         JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, category_scroll, diffs);
-        split.setResizeWeight(0.18);
+        split.setResizeWeight(0); //extra width goes to the findings, not the list of checks
         split.setBorder(null);
         JPanel p = new JPanel(new BorderLayout());
         p.add(header, BorderLayout.NORTH);
@@ -429,18 +465,37 @@ public class CheckerPanel extends JPanel {
         t.getTableHeader().setReorderingAllowed(true);
     }
 
-    //Sizes each column to its contents (header and rows), within limits, so short columns stay short
+    //Most a column may take, so the columns that matter (Tag, Location, Problem) get the room. Cut-off cells show in full as a tooltip.
+    static final Map<String, Integer> MAX_WIDTH = Map.ofEntries(
+        Map.entry("Severity", 66), Map.entry("Check", 110), Map.entry("Node", 38), Map.entry("CPU", 100), Map.entry("Loop", 40),
+        Map.entry("Address", 64), Map.entry("Type", 125), Map.entry("Tag", 190), Map.entry("Location", 180),
+        Map.entry("Change", 66), Map.entry("Category", 140), Map.entry("What", 420), Map.entry("Before", 220), Map.entry("After", 220));
+
+    //Sizes each column to its contents (header and rows), within the limits above, so short columns stay short
     private static void fitColumns(JTable t, int max_rows) {
         for (int c = 0; c < t.getColumnCount(); c++) {
             TableColumn col = t.getColumnModel().getColumn(c);
             Component h = t.getTableHeader().getDefaultRenderer().getTableCellRendererComponent(t, col.getHeaderValue(), false, false, -1, c);
-            int w = h.getPreferredSize().width + 16;
+            int w = h.getPreferredSize().width + 10;
             int rows = Math.min(t.getRowCount(), max_rows);
             for (int r = 0; r < rows; r++) {
                 Component comp = t.prepareRenderer(t.getCellRenderer(r, c), r, c);
-                w = Math.max(w, comp.getPreferredSize().width + 12);
+                w = Math.max(w, comp.getPreferredSize().width + 6);
             }
-            w = Math.min(w, c == t.getColumnCount() - 1 ? 1600 : 380);
+            boolean last = c == t.getColumnCount() - 1;
+            w = Math.min(w, last ? 1600 : MAX_WIDTH.getOrDefault(String.valueOf(col.getHeaderValue()), 300));
+            //Node / CPU / Loop that are the same on every row (single-node jobs, everything on the main panel) are hidden;
+            //the details pane still shows them
+            String header = String.valueOf(col.getHeaderValue());
+            boolean hide = false;
+            if ((header.equals("Node") || header.equals("CPU") || header.equals("Loop")) && t.getRowCount() > 0) {
+                hide = true;
+                Object first = t.getValueAt(0, c);
+                for (int r = 1; r < t.getRowCount() && hide; r++) hide = java.util.Objects.equals(first, t.getValueAt(r, c));
+            }
+            col.setMinWidth(hide ? 0 : 15);
+            col.setMaxWidth(hide ? 0 : Integer.MAX_VALUE);
+            if (hide) w = 0;
             col.setPreferredWidth(w);
             col.setWidth(w); //preferred widths alone are not applied to a table that is already laid out
         }
@@ -519,6 +574,9 @@ public class CheckerPanel extends JPanel {
                     return;
                 }
                 DefaultMutableTreeNode file_node = addToTree(f, versions);
+                stamps.put(f, f.lastModified());
+                reload_button.setEnabled(true);
+                watchFiles();
                 if (versions.size() == 1) {
                     DefaultMutableTreeNode v = (DefaultMutableTreeNode) file_node.getFirstChild().getChildAt(0);
                     tree.setSelectionPath(new TreePath(v.getPath()));
@@ -531,11 +589,13 @@ public class CheckerPanel extends JPanel {
     }
 
     private DefaultMutableTreeNode addToTree(File f, List<Job.Version> versions) {
-        //Replace a file that is already open
+        //Replace a file that is already open, in the same place
+        int at = 0;
         for (int i = 0; i < tree_root.getChildCount(); i++) {
             DefaultMutableTreeNode n = (DefaultMutableTreeNode) tree_root.getChildAt(i);
             if (((Source) n.getUserObject()).file.equals(f)) {
                 tree_model.removeNodeFromParent(n);
+                at = i;
                 break;
             }
         }
@@ -552,7 +612,7 @@ public class CheckerPanel extends JPanel {
             for (Job.Version v : list) job_node.add(new DefaultMutableTreeNode(new VersionEntry(f, v)));
             file_node.add(job_node);
         }
-        tree_model.insertNodeInto(file_node, tree_root, 0);
+        tree_model.insertNodeInto(file_node, tree_root, at);
         tree.expandPath(new TreePath(file_node.getPath()));
         if (file_node.getChildCount() > 0) tree.expandPath(new TreePath(((DefaultMutableTreeNode) file_node.getFirstChild()).getPath()));
         return file_node;
@@ -601,12 +661,132 @@ public class CheckerPanel extends JPanel {
     }
 
     //-------------------------------------------------------------------------------------------------
+    //Reloading: read every open file again, keep the selection, re-run what is showing
+
+    private static String key(File f, int job, int version) {
+        return f.getPath() + "|" + job + "|" + version;
+    }
+
+    private static String key(VersionEntry v) {
+        return key(v.file, v.version.job, v.version.version);
+    }
+
+    private static String key(Job j) {
+        return key(j.file, j.job_id, j.version);
+    }
+
+    private VersionEntry findVersion(String key) {
+        Enumeration<?> e = tree_root.depthFirstEnumeration();
+        while (e.hasMoreElements()) {
+            Object o = ((DefaultMutableTreeNode) e.nextElement()).getUserObject();
+            if (o instanceof VersionEntry && key((VersionEntry) o).equals(key)) return (VersionEntry) o;
+        }
+        return null;
+    }
+
+    private TreePath pathOf(Object user_object) {
+        Enumeration<?> e = tree_root.depthFirstEnumeration();
+        while (e.hasMoreElements()) {
+            DefaultMutableTreeNode n = (DefaultMutableTreeNode) e.nextElement();
+            if (n.getUserObject() == user_object) return new TreePath(n.getPath());
+        }
+        return null;
+    }
+
+    private void reload() {
+        List<File> files = new ArrayList<>();
+        for (int i = 0; i < tree_root.getChildCount(); i++) files.add(((Source) ((DefaultMutableTreeNode) tree_root.getChildAt(i)).getUserObject()).file);
+        if (files.isEmpty()) return;
+
+        //What to put back afterwards
+        List<String> selected = new ArrayList<>();
+        for (VersionEntry v : selectedVersions()) selected.add(key(v));
+        List<String> expanded = new ArrayList<>();
+        Enumeration<?> e = tree_root.depthFirstEnumeration();
+        while (e.hasMoreElements()) {
+            DefaultMutableTreeNode n = (DefaultMutableTreeNode) e.nextElement();
+            if (n.getUserObject() instanceof JobEntry && tree.isExpanded(new TreePath(n.getPath()))) {
+                JobEntry j = (JobEntry) n.getUserObject();
+                expanded.add(j.file.getPath() + "|" + j.job);
+            }
+        }
+        String checked = job == null ? null : key(job);
+        String[] compared = compare == null ? null : new String[] { key(compare.before), key(compare.after) };
+        int tab = tabs.getSelectedIndex();
+
+        synchronized (loaded) {
+            loaded.clear(); //everything is read again
+        }
+        reload_button.setEnabled(false);
+        working("Reloading " + Report.plural(files.size(), "file") + "...");
+        Map<File, Long> read_at = new java.util.concurrent.ConcurrentHashMap<>();
+        new SwingWorker<Map<File, List<Job.Version>>, Void>() {
+            protected Map<File, List<Job.Version>> doInBackground() throws Exception {
+                Map<File, List<Job.Version>> map = new LinkedHashMap<>();
+                for (File f : files) {
+                    read_at.put(f, f.lastModified()); //before reading, so a save during the read still shows as changed
+                    map.put(f, Job.versions(f));
+                }
+                return map;
+            }
+
+            protected void done() {
+                idle();
+                reload_button.setEnabled(true);
+                Map<File, List<Job.Version>> map;
+                try {
+                    map = get();
+                } catch (Exception ex) {
+                    failed("Could not reload. If the configurator is saving right now, wait a moment and press Reload again", ex);
+                    return;
+                }
+                for (Map.Entry<File, List<Job.Version>> m : map.entrySet()) addToTree(m.getKey(), m.getValue());
+                stamps.putAll(read_at);
+                watchFiles();
+
+                Enumeration<?> en = tree_root.depthFirstEnumeration();
+                while (en.hasMoreElements()) {
+                    DefaultMutableTreeNode n = (DefaultMutableTreeNode) en.nextElement();
+                    if (n.getUserObject() instanceof JobEntry) {
+                        JobEntry j = (JobEntry) n.getUserObject();
+                        if (expanded.contains(j.file.getPath() + "|" + j.job)) tree.expandPath(new TreePath(n.getPath()));
+                    }
+                }
+                List<TreePath> paths = new ArrayList<>();
+                for (String k : selected) {
+                    VersionEntry v = findVersion(k);
+                    if (v != null) paths.add(pathOf(v));
+                }
+                tree.setSelectionPaths(paths.toArray(new TreePath[0]));
+
+                List<String> gone = new ArrayList<>();
+                if (compared != null) {
+                    VersionEntry a = findVersion(compared[0]), b = findVersion(compared[1]);
+                    if (a != null && b != null) runCompare(a, b, false);
+                    else gone.add("the compared versions");
+                }
+                if (checked != null) {
+                    VersionEntry v = findVersion(checked);
+                    if (v != null) runCheck(v, false);
+                    else gone.add("the checked version");
+                }
+                tabs.setSelectedIndex(tab);
+                String time = java.time.LocalTime.now().withNano(0).toString();
+                status.setText("Reloaded at " + time + "." + (gone.isEmpty() ? "" : " Not found any more: " + String.join(", ", gone) + "."));
+            }
+        }.execute();
+    }
+
+    //-------------------------------------------------------------------------------------------------
     //Checking
 
     private void runCheck() {
         List<VersionEntry> sel = selectedVersions();
         if (sel.size() != 1) return;
-        VersionEntry v = sel.get(0);
+        runCheck(sel.get(0), true);
+    }
+
+    private void runCheck(VersionEntry v, boolean show_tab) {
         check_button.setEnabled(false);
         working("Checking " + versionName(v.version) + "...");
         new SwingWorker<Object[], Void>() {
@@ -621,7 +801,7 @@ public class CheckerPanel extends JPanel {
                 try {
                     Object[] result = get();
                     showCheck((Job) result[0], (Report) result[1]);
-                    tabs.setSelectedIndex(0);
+                    if (show_tab) tabs.setSelectedIndex(0);
                 } catch (Exception e) {
                     failed("Could not check the job. If the configurator is saving right now, try again, or export the job and open the export", e);
                 }
@@ -738,7 +918,10 @@ public class CheckerPanel extends JPanel {
         } else {
             return;
         }
-        VersionEntry from = a, to = b;
+        runCompare(a, b, true);
+    }
+
+    private void runCompare(VersionEntry from, VersionEntry to, boolean show_tab) {
         compare_button.setEnabled(false);
         working("Comparing " + versionName(from.version) + " with " + versionName(to.version) + "...");
         new SwingWorker<Compare, Void>() {
@@ -751,7 +934,7 @@ public class CheckerPanel extends JPanel {
                 updateButtons();
                 try {
                     showCompare(get());
-                    tabs.setSelectedIndex(1);
+                    if (show_tab) tabs.setSelectedIndex(1);
                 } catch (Exception e) {
                     failed("Could not compare the versions", e);
                 }
@@ -836,7 +1019,7 @@ public class CheckerPanel extends JPanel {
                 h.append("</p>");
             }
             if (rule == null && !report.skipped.isEmpty()) {
-                h.append("<p style='color:gray'>Not available for ").append(esc(job.panel.label)).append(" yet: ").append(esc(String.join(", ", report.skipped))).append("</p>");
+                h.append("<p style='color:gray'>Not used on ").append(esc(job.panel.label)).append(": ").append(esc(String.join(", ", report.skipped))).append("</p>");
             }
             return;
         }
@@ -969,6 +1152,14 @@ public class CheckerPanel extends JPanel {
         h.append("</table>");
     }
 
+    //Shorter forms for the table columns: "S200 QLA (CPU 1)" -> "S200 QLA 1", "Main panel (CPU 0)" -> "Main",
+    //"Loop 2" -> "2", "Frame 5" -> "F5". The details pane and CSV keep the full text.
+    static String[] tableValues(Place p) {
+        String cpu = p.cpu.startsWith("Main panel") ? "Main" : p.cpu.replaceAll("\\s*\\(CPU (\\d+)\\)$", " $1");
+        String loop = p.loop.replaceFirst("^Loop ", "").replaceFirst("^Frame ", "F");
+        return new String[] { p.nodeText(), cpu, loop, p.address, p.type, p.tag, p.location };
+    }
+
     static String[] placeValues(Place p) {
         return new String[] { p.nodeText(), p.cpu, p.loop, p.address, p.type, p.tag, p.location };
     }
@@ -1084,14 +1275,15 @@ public class CheckerPanel extends JPanel {
             String gray = selected ? "" : " color='#707070'";
             if (o instanceof Source) {
                 File f = ((Source) o).file;
-                String what = f.equals(FX4000_DB) ? "FX4000 configurator" : f.equals(FX6000_DB) ? "FX6000 configurator" : f.getName();
+                String what = f.equals(FX4000_DB) ? "FX4000 configurator" : f.equals(FX6000_DB) ? "FX6000 configurator"
+                    : f.equals(FX400_DB) ? "FX400 configurator" : f.equals(FX2000_DB) ? "FX2000 configurator" : f.getName();
                 setText("<html><b>" + esc(what) + "</b></html>");
                 setToolTipText(f.getPath());
             } else if (o instanceof JobEntry) {
                 JobEntry j = (JobEntry) o;
                 setText("<html><b>" + esc(j.description.isBlank() ? "(no name)" : j.description) + "</b><br><font" + gray + ">Job " + j.job + "  -  "
                     + Report.plural(j.versions, "version") + "</font></html>");
-                setToolTipText("Last saved " + j.newest.replace('T', ' '));
+                setToolTipText("<html><b>" + esc(j.description) + "</b><br>Job " + j.job + ", last saved " + esc(j.newest.replace('T', ' ')) + "</html>");
             } else if (o instanceof VersionEntry) {
                 Job.Version v = ((VersionEntry) o).version;
                 String name = v.version_description.isBlank() ? "version " + v.version : v.version_description.trim();
@@ -1127,15 +1319,26 @@ public class CheckerPanel extends JPanel {
             return this;
         }
 
+        //Short, for the narrow Result column; the full counts are in the tooltip
         String result() {
             if (skipped) return "n/a";
             List<String> parts = new ArrayList<>();
             if (errors > 0) parts.add(errors + " err");
             if (warnings - review > 0) parts.add((warnings - review) + " warn");
+            if (review > 0) parts.add(review + " review");
+            if (parts.isEmpty()) parts.add(info > 0 ? info + " info" : "OK");
+            if (accepted > 0) parts.add("+" + accepted + " acc");
+            return String.join(", ", parts);
+        }
+
+        String fullResult() {
+            if (skipped) return "Does not apply to this panel";
+            List<String> parts = new ArrayList<>();
+            parts.add(Report.plural(errors, "error"));
+            parts.add(Report.plural(warnings - review, "warning"));
             if (review > 0) parts.add(review + " to review");
-            if (parts.isEmpty()) parts.add("OK");
             if (accepted > 0) parts.add(accepted + " accepted");
-            if (info > 0 && errors + warnings == 0) parts.add(info + " info");
+            if (info > 0) parts.add(info + " info");
             return String.join(", ", parts);
         }
     }
@@ -1147,9 +1350,7 @@ public class CheckerPanel extends JPanel {
             rows.clear();
             rows.add(new RuleRow(null, r.count(Severity.ERROR), r.count(Severity.WARNING), false).counts(r));
             for (Rule rule : r.rules()) rows.add(new RuleRow(rule, r.count(rule.id(), Severity.ERROR), r.count(rule.id(), Severity.WARNING), false).counts(r));
-            for (String id : r.skipped) {
-                for (Rule rule : CorrelationChecker.RULES) if (rule.id().equals(id)) rows.add(new RuleRow(rule, 0, 0, true));
-            }
+            //Checks that do not apply to this panel (e.g. FSAE on FX400) are not listed; the details pane names them
             fireTableDataChanged();
         }
 
@@ -1168,7 +1369,7 @@ public class CheckerPanel extends JPanel {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean selected, boolean focused, int row, int col) {
             super.getTableCellRendererComponent(table, value, selected, false, row, col);
             RuleRow r = rule_model.rows.get(row);
-            setToolTipText(r.rule == null ? "Every check" : r.rule.title());
+            setToolTipText((r.rule == null ? "Every check" : r.rule.title()) + ": " + r.fullResult());
             setFont(getFont().deriveFont(r.rule == null ? Font.BOLD : Font.PLAIN));
             if (!selected) {
                 if (col == 0) setForeground(r.skipped ? MUTED_COLOR : Color.BLACK);
@@ -1210,7 +1411,7 @@ public class CheckerPanel extends JPanel {
             if (c < PLACE_COLUMNS.length) {
                 Place p = place(t);
                 if (c == 0) return p.node < 0 ? "" : p.node; //sorts as a number
-                return placeValues(p)[c];
+                return tableValues(p)[c];
             }
             return trail(t, c - PLACE_COLUMNS.length);
         }
@@ -1308,7 +1509,8 @@ public class CheckerPanel extends JPanel {
                 : value instanceof Status ? ((Status) value).label
                 : value instanceof Compare.Change ? changeName((Compare.Change) value) : value == null ? "" : String.valueOf(value);
             super.getTableCellRendererComponent(table, text, selected, false, row, col);
-            setToolTipText(text.length() > 30 ? text : null);
+            int width = table.getColumnModel().getColumn(col).getWidth();
+            setToolTipText(!text.isEmpty() && getFontMetrics(getFont()).stringWidth(text) + 6 > width ? text : null);
             boolean first = table.convertColumnIndexToModel(col) == 0;
             setFont(getFont().deriveFont(first ? Font.BOLD : Font.PLAIN));
             boolean faded = value instanceof Status ? value == Status.ACCEPTED : table.getValueAt(row, 0) == Status.ACCEPTED;

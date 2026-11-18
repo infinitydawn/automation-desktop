@@ -16,8 +16,17 @@ public final class Roles {
 
     public enum Family { ALARM, SUPERVISORY, LATCHED, TROUBLE, MONITOR, OUTPUT, NONE }
 
+    //By name, because the configurators number some types differently (FX400: 7 = Building/Property Safety,
+    //10 = Hazard Release, 12 = CO Latched Supervised; FX2000: 9 = Non-Latch Alarm)
     public static Family family(Circuit c) {
-        switch (c.process_type) {
+        String n = c.process_name.toLowerCase();
+        if (n.contains("supv") || n.contains("supervis")) return n.contains("non") ? Family.SUPERVISORY : Family.LATCHED;
+        if (n.contains("alarm") || n.contains("alm") || n.contains("waterflow") || n.contains("pull") || n.contains("hazard")) return Family.ALARM;
+        if (n.contains("trouble")) return Family.TROUBLE;
+        if (n.contains("monitor") || n.contains("building") || n.contains("remote")) return Family.MONITOR;
+        if (n.equals("signal") || n.equals("strobe") || n.equals("relay")) return Family.OUTPUT;
+        if (!n.startsWith("type ")) return Family.NONE;
+        switch (c.process_type) { //name missing: fall back to the MGC numbering
             case 0: case 1: case 2: case 5: case 10: return Family.ALARM; //Verified, Alarm Input, Priority, Waterflow, Manual Pull
             case 3: return Family.LATCHED;
             case 4: return Family.SUPERVISORY; //Non-Latch Supv
@@ -40,7 +49,7 @@ public final class Roles {
         SMOKE("Smoke Detector", Family.ALARM),
         HEAT("Heat Detector", Family.ALARM),
         SUPERVISORY("supervisory device", Family.SUPERVISORY),
-        PSU_TROUBLE("power supply trouble", Family.TROUBLE),
+        PSU_TROUBLE("trouble input (power supply / duct cover)", Family.TROUBLE),
         OTHER("device", null);
 
         public final String label;
@@ -56,32 +65,56 @@ public final class Roles {
     private static final Pattern PULL = Pattern.compile("pull");
     private static final Pattern ANSUL = Pattern.compile("ansul");
     private static final Pattern LOW_HEAT = Pattern.compile("lo(w)?\\s*heat");
-    private static final Pattern CO = Pattern.compile("\\bco\\b|carbon|co\\s*det");
-    private static final Pattern SMOKE = Pattern.compile("smoke|\\bduct|photo");
-    private static final Pattern HEAT = Pattern.compile("heat|135");
+    private static final Pattern CO = Pattern.compile("\\bco\\b|carbon|co\\s*det|\\bc\\s?o\\s+det");
+    private static final Pattern SMOKE = Pattern.compile("smoke|\\bduct|photo|\\bsd\\b|\\bdd\\b");
+    private static final Pattern HEAT = Pattern.compile("heat|135|\\bhd\\b");
+    //Duct detector cover-open / trouble modules (cheat sheet: Duct Det Cover Open - Trouble Input)
+    private static final Pattern DUCT_TROUBLE = Pattern.compile("cover\\s*open|\\bcover\\b|\\btrbl\\b|trouble");
     private static final Pattern PSU = Pattern.compile("inx|psu|power supply|\\bpsp\\b");
     private static final Pattern SUPERVISORY = Pattern.compile(
         "valv|tamper|pump|\\bpmp\\b|jock|generator|gen\\b|radio|door open|damp|fan|power|pwr|fault|key|dry sys|air|rcv|intake|discharge|bypass|"
-        + "status|running|\\brun\\b|purge|fail|trouble|troubl|monitor|elev|phase|phse|low temp|hoistway|meter|riser|active|shunt|open|closed|"
-        + "level|temp|tank|ups\\b|battery|line off|\\b24 ?v|shaft light|trigger|standpipe|sprnklr|sprinkler");
+        + "status|running|\\brun\\b|purge|fail|trouble|troubl|elev|phase|phse|low temp|hoistway|meter|riser|active|shunt|open|closed|"
+        + "level|temp|tank|ups\\b|battery|line off|\\b24 ?v|shaft light|trigger|standpipe|sprnklr|sprinkler|\\bts\\b|\\bfsd\\b");
 
     public static Device device(Circuit c) {
-        String t = Job.Circuit.splitWords(c.tag1()).toLowerCase();
         String type = c.device_type.toLowerCase();
         //FX6000 combo smoke/CO: the "B" input is the CO
         if (type.contains("fire-co") && c.sub == 2) return Device.CO;
         if (type.contains("fire-co")) return Device.SMOKE;
+        boolean monitor_module = type.contains("monit") || type.contains("input") || type.contains("ipt mod"); //FX400: Dual Input (4040/1)
+        String all = c.words().toLowerCase();
+        //INX-10 / power supply inputs and duct detector cover/trouble modules are trouble inputs
+        String t1 = Job.Circuit.splitWords(c.tag1()).toLowerCase();
+        if (PSU.matcher(t1).find() && (monitor_module || t1.contains("trouble") || t1.contains("fault") || t1.contains("fail"))) return Device.PSU_TROUBLE;
+        if (monitor_module && all.contains("duct") && DUCT_TROUBLE.matcher(all).find()) return Device.PSU_TROUBLE;
+
+        Device first = fromWords(t1, monitor_module);
+        //Line 2 is usually the location, but some tags put the device there ("1FL Stair B / Pull Station").
+        //Only take it when line 1 names nothing specific, and only for kinds that are not also room names
+        //("Heat Pump Rm", "Smoke Shaft" are places).
+        if (first == Device.OTHER || first == Device.SUPERVISORY) {
+            Device second = fromWords(Job.Circuit.splitWords(c.tag2()).toLowerCase(), monitor_module);
+            if (second == Device.WATERFLOW || second == Device.PULL || second == Device.CO || second == Device.ANSUL) return second;
+            if (first == Device.OTHER && second != Device.OTHER) return second;
+        }
+        if (first != Device.OTHER) return first;
+        //Tag is only a location ("1st Floor Hallway"): detectors still say what they are in their device type
+        if (type.contains("photo") || type.contains("ion det") || type.contains("smoke") || type.contains("laser") || type.contains("acclimate")) return Device.SMOKE;
+        if (type.contains("heat")) return Device.HEAT;
+        return Device.OTHER;
+    }
+
+    private static Device fromWords(String t, boolean monitor_module) {
         if (WATERFLOW.matcher(t).find()) return Device.WATERFLOW;
         if (PULL.matcher(t).find()) return Device.PULL;
         if (ANSUL.matcher(t).find()) return Device.ANSUL;
         if (LOW_HEAT.matcher(t).find()) return Device.LOW_HEAT;
         if (CO.matcher(t).find() && !t.contains("smoke")) return Device.CO;
-        boolean monitor_module = type.contains("monit") || type.contains("input mod") || type.contains("ipt mod");
-        //INX-10 / power supply inputs are trouble inputs (cheat sheet: INX-10 Power Supply ... Trouble Input)
-        if (PSU.matcher(t).find() && (monitor_module || t.contains("trouble") || t.contains("fault") || t.contains("fail"))) return Device.PSU_TROUBLE;
+        boolean smoke = SMOKE.matcher(t).find(), heat = HEAT.matcher(t).find();
+        //On a monitor module, status words win ("Smoke Damper Status"), except a smoke/heat simply on a module
         if (monitor_module && SUPERVISORY.matcher(t).find()) return Device.SUPERVISORY;
-        if (SMOKE.matcher(t).find()) return Device.SMOKE;
-        if (HEAT.matcher(t).find()) return Device.HEAT;
+        if (smoke) return Device.SMOKE;
+        if (heat) return Device.HEAT;
         if (SUPERVISORY.matcher(t).find()) return Device.SUPERVISORY;
         return Device.OTHER;
     }
@@ -167,6 +200,7 @@ public final class Roles {
         GENERATOR_SHUTDOWN("generator shutdown relay"),
         DAMPER("damper / fan relay"),
         SIGNAL_SILENCE("signal silence relay"),
+        TROUBLE_TRIP("trouble trip relay"),
         OTHER("output");
 
         public final String label;
@@ -181,7 +215,8 @@ public final class Roles {
 
     //Outputs that are recognised but have no cheat sheet rule (so they are not listed as unrecognised)
     private static final Pattern KNOWN_OTHER = Pattern.compile(
-        "^base signal|sync|paging|\\bmic\\b|shutter|shuttr|\\bgas\\b|fuel|stove|oven|heat\\s*trac|water\\s*temp|generat\\w*\\s*(run|fail)");
+        "^base signal|sync|paging|\\bmic\\b|shutter|shuttr|\\bgas\\b|fuel|stove|oven|heat\\s*trac|water\\s*temp|generat\\w*\\s*(run|fail)|"
+        + "central|local alarm|alarm signal|^trouble\\b|^waterflow\\b|^smoke\\b|relay waterflow|relay valve");
 
     public static boolean knownOther(Circuit c) {
         return KNOWN_OTHER.matcher(c.words().toLowerCase()).find();
@@ -199,11 +234,12 @@ public final class Roles {
         if (type.contains("sounder") || t.contains("sounder")) return Output.SOUNDER;
         if (t.contains("speaker") || type.contains("watt") || type.startsWith("control")) return Output.SPEAKER;
         if (t.contains("signal silence") || t.contains("sig sil")) return Output.SIGNAL_SILENCE;
+        if (t.contains("trip") && (t.contains("trouble") || t.contains("trbl"))) return Output.TROUBLE_TRIP;
         if (t.contains("shaft light") || t.contains("hoistway light")) return Output.SHAFT_LIGHT;
         if (t.contains("recal") || t.contains("shunt")) { //"recal": tags get cut short, e.g. "ElevRecalSouthTowr"
             return t.startsWith("alt") || t.contains("alternate") ? Output.ALT_RECALL : Output.ELEV_RECALL;
         }
-        boolean shut = t.contains("shut") || t.contains("shtdwn") || t.contains("shtdn") || t.contains("shut dn");
+        boolean shut = t.contains("shut") || t.contains("shtdwn") || t.contains("shtdn") || t.contains("shtdown") || t.contains("shut dn");
         if (t.contains("music") || (t.contains("audio") && shut)) return Output.MUSIC_SHUTDOWN;
         if (t.contains("door") && (t.contains("release") || t.contains("holder") || t.contains("mag"))) return Output.DOOR_RELEASE;
         if (t.contains("generator") && shut) return Output.GENERATOR_SHUTDOWN;
