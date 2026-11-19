@@ -61,7 +61,9 @@ import checker.Report.Severity;
 
 //The correlation checker as a window panel. Left: the job files that are open, each with its jobs and their versions.
 //Right: "Check" shows what the checks found in one version, "Compare" shows what changed between two versions.
-//Everything is read-only. Kept as a JPanel so it can sit in its own window (CheckerWindow) or as a tab in the bot window.
+//"Correlate" (CorrelatePanel) shows and changes one version's correlations; changes are only ever written to a NEW
+//copy of the job file (JobWriter), never to the open file or a configurator's own database.
+//Kept as a JPanel so it can sit in its own window (CheckerWindow) or as a tab in the bot window.
 @SuppressWarnings("serial")
 public class CheckerPanel extends JPanel {
 
@@ -161,6 +163,31 @@ public class CheckerPanel extends JPanel {
     private final JLabel diff_count = new JLabel(" ");
     private final JButton diff_csv = new JButton("Save CSV...");
 
+    //Correlate tab: the only place that writes, and only ever to a new copy of the job file
+    private final JButton correlate_button = new JButton("Correlate");
+    private final CorrelatePanel correlate_panel = new CorrelatePanel(new CorrelatePanel.Host() {
+        public void status(String text) {
+            status.setText(text);
+        }
+
+        public void detailsChanged() {
+            if (tabs.getSelectedIndex() == CORRELATE_TAB) showDetails();
+        }
+
+        public void saved(File file) {
+            openFile(file, false);
+        }
+
+        public String lastDir() {
+            return prefs.get("lastDir", System.getProperty("user.home"));
+        }
+
+        public void lastDir(String dir) {
+            prefs.put("lastDir", dir);
+        }
+    });
+    static final int CORRELATE_TAB = 2;
+
     public CheckerPanel() {
         super(new BorderLayout(0, 6));
         setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
@@ -175,6 +202,7 @@ public class CheckerPanel extends JPanel {
 
         tabs.addTab("Check", checkTab());
         tabs.addTab("Compare", compareTab());
+        tabs.addTab("Correlate", correlate_panel);
         tabs.addChangeListener(e -> showDetails());
 
         JSplitPane right = new JSplitPane(JSplitPane.VERTICAL_SPLIT, tabs, details_scroll);
@@ -185,7 +213,7 @@ public class CheckerPanel extends JPanel {
         main.setBorder(null);
         add(main, BorderLayout.CENTER);
 
-        JLabel hint = new JLabel("Read-only: jobs are never changed.");
+        JLabel hint = new JLabel("Job files are never changed. Correlation edits are saved to a new copy, which you load in the configurator with Import Job.");
         hint.setForeground(MUTED_COLOR);
         add(hint, BorderLayout.SOUTH);
         clearCheck();
@@ -274,11 +302,19 @@ public class CheckerPanel extends JPanel {
         check_button.addActionListener(e -> runCheck());
         compare_button.setToolTipText("Two versions selected (Ctrl+click): what changed between them. One: what changed since the version before it.");
         compare_button.addActionListener(e -> runCompare());
-        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 2));
-        buttons.add(check_button);
-        buttons.add(compare_button);
+        correlate_button.setToolTipText("See and change the selected version's correlations (saved to a new copy of the job)");
+        correlate_button.addActionListener(e -> runCorrelate());
+        //Two rows, so the buttons fit the narrow jobs list
+        JPanel row1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 2));
+        row1.add(check_button);
+        row1.add(compare_button);
+        JPanel row2 = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 2));
+        row2.add(correlate_button);
+        JPanel buttons = new JPanel(new BorderLayout());
+        buttons.add(row1, BorderLayout.NORTH);
+        buttons.add(row2, BorderLayout.SOUTH);
 
-        JLabel hint = new JLabel("<html>Pick a version to check. Ctrl+click two versions to compare them.</html>");
+        JLabel hint = new JLabel("<html>Pick a version to check. Ctrl+click two versions to compare them. Correlate: see and change its correlations.</html>");
         hint.setForeground(MUTED_COLOR);
         JPanel south = new JPanel(new BorderLayout());
         south.add(buttons, BorderLayout.NORTH);
@@ -408,7 +444,7 @@ public class CheckerPanel extends JPanel {
         return p;
     }
 
-    private static JPanel header(JLabel title, JLabel total) {
+    static JPanel header(JLabel title, JLabel total) {
         title.setFont(title.getFont().deriveFont(Font.BOLD, title.getFont().getSize() + 3f));
         total.setFont(total.getFont().deriveFont(Font.BOLD, total.getFont().getSize() + 1f));
         JPanel header = new JPanel(new BorderLayout(12, 0));
@@ -436,7 +472,7 @@ public class CheckerPanel extends JPanel {
         return bar;
     }
 
-    private static void onType(JTextField field, Runnable action) {
+    static void onType(JTextField field, Runnable action) {
         field.getDocument().addDocumentListener(new DocumentListener() {
             public void insertUpdate(DocumentEvent e) { action.run(); }
             public void removeUpdate(DocumentEvent e) { action.run(); }
@@ -445,7 +481,7 @@ public class CheckerPanel extends JPanel {
     }
 
     //A table that scrolls sideways when its columns do not fit, and stretches its last column when they do
-    private static JTable wideTable(TableModel model) {
+    static JTable wideTable(TableModel model) {
         JTable t = new JTable(model) {
             public boolean getScrollableTracksViewportWidth() {
                 return getPreferredSize().width < getParent().getWidth();
@@ -455,7 +491,7 @@ public class CheckerPanel extends JPanel {
         return t;
     }
 
-    private static void setupTable(JTable t, DefaultTableCellRenderer renderer) {
+    static void setupTable(JTable t, DefaultTableCellRenderer renderer) {
         t.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         t.setRowHeight(t.getRowHeight() + 6);
         t.setDefaultRenderer(Object.class, renderer);
@@ -472,7 +508,7 @@ public class CheckerPanel extends JPanel {
         Map.entry("Change", 66), Map.entry("Category", 140), Map.entry("What", 420), Map.entry("Before", 220), Map.entry("After", 220));
 
     //Sizes each column to its contents (header and rows), within the limits above, so short columns stay short
-    private static void fitColumns(JTable t, int max_rows) {
+    static void fitColumns(JTable t, int max_rows) {
         for (int c = 0; c < t.getColumnCount(); c++) {
             TableColumn col = t.getColumnModel().getColumn(c);
             Component h = t.getTableHeader().getDefaultRenderer().getTableCellRendererComponent(t, col.getHeaderValue(), false, false, -1, c);
@@ -554,6 +590,11 @@ public class CheckerPanel extends JPanel {
 
     //Adds the file's jobs to the tree (replacing it if already open). A file with one version is checked straight away.
     public void openFile(File f) {
+        openFile(f, true);
+    }
+
+    //show_check false: the check runs, but the tab that is showing stays (after saving an edited copy)
+    private void openFile(File f, boolean show_check) {
         if (f == null || !f.isFile()) {
             status.setText("File not found: " + f);
             return;
@@ -580,7 +621,7 @@ public class CheckerPanel extends JPanel {
                 if (versions.size() == 1) {
                     DefaultMutableTreeNode v = (DefaultMutableTreeNode) file_node.getFirstChild().getChildAt(0);
                     tree.setSelectionPath(new TreePath(v.getPath()));
-                    runCheck();
+                    runCheck((VersionEntry) v.getUserObject(), show_check);
                 } else {
                     status.setText(f.getName() + ": " + Report.plural(file_node.getChildCount(), "job") + ", " + versions.size() + " versions.");
                 }
@@ -633,6 +674,7 @@ public class CheckerPanel extends JPanel {
         int n = selectedVersions().size();
         check_button.setEnabled(n == 1);
         compare_button.setEnabled(n == 1 || n == 2);
+        correlate_button.setEnabled(n == 1);
     }
 
     //The version before this one in the same job, or null
@@ -775,6 +817,47 @@ public class CheckerPanel extends JPanel {
                 status.setText("Reloaded at " + time + "." + (gone.isEmpty() ? "" : " Not found any more: " + String.join(", ", gone) + "."));
             }
         }.execute();
+    }
+
+    //-------------------------------------------------------------------------------------------------
+    //Correlating
+
+    private void runCorrelate() {
+        List<VersionEntry> sel = selectedVersions();
+        if (sel.size() != 1) return;
+        VersionEntry v = sel.get(0);
+        if (!confirmDropChanges()) return;
+        correlate_button.setEnabled(false);
+        working("Reading " + versionName(v.version) + " for correlating...");
+        new SwingWorker<Job, Void>() {
+            protected Job doInBackground() throws Exception {
+                //Read fresh, so the edits are made on the file as it is now
+                return Job.load(v.file, v.version.job, v.version.version);
+            }
+
+            protected void done() {
+                idle();
+                updateButtons();
+                try {
+                    Job j = get();
+                    correlate_panel.setJob(j);
+                    tabs.setSelectedIndex(CORRELATE_TAB);
+                    showDetails();
+                    status.setText(j.panel.isReadable() ? "Correlating " + versionName(j) + ". Changes are saved to a new copy." : "This job's panel type is not supported.");
+                } catch (Exception e) {
+                    failed("Could not read the job. If the configurator is saving right now, try again, or export the job and open the export", e);
+                }
+            }
+        }.execute();
+    }
+
+    //Asks before unsaved correlation changes are dropped; true = go ahead
+    public boolean confirmDropChanges() {
+        if (!correlate_panel.hasChanges()) return true;
+        tabs.setSelectedIndex(CORRELATE_TAB);
+        int answer = JOptionPane.showConfirmDialog(this, "The correlation changes to " + versionName(correlate_panel.job()) + " are not saved. Drop them?",
+            "Unsaved correlation changes", JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
+        return answer == JOptionPane.OK_OPTION;
     }
 
     //-------------------------------------------------------------------------------------------------
@@ -1000,6 +1083,7 @@ public class CheckerPanel extends JPanel {
     private void showDetails() {
         StringBuilder h = new StringBuilder("<html><body style='font-family:sans-serif; margin:4px'>");
         if (tabs.getSelectedIndex() == 0) findingDetails(h);
+        else if (tabs.getSelectedIndex() == CORRELATE_TAB) correlate_panel.details(h);
         else diffDetails(h);
         h.append("</body></html>");
         details.setText(h.toString());
@@ -1497,7 +1581,7 @@ public class CheckerPanel extends JPanel {
     }
 
     //Colors the first column and shows the full cell text as a tooltip (for cut-off cells)
-    private static class ColoredRenderer extends DefaultTableCellRenderer {
+    static class ColoredRenderer extends DefaultTableCellRenderer {
         final Function<Object, Color> color;
 
         ColoredRenderer(Function<Object, Color> color) {

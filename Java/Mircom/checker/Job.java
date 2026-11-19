@@ -64,6 +64,7 @@ public class Job {
     static final int CTRL_TYPE_BYPASS = 1;
 
     public final File file;
+    public long file_stamp; //the file's modified time when it was read, to notice a save in the configurator since
     public Panel panel = Panel.UNKNOWN;
     public int job_id;
     public int version;
@@ -95,6 +96,11 @@ public class Job {
     public final Map<Integer, String> node_names = new HashMap<>(); //node -> its tag, e.g. "FCC 2FL (Cell-13FL)"
     public final Map<String, String> cpu_types = new HashMap<>(); //"node/cpu" -> card type, e.g. "S200 QLA"
     public final Map<Integer, String> status_names = new HashMap<>(); //system status -> name, e.g. "Common Trouble"
+
+    //Circuits whose correlations the configurator manages somewhere else (hazard zones, output zones, equipment sets),
+    //with the reason. The correlation editor will not add links to them.
+    public final Map<Integer, String> locked_inputs = new HashMap<>(); //input ckt -> reason
+    public final Map<Integer, String> locked_outputs = new HashMap<>(); //output ckt -> reason
 
     //Lookups built from the link rows once loading is done
     private final Map<Integer, List<Circuit>> zones_of = new HashMap<>(); //device input ckt -> its input zones
@@ -131,6 +137,9 @@ public class Job {
         public boolean aux_reset; //outputs: AR flag
         public Boolean co_flag; //FX6000 input zones: CO flag (F4). Null when the panel does not store it.
         public Boolean class_a; //FX400 inputs: Class-A option. Null when the panel does not store it.
+        //The configurator's correlation class of the process type (SYSProcTypes.LedCktType): 4 alarm, 5 supervisory,
+        //6 trouble, 7 monitor / building, 8 signal, 9 relay, 10 CO (FX400), 0 = takes no correlations. -1 = unknown.
+        public int corr_class = -1;
 
         //Short, unambiguous name for reports, e.g. N1 IZ61 "Low Heat 13FL SouthT" or N1 C1 L1-109.2 HeatPhoto (2351TAP) "..."
         public String label() {
@@ -193,6 +202,8 @@ public class Job {
         public int group;
         public int led_type;
         public String led_type_name = "";
+        public String display_type = ""; //SYSLedTypes.DisplayType, e.g. "Ipt Zone", "Auto/Man Slide"
+        public String description = ""; //SYSLedTypes.Description, e.g. "Alarm Stat", "Supervisory Stat"
         public String tag = "";
         public Map<String, Integer> states = new LinkedHashMap<>(); //AllActive, SomeActive, ... as stored
         public final List<int[]> slots = new ArrayList<>(); //{node, cpu, frame, led}
@@ -404,6 +415,7 @@ public class Job {
     //With a job but no version, the newest version of that job is used.
     public static Job load(File file, Integer job_id, Integer version) throws IOException {
         Job job = new Job(file);
+        job.file_stamp = file.lastModified(); //before reading, so a save during the read still counts as a change
         try (Database db = open(file)) {
             job.panel = detectPanel(db);
             job.pickVersion(db, job_id, version);
@@ -480,6 +492,7 @@ public class Job {
     private void loadCircuits(Database db) throws IOException {
         Map<Integer, String> device_types = lookup(db, "SYSDevTypes", "DevType", "Tag");
         Map<Integer, String> process_types = lookup(db, "SYSProcTypes", "ProcessType", "Tag");
+        Map<Integer, String> process_classes = lookup(db, "SYSProcTypes", "ProcessType", "LedCktType");
         Map<Integer, String> loop_type_names = lookup(db, "SYSLoopTypes", "LoopType", "Tag");
 
         Map<String, Integer> loop_types = new HashMap<>(); //FX4000 "node/cpu/loop", FX6000 "node/loop" -> loop type
@@ -507,6 +520,11 @@ public class Job {
                 c.output = output;
                 c.process_type = num(r, "ProcessType");
                 c.process_name = process_types.getOrDefault(c.process_type, "type " + c.process_type);
+                try {
+                    c.corr_class = Integer.parseInt(process_classes.getOrDefault(c.process_type, "-1").trim());
+                } catch (NumberFormatException e) {
+                    c.corr_class = -1;
+                }
                 c.tag = str(r, "Tag");
                 c.silenceable = bool(r, "Silenceable", true);
                 c.aux_reset = bool(r, "AuxReset", false);
@@ -584,8 +602,8 @@ public class Job {
             String type = cpu_type_names.getOrDefault(num(r, "CPUType"), "");
             cpu_types.put(nodeOf(r) + "/" + num(r, "CPUNo"), type + (tag.isEmpty() ? "" : " " + tag));
         }
-        Map<Integer, String> led_type_names = new HashMap<>();
-        for (Row r : db.getTable("SYSLedTypes")) led_type_names.put(num(r, "LedType"), str(r, "DisplayType") + " / " + str(r, "Description"));
+        Map<Integer, String[]> led_type_names = new HashMap<>();
+        for (Row r : db.getTable("SYSLedTypes")) led_type_names.put(num(r, "LedType"), new String[] { str(r, "DisplayType").trim(), str(r, "Description").trim() });
 
         for (Row r : rows(db, "IptZoneCorrs")) if (mine(r)) zone_links.add(new int[] { num(r, "IptCkt"), num(r, "IptZone") });
         for (Row r : rows(db, "IOCorrs")) if (mine(r)) io_links.add(new int[] { num(r, "IptCkt"), num(r, "OptCkt") });
@@ -604,7 +622,10 @@ public class Job {
             Led l = new Led();
             l.group = num(r, "LedGrp");
             l.led_type = num(r, "LedType");
-            l.led_type_name = led_type_names.getOrDefault(l.led_type, "type " + l.led_type);
+            String[] type = led_type_names.get(l.led_type);
+            l.display_type = type == null ? "" : type[0];
+            l.description = type == null ? "" : type[1];
+            l.led_type_name = type == null ? "type " + l.led_type : type[0] + " / " + type[1];
             l.tag = str(r, "Tag");
             for (String s : state_columns) l.states.put(s, num(r, s));
             leds.put(l.group, l);
@@ -677,6 +698,12 @@ public class Job {
             Circuit c = outputs.get(num(r, "CktNo"));
             if (g != null && c != null) g.outputs.add(c);
         }
+
+        //Circuits whose correlations are set somewhere else in the configurator
+        for (Row r : rows(db, "OptZnCorrs")) if (mine(r)) locked_outputs.put(num(r, "OptCkt"), "It is in an output zone; the configurator does not allow direct input correlations to it.");
+        for (Row r : rows(db, "HazardOptCkts")) if (mine(r)) locked_outputs.put(num(r, "CktNo"), "It is in hazard zone " + num(r, "ZoneNo") + "; change it there in the configurator.");
+        for (Row r : rows(db, "HazardIptCkts")) if (mine(r)) locked_inputs.put(num(r, "CktNo"), "It is in hazard zone " + num(r, "ZoneNo") + "; change it there in the configurator.");
+        for (Row r : rows(db, "RelayGrpOpts")) if (mine(r)) locked_outputs.put(num(r, "OptCkt"), "It is in Equipment Set " + num(r, "RelayGrp") + "; its relays must keep the same correlations, so change them in the configurator.");
     }
 
     private void index() {

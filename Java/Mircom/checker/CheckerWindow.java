@@ -23,8 +23,14 @@ public class CheckerWindow {
                 //default look is fine
             }
             JFrame frame = new JFrame("Mircom Correlation Checker");
-            frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
             CheckerPanel panel = new CheckerPanel();
+            //Unsaved correlation changes are asked about before closing
+            frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+            frame.addWindowListener(new java.awt.event.WindowAdapter() {
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    if (panel.confirmDropChanges()) System.exit(0);
+                }
+            });
             frame.setContentPane(panel);
             frame.setSize(1300, 820);
             frame.setLocationRelativeTo(null);
