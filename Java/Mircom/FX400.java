@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Collections;
 import java.awt.event.KeyEvent;
 import java.io.File;
@@ -7,192 +8,126 @@ import org.ini4j.Ini;
 
 public class FX400 extends ConfigBot{
 
-    public void run() {
-        System.out.println("Starting FX400 Data Entry");
-        try{
-            is_running = true;
-            is_paused = false;
+    protected String panelName() {
+        return "FX400";
+    }
 
-            ZoneList zone_list = new ZoneList();
-            zone_list.readFile();
-            zone_list.displayZoneList();
-            //organizeZones(zone_list); // Sensors/modules both use the same set of addresses for FX400
-
-            if(zone_list.CONTAINS_AR) {
-                is_paused = true;
-            }
-
-            System.out.println("----------------------------------------------------------------");
-            if (validateZones(zone_list)) {
-                is_running = false;
-                System.out.println("----------------------------------------------------------------");
-                System.out.println("Errors found in zone list, please correct them and run again.");
-                System.out.println("----------------------------------------------------------------");
-            }
-
-            if(is_running) {
-                if(is_paused) {
-                    if(BYPASS_PAUSE) {
-                        is_paused = false;
-                    }else{
-                        System.out.println("The following settings need to be enabled for data entry:");
-                        if(zone_list.CONTAINS_AR) {
-                            System.out.println("AR/Buzzer Silence");
-                        }
-                        System.out.println("Please make necessary changes and press F2 to continue.");
-                        System.out.println("----------------------------------------------------------------");
-                    }
-                }
-
-                while(is_paused) {
-                    Thread.sleep(DELAY); //Wait until start button pressed again
-                }
-
-                ArrayList<Zone> zonelist = zone_list.zones;
-                if(!SKIP_INSERT_DEVICES && !zonelist.isEmpty()) {
-                    Zone zone = zonelist.get(0);
-                    skip_count = (int) zone.getAddress() - 1;
-
-                    for(int current_zone = 0; current_zone < zonelist.size() && is_running; current_zone++) {
-                        zone = zonelist.get(current_zone);
-                        if(current_zone > 0) {
-                            skip_count += (int) zone.getAddress() - (int) zonelist.get(current_zone - 1).getAddress() - 1;
-                        }
-                        insertDevice(zone);
-                    }
-
-                    //Additional delay to ensure final device is added
-                    Thread.sleep(DELAY);
-                }
-
-                if(SKIP_INSERT_DEVICES) {
-                    System.out.println("Skipping device insertion.");
-                }
-
-                enterZoneList(zone_list);
-                
-                System.out.println("FX400 Entry Complete");
-                is_running = false;
-                System.exit(MAX_PRIORITY);
-            }
-            else {
-                System.out.println("FX400 entry did not run");
+    //Sensors/modules both use the same set of addresses for FX400, so no organizeZones
+    protected void prepare(ZoneList zone_list) {
+        //Duct detectors have a spare input. Marked here (not while inserting) so the update pass
+        //still adds the spare row when insertion is skipped or resumed past them.
+        for(Zone zone : zone_list.zones) {
+            if(zone.getType().equals("Photo Detector") && Zone.checkTags(zone.getTag1(), new String[] { "duct" })) {
+                zone.setDualInput(true);
             }
         }
-        catch(Exception e) {
-            e.printStackTrace();
+    }
+
+    protected List<String> requiredSettings(ZoneList zone_list) {
+        List<String> settings = new ArrayList<>();
+        if(zone_list.CONTAINS_AR) {
+            settings.add("AR/Buzzer Silence");
+        }
+        return settings;
+    }
+
+    protected void insertDevices(ZoneList zone_list) {
+        ArrayList<Zone> zonelist = zone_list.zones;
+        if(zonelist.isEmpty()) {
+            return;
+        }
+
+        Zone zone = zonelist.get(0);
+        skip_count = (int) zone.getAddress() - 1;
+
+        for(int current_zone = 0; current_zone < zonelist.size() && is_running; current_zone++) {
+            zone = zonelist.get(current_zone);
+            if(current_zone > 0) {
+                skip_count += (int) zone.getAddress() - (int) zonelist.get(current_zone - 1).getAddress() - 1;
+            }
+            insertAt(zone);
         }
     }
 
     protected void addPhotoDetector() {
-        open();
+        insertWith(() -> {
+            //For MIX-4011
+            //bot.pressKey(KeyEvent.VK_UP, 1);
 
-        //For MIX-4011
-        //bot.pressKey(KeyEvent.VK_UP, 1);
-
-        //MIX-4010 is the default
-        bot.pressKey(KeyEvent.VK_TAB, 3);
-        skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
-        bot.pressKey(KeyEvent.VK_ESCAPE);
-        bot.pressKey(KeyEvent.VK_END);
+            //MIX-4010 is the default
+            bot.pressKey(KeyEvent.VK_TAB, 3);
+        });
     }
 
     protected void addDuctDetector() {
-        open();
-        bot.pressKey(KeyEvent.VK_P, 5);
-        bot.pressKey(KeyEvent.VK_TAB, 2);
-        skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
-        bot.pressKey(KeyEvent.VK_ESCAPE);
-        bot.pressKey(KeyEvent.VK_END);
+        insertWith(() -> {
+            bot.pressKey(KeyEvent.VK_P, 5);
+            bot.pressKey(KeyEvent.VK_TAB, 2);
+        });
     }
 
     protected void addAlarmInputMod() {
-        open();
-        bot.pressKey(KeyEvent.VK_D, 2);
-        bot.pressKey(KeyEvent.VK_TAB, 3);
-        skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
-        bot.pressKey(KeyEvent.VK_ESCAPE);
-        bot.pressKey(KeyEvent.VK_END);
+        insertWith(() -> {
+            bot.pressKey(KeyEvent.VK_D, 2);
+            bot.pressKey(KeyEvent.VK_TAB, 3);
+        });
     }
 
     protected void addNonLatchedSupv() {
-        open();
-        bot.pressKey(KeyEvent.VK_D, 2);
-        bot.pressKey(KeyEvent.VK_TAB, 2);
-        bot.pressKey(KeyEvent.VK_N);
-        bot.pressKey(KeyEvent.VK_TAB);
-        skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
-        bot.pressKey(KeyEvent.VK_ESCAPE);
-        bot.pressKey(KeyEvent.VK_END);
+        insertWith(() -> {
+            bot.pressKey(KeyEvent.VK_D, 2);
+            bot.pressKey(KeyEvent.VK_TAB, 2);
+            bot.pressKey(KeyEvent.VK_N);
+            bot.pressKey(KeyEvent.VK_TAB);
+        });
     }
 
     protected void addLatchedSupv() {
-        open();
-        bot.pressKey(KeyEvent.VK_D,2);
-        bot.pressKey(KeyEvent.VK_TAB,2);
-        bot.pressKey(KeyEvent.VK_L);
-        bot.pressKey(KeyEvent.VK_TAB);
-        skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
-        bot.pressKey(KeyEvent.VK_ESCAPE);
-        bot.pressKey(KeyEvent.VK_END);
+        insertWith(() -> {
+            bot.pressKey(KeyEvent.VK_D,2);
+            bot.pressKey(KeyEvent.VK_TAB,2);
+            bot.pressKey(KeyEvent.VK_L);
+            bot.pressKey(KeyEvent.VK_TAB);
+        });
     }
 
     protected void addHeatDetector() {
-        open();
-        bot.pressKey(KeyEvent.VK_H,3);
-        bot.pressKey(KeyEvent.VK_TAB,3);
-        skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
-        bot.pressKey(KeyEvent.VK_ESCAPE);
-        bot.pressKey(KeyEvent.VK_END);
+        insertWith(() -> {
+            bot.pressKey(KeyEvent.VK_H,3);
+            bot.pressKey(KeyEvent.VK_TAB,3);
+        });
     }
 
     protected void addAlarmInputClassA() {
-        open();
-        bot.pressKey(KeyEvent.VK_D, 2);
-        bot.pressKey(KeyEvent.VK_TAB, 1);
-        bot.pressKey(KeyEvent.VK_C, 1);
-        bot.pressKey(KeyEvent.VK_TAB, 2);
-        skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
-        bot.pressKey(KeyEvent.VK_ESCAPE);
-        bot.pressKey(KeyEvent.VK_END);
+        insertWith(() -> {
+            bot.pressKey(KeyEvent.VK_D, 2);
+            bot.pressKey(KeyEvent.VK_TAB, 1);
+            bot.pressKey(KeyEvent.VK_C, 1);
+            bot.pressKey(KeyEvent.VK_TAB, 2);
+        });
     }
 
     protected void addRelay() {
-        open();
-        bot.pressKey(KeyEvent.VK_D);
-        bot.pressKey(KeyEvent.VK_TAB, 2);
-        skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
-        bot.pressKey(KeyEvent.VK_ESCAPE);
-        bot.pressKey(KeyEvent.VK_END);
+        insertWith(() -> {
+            bot.pressKey(KeyEvent.VK_D);
+            bot.pressKey(KeyEvent.VK_TAB, 2);
+        });
     }
 
     protected void addTroubleInput() {
-         open();
-        bot.pressKey(KeyEvent.VK_D, 2);
-        bot.pressKey(KeyEvent.VK_TAB, 2);
-        bot.pressKey(KeyEvent.VK_T);
-        bot.pressKey(KeyEvent.VK_TAB);
-        skipDevices();
-        bot.pressKey(KeyEvent.VK_ENTER, 1 , DEVICE_INSERT_DELAY_STRENGTH);
-        bot.pressKey(KeyEvent.VK_ESCAPE);
-        bot.pressKey(KeyEvent.VK_END);
+        insertWith(() -> {
+            bot.pressKey(KeyEvent.VK_D, 2);
+            bot.pressKey(KeyEvent.VK_TAB, 2);
+            bot.pressKey(KeyEvent.VK_T);
+            bot.pressKey(KeyEvent.VK_TAB);
+        });
     }
 
     protected void insertDevice(Zone zone){
-        System.out.println("Inserting: " + zone.getZoneinfo());
         switch (zone.getType()) {
             case "Photo Detector":
                 //Duct detectors have spare
                 if (Zone.checkTags(zone.getTag1(), new String[] { "duct" })){
-                    zone.setDualInput(true);
                     addDuctDetector();
                 }
                 else {
@@ -225,7 +160,7 @@ public class FX400 extends ConfigBot{
 
     protected void updateType(Zone zone) {
         try {
-            Thread.sleep(DELAY);
+            stepPause();
             switch(zone.getType()) {
                 case "Photo Detector":
                     bot.pressKey(KeyEvent.VK_A);

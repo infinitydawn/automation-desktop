@@ -1,24 +1,49 @@
-from tkinter import Tk
-from tkinter.filedialog import askopenfilename
 import pandas as pd
 import os
+import sys
 
 #Change working path to this file's path
 abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)
 os.chdir(dname)
 
-Tk().withdraw() # we don't want a full GUI, so keep the root window from appearing
-file_path = askopenfilename(filetypes=[("Worksheet Files", "*.xlsx *.csv")]) # show an "Open" dialog box and return the path to the selected file
+if len(sys.argv) > 1:
+    # Path passed in (e.g. from the bot window)
+    file_path = os.path.abspath(os.path.join(os.path.dirname(dname), sys.argv[1])) if not os.path.isabs(sys.argv[1]) else sys.argv[1]
+else:
+    # tkinter's dialog is the native Windows "Open" dialog
+    from tkinter import Tk
+    from tkinter.filedialog import askopenfilename
+    root = Tk()
+    root.withdraw() # we don't want a full GUI, so keep the root window from appearing
+    root.attributes('-topmost', True) # open the dialog in front of other windows
+    file_path = askopenfilename(
+        parent=root,
+        title="Select the zone list",
+        filetypes=[
+            ("Zone lists", "*.xlsx *.xlsm *.csv"),
+            ("Excel workbooks", "*.xlsx *.xlsm"),
+            ("CSV files", "*.csv"),
+            ("All files", "*.*"),
+        ],
+    )
+    root.destroy()
 
-raw_df = ""
+if not file_path:
+    print("No file selected.")
+    sys.exit(1)
 
-if file_path.endswith('.xlsx'):
+print(f" * Reading {file_path}")
+
+extension = os.path.splitext(file_path)[1].lower()
+
+if extension in ('.xlsx', '.xlsm'):
+    # .xlsm is the macro-enabled workbook; same layout as .xlsx, macros are ignored
     raw_df = pd.read_excel(file_path, engine='openpyxl')
-elif file_path.endswith('.csv'):
+elif extension == '.csv':
     raw_df = pd.read_csv(file_path, encoding='utf-8')
-    if not file_path.endswith('.csv'):
-        raise ValueError("The selected file is not a .CSV Or .XLSX file.")
+else:
+    raise ValueError(f"The selected file is not a .xlsx, .xlsm or .csv file: {file_path}")
 
 
 df = raw_df.sort_values(by = 'Zone', ascending=True)
@@ -85,3 +110,4 @@ check_column_headers(df)
 check_subaddresses(zoneColumn)
 
 df.to_csv('../assets/temp_zones.csv', index=False)
+print(f" * Saved {len(df)} rows to assets/temp_zones.csv")
