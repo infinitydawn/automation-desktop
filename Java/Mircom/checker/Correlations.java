@@ -340,8 +340,8 @@ public final class Correlations {
         if (zone.kind != Kind.INPUT_ZONE) return "That is not an input zone.";
         String locked = locked(job, dev, zone);
         if (locked != null) return locked;
-        if (dev.corr_class <= 0) return a(dev.process_name) + " input takes no correlations.";
-        if (zone.corr_class <= 0) return a(zone.process_name) + " zone takes no correlations.";
+        if (dev.corr_class <= 0) return "Its input type (" + dev.process_name + ") takes no correlations.";
+        if (zone.corr_class <= 0) return "The zone's type (" + zone.process_name + ") takes no correlations.";
         if (dev.node != zone.node) return "Input zones belong to one node: the device is on node " + dev.node + ", the zone on node " + zone.node + ".";
         if (job.panel == Panel.FX6000 && dev.cpu != zone.cpu) return "On the FX6000 each CPU has its own input zones: the device is on CPU " + dev.cpu + ", the zone on CPU " + zone.cpu + ".";
         if (dev.corr_class != zone.corr_class) {
@@ -365,8 +365,8 @@ public final class Correlations {
         if (out.kind == Kind.OUTPUT_ZONE) return "Output zones are set in the configurator.";
         String locked = locked(job, in, out);
         if (locked != null) return locked;
-        if (in.corr_class <= 0 || in.process_name.toLowerCase().contains("hazard")) return a(in.process_name) + " input takes no output correlations.";
-        if (out.corr_class != 8 && out.corr_class != 9) return a(out.process_name) + " output takes no input correlations.";
+        if (in.corr_class <= 0 || in.process_name.toLowerCase().contains("hazard")) return "Its input type (" + in.process_name + ") takes no output correlations.";
+        if (out.corr_class != 8 && out.corr_class != 9) return "Its output type (" + out.process_name + ") takes no input correlations.";
         return null;
     }
 
@@ -375,7 +375,7 @@ public final class Correlations {
         if (zone.kind != Kind.INPUT_ZONE) return "Input zone LEDs show input zones, not single devices.";
         if (led.slots.isEmpty()) return "This LED group has no position on a display.";
         int want = ledClass(led);
-        if (zone.corr_class <= 0) return a(zone.process_name) + " zone cannot be shown on an LED.";
+        if (zone.corr_class <= 0) return "The zone's type (" + zone.process_name + ") cannot be shown on an LED.";
         if (want != MIXED && want != zone.corr_class) {
             return "A \"" + led.description + "\" LED shows " + className(want) + " zones; this zone is " + className(zone.corr_class) + " (" + zone.process_name + ").";
         }

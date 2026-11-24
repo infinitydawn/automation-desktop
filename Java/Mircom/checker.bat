@@ -1,6 +1,6 @@
 @echo off
 rem Correlation checker: reads a configurator job (.mdb) and reports correlation mistakes. Never changes the job file;
-rem the window's Correlate tab saves correlation changes to a NEW copy, loaded in the configurator with Import Job.
+rem the window's Correlate and LEDs tabs save changes to a NEW copy, loaded in the configurator with Import Job.
 rem   checker.bat                       open the checker window
 rem   checker.bat "job.mdb"             print the report for an exported job
 rem   checker.bat "job.mdb" --csv out.csv --rules FSAE

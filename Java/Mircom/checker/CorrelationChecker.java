@@ -31,6 +31,9 @@ public class CorrelationChecker {
         new FsaeRules.Devices(),
         new FsaeRules.Logic(),
         new FsaeRules.Display(),
+        new LedRules.FsaeColors(),
+        new LedRules.Paging(),
+        new LedRules.Hoa(),
         new TagRules.Unrecognised(),
         new Acceptances.Review()); //last: it marks the accepted findings of every check above
 

@@ -96,6 +96,16 @@ public class Job {
     public final Map<Integer, String> node_names = new HashMap<>(); //node -> its tag, e.g. "FCC 2FL (Cell-13FL)"
     public final Map<String, String> cpu_types = new HashMap<>(); //"node/cpu" -> card type, e.g. "S200 QLA"
     public final Map<Integer, String> status_names = new HashMap<>(); //system status -> name, e.g. "Common Trouble"
+    public final Map<Integer, String> led_state_names = new TreeMap<>(); //SomeActive value -> name, e.g. 18 -> "Green Continuous"
+    public final List<int[]> led_proving_links = new ArrayList<>(); //LedProvingStat: {led group, proving group}
+    public final Map<Integer, Proving> provings = new TreeMap<>(); //by proving group
+
+    //A proving group: the input zone that proves an output came on (ProvingIpts) and the outputs it watches (ProvingCtrl)
+    public static class Proving {
+        public int group;
+        public Circuit zone;
+        public final List<Circuit> outputs = new ArrayList<>();
+    }
 
     //Circuits whose correlations the configurator manages somewhere else (hazard zones, output zones, equipment sets),
     //with the reason. The correlation editor will not add links to them.
@@ -209,6 +219,11 @@ public class Job {
         public final List<int[]> slots = new ArrayList<>(); //{node, cpu, frame, led}
         public final List<Circuit> inputs = new ArrayList<>();
         public final List<Circuit> outputs = new ArrayList<>();
+        public final List<Integer> provings = new ArrayList<>(); //proving groups (LedProvingStat), e.g. an HOA switch's yellow LED
+
+        public int someActive() {
+            return states.getOrDefault("SomeActive", 0);
+        }
 
         public String label() {
             StringBuilder s = new StringBuilder();
@@ -637,6 +652,21 @@ public class Job {
         }
         for (Row r : rows(db, "LedIpts")) if (mine(r)) led_input_links.add(new int[] { num(r, "LedGrp"), num(r, "IptCkt") });
         for (Row r : rows(db, "LedOpts")) if (mine(r)) led_output_links.add(new int[] { num(r, "LedGrp"), num(r, "OptCkt") });
+        for (Row r : rows(db, "LedProvingStat")) if (mine(r)) led_proving_links.add(new int[] { num(r, "LedGrp"), num(r, "ProvingGrp") });
+        for (Row r : rows(db, "SYSLedStates")) led_state_names.put(num(r, "Condition"), str(r, "Description"));
+        for (Row r : rows(db, "ProvingIpts")) {
+            if (!mine(r)) continue;
+            Proving p = provings.computeIfAbsent(num(r, "ProvingGrp"), k -> new Proving());
+            p.group = num(r, "ProvingGrp");
+            p.zone = inputs.get(num(r, "IptCkt"));
+        }
+        for (Row r : rows(db, "ProvingCtrl")) {
+            if (!mine(r)) continue;
+            Proving p = provings.computeIfAbsent(num(r, "ProvingGrp"), k -> new Proving());
+            p.group = num(r, "ProvingGrp");
+            Circuit o = outputs.get(num(r, "OptCkt"));
+            if (o != null) p.outputs.add(o);
+        }
 
         for (Row r : rows(db, "Equations")) {
             if (!mine(r)) continue;
@@ -732,6 +762,10 @@ public class Job {
             Led l = leds.get(link[0]);
             Circuit c = outputs.get(link[1]);
             if (l != null && c != null) l.outputs.add(c);
+        }
+        for (int[] link : led_proving_links) {
+            Led l = leds.get(link[0]);
+            if (l != null) l.provings.add(link[1]);
         }
         for (Equation e : equations.values()) {
             for (Circuit c : e.subjects) equations_of_subject.computeIfAbsent(c.ckt, k -> new ArrayList<>()).add(e);

@@ -3,18 +3,13 @@ package checker;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.FileDialog;
 import java.awt.FlowLayout;
 import java.awt.Font;
-import java.awt.Frame;
-import java.awt.Window;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 
 import javax.swing.BorderFactory;
@@ -27,12 +22,10 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
-import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.RowFilter;
 import javax.swing.SwingUtilities;
-import javax.swing.SwingWorker;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableRowSorter;
 
@@ -47,8 +40,9 @@ import checker.Job.Kind;
 import checker.Job.Led;
 
 //The "Correlate" tab: see everything correlated to any input, input zone, output or LED of a job, and add or
-//remove correlations the way the configurator allows (Correlations has the rules). Changes stay pending until
-//"Save edited copy", which writes a NEW file (JobWriter) to load into the configurator with Import Job.
+//remove correlations the way the configurator allows (Correlations has the rules). Changes stay pending (together
+//with the LEDs tab's ticked fixes for the same job version) until
+//"Save edited copy", which writes a NEW file (EditedCopy) to load into the configurator with Import Job.
 @SuppressWarnings("serial")
 public class CorrelatePanel extends JPanel {
 
@@ -56,16 +50,37 @@ public class CorrelatePanel extends JPanel {
     interface Host {
         void status(String text);
         void detailsChanged();
-        void saved(File file); //opens the saved copy in the jobs list and checks it
-        String lastDir();
-        void lastDir(String dir);
+        void save(); //saves the pending changes of this tab AND the LEDs tab into one new copy
+        void changed(); //the pending changes changed
+        List<Choice> choices(); //every job version in the open files
+        void correlate(Object entry); //load this version into the tab (asks first if there are unsaved changes)
+    }
+
+    //A job version in the job picker at the top of the tab
+    static final class Choice {
+        final Object entry; //the window's own handle for the version; null = nothing to load
+        final String key; //file|job|version
+        final String text;
+
+        Choice(Object entry, String key, String text) {
+            this.entry = entry;
+            this.key = key;
+            this.text = text;
+        }
+
+        @Override
+        public String toString() {
+            return text;
+        }
     }
 
     private final Host host;
     private Job job;
     private Edits edits;
 
-    private final JLabel title = new JLabel(" ");
+    //Which job is being correlated; opening it lists every version in the open files
+    private final JComboBox<Choice> job_box = new JComboBox<>();
+    private boolean filling_job_box;
     private final JLabel pending = new JLabel(" ");
     private final JButton save_button = new JButton("Save edited copy...");
     private final JButton discard_button = new JButton("Discard changes");
@@ -101,26 +116,51 @@ public class CorrelatePanel extends JPanel {
         super(new BorderLayout());
         this.host = host;
 
-        title.setFont(title.getFont().deriveFont(Font.BOLD, title.getFont().getSize() + 3f));
+        job_box.setFont(job_box.getFont().deriveFont(Font.BOLD, job_box.getFont().getSize() + 2f));
+        job_box.setToolTipText("The job version whose correlations are shown. Click to pick another version from the open files.");
+        job_box.setMaximumRowCount(20);
+        job_box.addPopupMenuListener(new javax.swing.event.PopupMenuListener() {
+            public void popupMenuWillBecomeVisible(javax.swing.event.PopupMenuEvent e) {
+                fillJobBox(true);
+            }
+
+            public void popupMenuWillBecomeInvisible(javax.swing.event.PopupMenuEvent e) {
+            }
+
+            public void popupMenuCanceled(javax.swing.event.PopupMenuEvent e) {
+            }
+        });
+        job_box.addActionListener(e -> {
+            if (filling_job_box) return;
+            Choice c = (Choice) job_box.getSelectedItem();
+            if (c == null || c.entry == null || c.key.equals(currentKey())) return;
+            SwingUtilities.invokeLater(() -> {
+                fillJobBox(false); //shows the current job until the picked one has loaded
+                host.correlate(c.entry);
+            });
+        });
         pending.setFont(pending.getFont().deriveFont(Font.BOLD));
         save_button.setFont(save_button.getFont().deriveFont(Font.BOLD));
         save_button.setToolTipText("Write the changes into a NEW copy of the job file. Load the copy in the configurator with Import Job; the open file is not changed.");
-        save_button.addActionListener(e -> save());
+        save_button.addActionListener(e -> host.save());
         discard_button.addActionListener(e -> discard());
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
         buttons.add(pending);
         buttons.add(discard_button);
         buttons.add(save_button);
-        JPanel header = new JPanel(new BorderLayout(12, 0));
+        JLabel job_label = new JLabel("Job:");
+        job_label.setFont(job_label.getFont().deriveFont(Font.BOLD, job_label.getFont().getSize() + 2f));
+        JPanel header = new JPanel(new BorderLayout(8, 0));
         header.setBorder(BorderFactory.createEmptyBorder(6, 4, 6, 4));
-        header.add(title, BorderLayout.CENTER);
+        header.add(job_label, BorderLayout.WEST);
+        header.add(job_box, BorderLayout.CENTER);
         header.add(buttons, BorderLayout.EAST);
 
         JSplitPane right = new JSplitPane(JSplitPane.VERTICAL_SPLIT, linksPanel(), addPanel());
         right.setResizeWeight(0.45);
         right.setBorder(null);
         JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, itemsPanel(), right);
-        split.setResizeWeight(0.42);
+        split.setResizeWeight(0.36);
         split.setBorder(null);
 
         add(header, BorderLayout.NORTH);
@@ -144,6 +184,8 @@ public class CorrelatePanel extends JPanel {
 
         item_table.setRowSorter(item_sorter);
         CheckerPanel.setupTable(item_table, new CheckerPanel.ColoredRenderer(v -> Color.BLACK));
+        item_table.setDefaultRenderer(Integer.class, item_table.getDefaultRenderer(Object.class)); //numbers on the left too
+        fillWith(item_table, "Location");
         item_table.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) showItem();
         });
@@ -161,6 +203,8 @@ public class CorrelatePanel extends JPanel {
         link_table.setRowHeight(link_table.getRowHeight() + 6);
         link_table.setDefaultRenderer(Object.class, new CheckerPanel.ColoredRenderer(v -> v instanceof State ? ((State) v).color : Color.BLACK));
         link_table.setDefaultRenderer(State.class, link_table.getDefaultRenderer(Object.class));
+        link_table.setDefaultRenderer(Integer.class, link_table.getDefaultRenderer(Object.class));
+        fillWith(link_table, "Note");
         link_table.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) updateButtons();
         });
@@ -205,8 +249,13 @@ public class CorrelatePanel extends JPanel {
         cand_table.setRowHeight(cand_table.getRowHeight() + 6);
         cand_table.setDefaultRenderer(Object.class, new CheckerPanel.ColoredRenderer(v -> v instanceof Allowed ? ((Allowed) v).color : Color.BLACK));
         cand_table.setDefaultRenderer(Allowed.class, cand_table.getDefaultRenderer(Object.class));
+        cand_table.setDefaultRenderer(Integer.class, cand_table.getDefaultRenderer(Object.class));
+        fillWith(cand_table, "Location");
         cand_table.getSelectionModel().addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) updateButtons();
+            if (!e.getValueIsAdjusting()) {
+                updateButtons();
+                host.detailsChanged(); //the full reason of the picked row
+            }
         });
         cand_table.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
@@ -245,14 +294,41 @@ public class CorrelatePanel extends JPanel {
         job = j;
         edits = j == null ? null : new Edits(j);
         item_kind.removeAllItems();
-        if (j == null) {
-            title.setText("Pick a job version on the left and press Correlate.");
-        } else {
-            title.setText(CheckerPanel.jobTitle(j));
-            for (ItemKind k : ItemKind.values()) if (k.applies(j.panel)) item_kind.addItem(k);
-        }
+        if (j != null) for (ItemKind k : ItemKind.values()) if (k.applies(j.panel)) item_kind.addItem(k);
+        fillJobBox(false);
         loadItems();
         updatePending();
+    }
+
+    private String currentKey() {
+        return job == null ? "" : CheckerPanel.key(job);
+    }
+
+    //all = every version in the open files (when the list opens); otherwise just the current job
+    private void fillJobBox(boolean all) {
+        filling_job_box = true;
+        try {
+            job_box.removeAllItems();
+            String key = currentKey();
+            Choice current = job == null ? new Choice(null, "", "Pick a job version...")
+                : new Choice(null, key, CheckerPanel.jobTitle(job) + "      [" + CheckerPanel.fileLabel(job.file) + "]");
+            List<Choice> list = all ? host.choices() : List.of();
+            boolean found = false;
+            for (Choice c : list) {
+                job_box.addItem(c);
+                if (c.key.equals(key)) {
+                    job_box.setSelectedItem(c);
+                    found = true;
+                }
+            }
+            if (!found) {
+                job_box.insertItemAt(current, 0);
+                job_box.setSelectedIndex(0);
+            }
+            if (all && list.isEmpty()) job_box.addItem(new Choice(null, "", "Open a job file or a configurator first (buttons at the top)."));
+        } finally {
+            filling_job_box = false;
+        }
     }
 
     //-------------------------------------------------------------------------------------------------
@@ -311,14 +387,14 @@ public class CorrelatePanel extends JPanel {
             }
         }
         item_model.fireTableStructureChanged();
-        filterItems();
-        CheckerPanel.fitColumns(item_table, 300);
+        filterItems(); //also sizes the columns
         showItem();
     }
 
     private void filterItems() {
         item_sorter.setRowFilter(textFilter(item_search.getText()));
         item_count.setText(item_table.getRowCount() + " of " + item_model.rows.size());
+        fit(item_table); //sized to the rows that are showing
     }
 
     private Object selectedItem() {
@@ -383,7 +459,7 @@ public class CorrelatePanel extends JPanel {
             readOnlyLinks(item);
         }
         link_model.fireTableStructureChanged();
-        CheckerPanel.fitColumns(link_table, 300);
+        fit(link_table);
         updateButtons();
     }
 
@@ -493,9 +569,9 @@ public class CorrelatePanel extends JPanel {
                 cand_model.rows.add(new Cand(other, Place.of(job, other), l, a, why != null ? why : caution != null ? caution : ""));
             }
         }
+        cand_model.rows.sort((x, y) -> Integer.compare(x.allowed.ordinal(), y.allowed.ordinal())); //allowed first, not allowed last
         cand_model.fireTableStructureChanged();
-        filterCandidates();
-        CheckerPanel.fitColumns(cand_table, 300);
+        filterCandidates(); //also sizes the columns
         updateButtons();
     }
 
@@ -512,6 +588,7 @@ public class CorrelatePanel extends JPanel {
         for (Cand c : cand_model.rows) if (c.allowed != Allowed.NO) allowed++;
         int not = cand_model.rows.size() - allowed;
         cand_count.setText(cand_table.getRowCount() + " shown, " + allowed + " allowed" + (not > 0 ? ", " + not + " not allowed" : ""));
+        fit(cand_table); //e.g. the Note column needs room once not-allowed rows show
     }
 
     private void addSelected() {
@@ -573,11 +650,29 @@ public class CorrelatePanel extends JPanel {
     }
 
     private void updatePending() {
+        refreshPending();
+        host.changed();
+    }
+
+    private int other_changes; //ticked LED fixes (LEDs tab) on the same job version, saved together with these
+
+    void pendingElsewhere(int n) {
+        other_changes = n;
+        refreshPending();
+    }
+
+    private void refreshPending() {
         int n = edits == null ? 0 : edits.size();
-        pending.setText(n == 0 ? (job == null ? " " : "No changes") : Report.plural(n, "change") + " not saved");
-        pending.setForeground(n == 0 ? CheckerPanel.MUTED_COLOR : CheckerPanel.CHANGED_COLOR);
-        save_button.setEnabled(n > 0);
+        String text = n == 0 ? (job == null ? " " : "No changes") : Report.plural(n, "change") + " not saved";
+        if (other_changes > 0) text = (n == 0 ? "" : text + ", ") + Report.plural(other_changes, "LED change") + " ticked";
+        pending.setText(text);
+        pending.setForeground(n + other_changes == 0 ? CheckerPanel.MUTED_COLOR : CheckerPanel.CHANGED_COLOR);
+        save_button.setEnabled(n + other_changes > 0);
         discard_button.setEnabled(n > 0);
+    }
+
+    Edits edits() {
+        return edits;
     }
 
     private void updateButtons() {
@@ -612,85 +707,22 @@ public class CorrelatePanel extends JPanel {
         return lines;
     }
 
-    private void save() {
-        if (!hasChanges()) return;
-        File target = pickTarget();
-        if (target == null) return;
-        JTextArea list = new JTextArea(String.join("\n", changeLines()), Math.min(12, edits.size() + 1), 90);
-        list.setEditable(false);
-        Object[] message = { "<html>Write " + Report.plural(edits.size(), "change") + " into a new file:<br><b>" + CheckerPanel.esc(target.getPath())
-            + "</b><br><br>" + CheckerPanel.esc(job.file.getName()) + " is not changed. Load the new file in the configurator with <b>Import Job</b>.</html>",
-            new JScrollPane(list) };
-        int answer = JOptionPane.showConfirmDialog(this, message, "Save edited copy", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-        if (answer != JOptionPane.OK_OPTION) return;
-        saveTo(target);
-    }
-
-    //Writes the pending changes into target (a new file) and carries on editing the saved copy
-    void saveTo(File target) {
-        save_button.setEnabled(false);
-        host.status("Saving " + target.getName() + "...");
+    //After the window saved the pending changes into a new copy: carry on editing the saved copy, on the same item
+    void savedAs(Job saved) {
         Job from = job;
-        new SwingWorker<Job, Void>() {
-            protected Job doInBackground() throws Exception {
-                JobWriter.save(edits, target);
-                return Job.load(target, from.job_id, from.version);
-            }
-
-            protected void done() {
-                Job saved;
-                try {
-                    saved = get();
-                } catch (Exception e) {
-                    updatePending();
-                    Throwable cause = e.getCause() != null ? e.getCause() : e;
-                    host.status("Not saved.");
-                    JOptionPane.showMessageDialog(CorrelatePanel.this, "Not saved:\n" + cause.getMessage(), "Save edited copy", JOptionPane.ERROR_MESSAGE);
-                    return;
+        ItemKind kind = (ItemKind) item_kind.getSelectedItem();
+        Object item = selectedItem();
+        String item_key = item == null ? null : Place.of(from, item).text();
+        setJob(saved);
+        if (kind != null) item_kind.setSelectedItem(kind);
+        if (item_key != null) {
+            for (int i = 0; i < item_model.rows.size(); i++) {
+                if (item_model.rows.get(i).place.text().equals(item_key)) {
+                    reselect(item_model.rows.get(i).obj);
+                    break;
                 }
-                int n = edits.size();
-                ItemKind kind = (ItemKind) item_kind.getSelectedItem();
-                Object item = selectedItem();
-                String item_key = item == null ? null : Place.of(from, item).text();
-                setJob(saved); //keep working on the saved copy
-                if (kind != null) item_kind.setSelectedItem(kind);
-                if (item_key != null) {
-                    for (int i = 0; i < item_model.rows.size(); i++) {
-                        if (item_model.rows.get(i).place.text().equals(item_key)) {
-                            reselect(item_model.rows.get(i).obj);
-                            break;
-                        }
-                    }
-                }
-                host.saved(target);
-                host.status("Saved " + Report.plural(n, "change") + " to " + target.getName() + ". Load it in the configurator with Import Job.");
-                JOptionPane.showMessageDialog(CorrelatePanel.this, "Saved " + Report.plural(n, "change") + " to\n" + target.getPath()
-                    + "\n\nIn the configurator use Import Job and pick this file; it comes in as a new version.\nThe Check tab now shows the checks on the saved copy.",
-                    "Save edited copy", JOptionPane.INFORMATION_MESSAGE);
             }
-        }.execute();
-    }
-
-    private File pickTarget() {
-        Window owner = SwingUtilities.getWindowAncestor(this);
-        FileDialog dialog = new FileDialog(owner instanceof Frame ? (Frame) owner : null, "Save the edited job as a new file", FileDialog.SAVE);
-        boolean live = false;
-        for (File f : JobWriter.LIVE_DATABASES) if (f.equals(job.file)) live = true;
-        File dir = live ? new File(System.getProperty("user.home"), "Downloads") : job.file.getParentFile();
-        dialog.setDirectory(dir != null && dir.isDirectory() ? dir.getPath() : host.lastDir());
-        dialog.setFile(JobWriter.suggestedName(job));
-        dialog.setVisible(true);
-        if (dialog.getFile() == null) return null;
-        String name = dialog.getFile().toLowerCase(Locale.ROOT).endsWith(".mdb") ? dialog.getFile() : dialog.getFile() + ".mdb";
-        File f = new File(dialog.getDirectory(), name);
-        host.lastDir(f.getParent());
-        try {
-            JobWriter.checkTarget(job.file, f);
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, e.getMessage(), "Save edited copy", JOptionPane.WARNING_MESSAGE);
-            return null;
         }
-        return f;
     }
 
     //-------------------------------------------------------------------------------------------------
@@ -714,6 +746,15 @@ public class CorrelatePanel extends JPanel {
             h.append("<p style='color:gray'>Pick an item on the left to see what it is correlated to. Below, add what the configurator allows; ")
                 .append("tick <i>Show not allowed</i> to see why something is missing.</p>");
         }
+        int cand_row = cand_table.getSelectedRow();
+        if (cand_row >= 0) {
+            Cand c = cand_model.rows.get(cand_table.convertRowIndexToModel(cand_row));
+            String color = CheckerPanel.hex(c.allowed.color);
+            h.append("<p><b>To add:</b> ").append(CheckerPanel.esc(c.place.text())).append("<br><b style='color:").append(color).append("'>")
+                .append(c.allowed == Allowed.NO ? "Not allowed" : c.allowed == Allowed.CAUTION ? "Allowed, please check" : "Allowed").append("</b>");
+            if (!c.note.isEmpty()) h.append(": ").append(CheckerPanel.esc(c.note));
+            h.append("</p>");
+        }
         List<String> lines = changeLines();
         if (!lines.isEmpty()) {
             h.append("<p><b>Not saved yet</b> (").append(lines.size()).append(")</p><p>");
@@ -723,6 +764,83 @@ public class CorrelatePanel extends JPanel {
             }
             h.append("</p>");
         }
+    }
+
+    //-------------------------------------------------------------------------------------------------
+    //Column widths: every column only as wide as it needs (within the caps below); one column takes the rest
+
+    //Caps for these tables, tighter than the Check tab's so the Note column has room
+    private static final java.util.Map<String, Integer> CAP = java.util.Map.ofEntries(
+        java.util.Map.entry("Links", 46), java.util.Map.entry("Allowed", 58), java.util.Map.entry("Status", 84),
+        java.util.Map.entry("Correlated as", 120), java.util.Map.entry("Node", 40), java.util.Map.entry("CPU", 72),
+        java.util.Map.entry("Loop", 38), java.util.Map.entry("Address", 62), java.util.Map.entry("Type", 140),
+        java.util.Map.entry("Tag", 170), java.util.Map.entry("Location", 150), java.util.Map.entry("Note", 260));
+
+    //Makes this column take whatever width the others leave, whenever the table is resized
+    private static void fillWith(JTable t, String column) {
+        t.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+        t.putClientProperty("fill", column);
+        t.addAncestorListener(new javax.swing.event.AncestorListener() {
+            public void ancestorAdded(javax.swing.event.AncestorEvent e) {
+                java.awt.Container parent = t.getParent();
+                if (parent instanceof javax.swing.JComponent && ((javax.swing.JComponent) parent).getClientProperty("fillListener") == null) {
+                    javax.swing.JComponent vp = (javax.swing.JComponent) parent;
+                    vp.putClientProperty("fillListener", Boolean.TRUE);
+                    vp.addComponentListener(new java.awt.event.ComponentAdapter() {
+                        public void componentResized(java.awt.event.ComponentEvent ev) {
+                            fill(t);
+                        }
+                    });
+                }
+                fill(t);
+            }
+
+            public void ancestorRemoved(javax.swing.event.AncestorEvent e) {
+            }
+
+            public void ancestorMoved(javax.swing.event.AncestorEvent e) {
+            }
+        });
+    }
+
+    //Sizes the columns to their contents within CAP, then stretches the fill column
+    private static void fit(JTable t) {
+        CheckerPanel.fitColumns(t, 300);
+        Object fill = t.getClientProperty("fill");
+        for (int c = 0; c < t.getColumnCount(); c++) {
+            javax.swing.table.TableColumn col = t.getColumnModel().getColumn(c);
+            String name = String.valueOf(col.getHeaderValue());
+            if (col.getMaxWidth() == 0) continue; //hidden: same value on every row
+            int w = col.getPreferredWidth();
+            if (!name.equals(fill) && CAP.containsKey(name)) w = Math.min(w, CAP.get(name));
+            col.setPreferredWidth(w);
+            col.setWidth(w);
+            if (name.equals(fill)) t.putClientProperty("fitted", w);
+        }
+        fill(t);
+    }
+
+    private static final int FILL_MIN = 180;
+
+    private static void fill(JTable t) {
+        Object fill = t.getClientProperty("fill");
+        if (fill == null || t.getParent() == null) return;
+        int others = 0;
+        javax.swing.table.TableColumn target = null;
+        for (int c = 0; c < t.getColumnCount(); c++) {
+            javax.swing.table.TableColumn col = t.getColumnModel().getColumn(c);
+            if (fill.equals(String.valueOf(col.getHeaderValue()))) target = col;
+            else others += col.getWidth();
+        }
+        if (target == null) return;
+        Object fitted = t.getClientProperty("fitted");
+        //At least FILL_MIN wide (the rest scrolls; the full text is in the tooltip and the details pane), or all the room left
+        int need = fitted instanceof Integer ? (Integer) fitted : 60;
+        int w = Math.max(Math.min(need, FILL_MIN), t.getParent().getWidth() - others);
+        target.setPreferredWidth(w);
+        target.setWidth(w);
+        t.revalidate();
+        t.repaint();
     }
 
     //-------------------------------------------------------------------------------------------------
@@ -855,11 +973,12 @@ public class CorrelatePanel extends JPanel {
 
     private static class CandidateModel extends PlaceModel<Cand> {
         CandidateModel() {
-            super(new String[] { "Allowed" }, new String[] { "Note" });
+            //Note next to Allowed so the reason is in view; it is only as wide as the reasons showing
+            super(new String[] { "Allowed", "Note" }, new String[0]);
         }
 
         Place place(Cand c) { return c.place; }
-        Object lead(Cand c, int col) { return c.allowed; }
-        Object trail(Cand c, int col) { return c.note; }
+        Object lead(Cand c, int col) { return col == 0 ? c.allowed : c.note; }
+        Object trail(Cand c, int col) { return ""; }
     }
 }

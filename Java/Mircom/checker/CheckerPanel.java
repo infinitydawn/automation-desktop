@@ -163,8 +163,10 @@ public class CheckerPanel extends JPanel {
     private final JLabel diff_count = new JLabel(" ");
     private final JButton diff_csv = new JButton("Save CSV...");
 
-    //Correlate tab: the only place that writes, and only ever to a new copy of the job file
+    //Correlate and LEDs tabs: the only places that change anything, both on the same job version, and only ever into a new
+    //copy of the job file. Their changes stay pending until "Save edited copy" (either tab) writes them all together.
     private final JButton correlate_button = new JButton("Correlate");
+    private final JButton close_button = new JButton("Close");
     private final CorrelatePanel correlate_panel = new CorrelatePanel(new CorrelatePanel.Host() {
         public void status(String text) {
             status.setText(text);
@@ -174,19 +176,66 @@ public class CheckerPanel extends JPanel {
             if (tabs.getSelectedIndex() == CORRELATE_TAB) showDetails();
         }
 
-        public void saved(File file) {
-            openFile(file, false);
+        public void save() {
+            saveEdits();
         }
 
-        public String lastDir() {
-            return prefs.get("lastDir", System.getProperty("user.home"));
+        public void changed() {
+            pendingChanged();
         }
 
-        public void lastDir(String dir) {
-            prefs.put("lastDir", dir);
+        public List<CorrelatePanel.Choice> choices() {
+            List<CorrelatePanel.Choice> list = new ArrayList<>();
+            Enumeration<?> e = tree_root.depthFirstEnumeration();
+            List<VersionEntry> versions = new ArrayList<>();
+            while (e.hasMoreElements()) {
+                Object o = ((DefaultMutableTreeNode) e.nextElement()).getUserObject();
+                if (o instanceof VersionEntry) versions.add((VersionEntry) o);
+            }
+            //Tree order (files, jobs newest first, versions newest first); depth-first visits children first, so restore it
+            versions.sort((a, b) -> Integer.compare(treeIndex(a), treeIndex(b)));
+            for (VersionEntry v : versions) {
+                Job.Version jv = v.version;
+                list.add(new CorrelatePanel.Choice(v, key(v), fileLabel(v.file) + "   >   " + versionName(jv) + ":  " + jv.description
+                    + (jv.created.isEmpty() ? "" : "   (" + jv.created.replace('T', ' ') + ")")));
+            }
+            return list;
+        }
+
+        public void correlate(Object entry) {
+            VersionEntry v = (VersionEntry) entry;
+            TreePath p = pathOf(v);
+            if (p != null) tree.setSelectionPath(p);
+            runCorrelate(v);
         }
     });
     static final int CORRELATE_TAB = 2;
+
+    private final LedPanel led_panel = new LedPanel(new LedPanel.Host() {
+        public void status(String text) {
+            status.setText(text);
+        }
+
+        public void save() {
+            saveEdits();
+        }
+
+        public void changed() {
+            pendingChanged();
+        }
+    });
+    static final int LED_TAB = 3;
+
+    //Row of a version in the expanded-or-not tree, for ordering
+    private int treeIndex(VersionEntry v) {
+        int i = 0;
+        Enumeration<?> e = tree_root.preorderEnumeration();
+        while (e.hasMoreElements()) {
+            if (((DefaultMutableTreeNode) e.nextElement()).getUserObject() == v) return i;
+            i++;
+        }
+        return i;
+    }
 
     public CheckerPanel() {
         super(new BorderLayout(0, 6));
@@ -203,6 +252,7 @@ public class CheckerPanel extends JPanel {
         tabs.addTab("Check", checkTab());
         tabs.addTab("Compare", compareTab());
         tabs.addTab("Correlate", correlate_panel);
+        tabs.addTab("LEDs", led_panel);
         tabs.addChangeListener(e -> showDetails());
 
         JSplitPane right = new JSplitPane(JSplitPane.VERTICAL_SPLIT, tabs, details_scroll);
@@ -213,7 +263,7 @@ public class CheckerPanel extends JPanel {
         main.setBorder(null);
         add(main, BorderLayout.CENTER);
 
-        JLabel hint = new JLabel("Job files are never changed. Correlation edits are saved to a new copy, which you load in the configurator with Import Job.");
+        JLabel hint = new JLabel("Job files are never changed. Correlation and LED changes are saved together to a new copy, which you load in the configurator with Import Job.");
         hint.setForeground(MUTED_COLOR);
         add(hint, BorderLayout.SOUTH);
         clearCheck();
@@ -293,7 +343,37 @@ public class CheckerPanel extends JPanel {
         tree.addTreeSelectionListener(e -> updateButtons());
         tree.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
-                if (e.getClickCount() == 2 && selectedVersions().size() == 1) runCheck();
+                //Double-click opens the version in the tab that is showing (Correlate stays on Correlate)
+                if (e.getClickCount() == 2 && selectedVersions().size() == 1) {
+                    if (tabs.getSelectedIndex() == CORRELATE_TAB) runCorrelate();
+                    else runCheck();
+                }
+            }
+
+            public void mousePressed(MouseEvent e) {
+                popup(e);
+            }
+
+            public void mouseReleased(MouseEvent e) {
+                popup(e);
+            }
+
+            //Right-click: close the file under the mouse, or every file
+            private void popup(MouseEvent e) {
+                if (!e.isPopupTrigger()) return;
+                TreePath p = tree.getPathForLocation(e.getX(), e.getY());
+                if (p != null && !tree.isPathSelected(p)) tree.setSelectionPath(p);
+                javax.swing.JPopupMenu menu = new javax.swing.JPopupMenu();
+                List<File> files = selectedFiles();
+                javax.swing.JMenuItem close = new javax.swing.JMenuItem(files.size() == 1 ? "Close " + fileLabel(files.get(0)) : "Close " + Report.plural(files.size(), "file"));
+                close.setEnabled(!files.isEmpty());
+                close.addActionListener(a -> closeFiles(selectedFiles()));
+                javax.swing.JMenuItem all = new javax.swing.JMenuItem("Close all");
+                all.setEnabled(tree_root.getChildCount() > 0);
+                all.addActionListener(a -> closeFiles(openFiles()));
+                menu.add(close);
+                menu.add(all);
+                menu.show(tree, e.getX(), e.getY());
             }
         });
 
@@ -308,8 +388,11 @@ public class CheckerPanel extends JPanel {
         JPanel row1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 2));
         row1.add(check_button);
         row1.add(compare_button);
+        close_button.setToolTipText("Close the selected file(s) or configurator(s) in this list (right-click for Close all). Files on disk are not touched.");
+        close_button.addActionListener(e -> closeFiles(selectedFiles()));
         JPanel row2 = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 2));
         row2.add(correlate_button);
+        row2.add(close_button);
         JPanel buttons = new JPanel(new BorderLayout());
         buttons.add(row1, BorderLayout.NORTH);
         buttons.add(row2, BorderLayout.SOUTH);
@@ -675,6 +758,60 @@ public class CheckerPanel extends JPanel {
         check_button.setEnabled(n == 1);
         compare_button.setEnabled(n == 1 || n == 2);
         correlate_button.setEnabled(n == 1);
+        close_button.setEnabled(!selectedFiles().isEmpty());
+    }
+
+    //The files (or configurator databases) of the selected tree rows, whatever level is selected
+    private List<File> selectedFiles() {
+        List<File> list = new ArrayList<>();
+        TreePath[] paths = tree.getSelectionPaths();
+        if (paths == null) return list;
+        for (TreePath p : paths) {
+            if (p.getPathCount() < 2) continue;
+            Object o = ((DefaultMutableTreeNode) p.getPathComponent(1)).getUserObject();
+            if (o instanceof Source && !list.contains(((Source) o).file)) list.add(((Source) o).file);
+        }
+        return list;
+    }
+
+    private List<File> openFiles() {
+        List<File> list = new ArrayList<>();
+        for (int i = 0; i < tree_root.getChildCount(); i++) list.add(((Source) ((DefaultMutableTreeNode) tree_root.getChildAt(i)).getUserObject()).file);
+        return list;
+    }
+
+    //Takes files out of the list (nothing on disk changes); clears whatever was showing from them
+    private void closeFiles(List<File> files) {
+        if (files.isEmpty()) return;
+        Job editing = correlate_panel.job();
+        if (editing != null && files.contains(editing.file) && !confirmDropChanges()) return;
+        for (File f : files) {
+            for (int i = 0; i < tree_root.getChildCount(); i++) {
+                DefaultMutableTreeNode n = (DefaultMutableTreeNode) tree_root.getChildAt(i);
+                if (((Source) n.getUserObject()).file.equals(f)) {
+                    tree_model.removeNodeFromParent(n);
+                    break;
+                }
+            }
+            stamps.remove(f);
+            synchronized (loaded) {
+                loaded.keySet().removeIf(k -> k.startsWith(f.getPath() + "|"));
+            }
+        }
+        if (job != null && files.contains(job.file)) clearCheck();
+        if (compare != null && (files.contains(compare.before.file) || files.contains(compare.after.file))) clearCompare();
+        if (editing != null && files.contains(editing.file)) edit(null);
+        reload_button.setEnabled(tree_root.getChildCount() > 0);
+        watchFiles();
+        updateButtons();
+        showDetails();
+        status.setText(files.size() == 1 ? "Closed " + fileLabel(files.get(0)) + "." : "Closed " + Report.plural(files.size(), "file") + ".");
+    }
+
+    //How a file is named in the list: the configurators by name, other files by file name
+    static String fileLabel(File f) {
+        return f.equals(FX4000_DB) ? "FX4000 configurator" : f.equals(FX6000_DB) ? "FX6000 configurator"
+            : f.equals(FX400_DB) ? "FX400 configurator" : f.equals(FX2000_DB) ? "FX2000 configurator" : f.getName();
     }
 
     //The version before this one in the same job, or null
@@ -713,7 +850,7 @@ public class CheckerPanel extends JPanel {
         return key(v.file, v.version.job, v.version.version);
     }
 
-    private static String key(Job j) {
+    static String key(Job j) {
         return key(j.file, j.job_id, j.version);
     }
 
@@ -824,8 +961,10 @@ public class CheckerPanel extends JPanel {
 
     private void runCorrelate() {
         List<VersionEntry> sel = selectedVersions();
-        if (sel.size() != 1) return;
-        VersionEntry v = sel.get(0);
+        if (sel.size() == 1) runCorrelate(sel.get(0));
+    }
+
+    private void runCorrelate(VersionEntry v) {
         if (!confirmDropChanges()) return;
         correlate_button.setEnabled(false);
         working("Reading " + versionName(v.version) + " for correlating...");
@@ -840,7 +979,7 @@ public class CheckerPanel extends JPanel {
                 updateButtons();
                 try {
                     Job j = get();
-                    correlate_panel.setJob(j);
+                    edit(j);
                     tabs.setSelectedIndex(CORRELATE_TAB);
                     showDetails();
                     status.setText(j.panel.isReadable() ? "Correlating " + versionName(j) + ". Changes are saved to a new copy." : "This job's panel type is not supported.");
@@ -851,13 +990,110 @@ public class CheckerPanel extends JPanel {
         }.execute();
     }
 
-    //Asks before unsaved correlation changes are dropped; true = go ahead
+    //Asks before unsaved correlation changes / ticked LED fixes are dropped; true = go ahead
     public boolean confirmDropChanges() {
-        if (!correlate_panel.hasChanges()) return true;
-        tabs.setSelectedIndex(CORRELATE_TAB);
-        int answer = JOptionPane.showConfirmDialog(this, "The correlation changes to " + versionName(correlate_panel.job()) + " are not saved. Drop them?",
-            "Unsaved correlation changes", JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
+        if (!hasChanges()) return true;
+        tabs.setSelectedIndex(correlate_panel.hasChanges() ? CORRELATE_TAB : LED_TAB);
+        int answer = JOptionPane.showConfirmDialog(this, pendingText() + " to " + versionName(correlate_panel.job()) + " not saved. Drop them?",
+            "Unsaved changes", JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
         return answer == JOptionPane.OK_OPTION;
+    }
+
+    private boolean hasChanges() {
+        return correlate_panel.hasChanges() || led_panel.hasChanges();
+    }
+
+    private String pendingText() {
+        List<String> parts = new ArrayList<>();
+        Correlations.Edits c = correlate_panel.edits();
+        if (c != null && !c.isEmpty()) parts.add(Report.plural(c.size(), "correlation change"));
+        Leds.Edits l = led_panel.edits();
+        if (!l.isEmpty()) parts.add(Report.plural(l.size(), "LED change"));
+        return String.join(" and ", parts);
+    }
+
+    //The job version the Correlate and LEDs tabs work on (both always the same one)
+    private void edit(Job j) {
+        correlate_panel.setJob(j);
+        led_panel.setJob(j);
+        pendingChanged();
+    }
+
+    private static boolean sameVersion(Job a, Job b) {
+        return a != null && b != null && a.file.equals(b.file) && a.job_id == b.job_id && a.version == b.version && a.file_stamp == b.file_stamp;
+    }
+
+    //Each tab shows the other's pending count, and either one's Save button saves both
+    private void pendingChanged() {
+        if (correlate_panel == null || led_panel == null) return; //while the window is being built
+        Correlations.Edits c = correlate_panel.edits();
+        correlate_panel.pendingElsewhere(led_panel.job() == null ? 0 : led_panel.edits().size());
+        led_panel.pendingElsewhere(c == null ? 0 : c.size());
+        if (tabs.getSelectedIndex() == CORRELATE_TAB || tabs.getSelectedIndex() == LED_TAB) showDetails();
+    }
+
+    //Writes every pending change of the edited version - correlations and LED fixes - into one new copy
+    private void saveEdits() {
+        Job j = correlate_panel.job();
+        if (j == null || !hasChanges()) return;
+        Correlations.Edits corr = correlate_panel.edits();
+        Leds.Edits leds = led_panel.edits();
+        File target = EditedCopy.pickTarget(this, j, prefs.get("lastDir", System.getProperty("user.home")));
+        if (target == null) return;
+        prefs.put("lastDir", target.getParent());
+        try {
+            JobWriter.checkTarget(j.file, target);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, e.getMessage(), "Save edited copy", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        List<String> lines = new ArrayList<>();
+        List<String> corr_lines = correlate_panel.changeLines();
+        if (!corr_lines.isEmpty()) {
+            lines.add("CORRELATIONS (" + corr_lines.size() + ")");
+            for (String l : corr_lines) lines.add("  " + l);
+        }
+        List<String> led_lines = leds.describe();
+        if (!led_lines.isEmpty()) {
+            if (!lines.isEmpty()) lines.add("");
+            lines.add("LEDs (" + led_lines.size() + ")");
+            for (String l : led_lines) lines.add("  " + l);
+        }
+        javax.swing.JTextArea list = new javax.swing.JTextArea(String.join("\n", lines), Math.min(14, lines.size() + 1), 90);
+        list.setEditable(false);
+        String what = pendingText();
+        Object[] message = { "<html>Write " + esc(what) + " into a new file:<br><b>" + esc(target.getPath())
+            + "</b><br><br>" + esc(j.file.getName()) + " is not changed. Load the new file in the configurator with <b>Import Job</b>.</html>",
+            new JScrollPane(list) };
+        if (JOptionPane.showConfirmDialog(this, message, "Save edited copy", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) != JOptionPane.OK_OPTION) return;
+        working("Saving " + target.getName() + "...");
+        new SwingWorker<Job, Void>() {
+            protected Job doInBackground() throws Exception {
+                EditedCopy.save(j, corr, leds, target);
+                return Job.load(target, j.job_id, j.version);
+            }
+
+            protected void done() {
+                idle();
+                Job saved;
+                try {
+                    saved = get();
+                } catch (Exception e) {
+                    Throwable cause = e.getCause() != null ? e.getCause() : e;
+                    status.setText("Not saved.");
+                    JOptionPane.showMessageDialog(CheckerPanel.this, "Not saved:\n" + cause.getMessage(), "Save edited copy", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                correlate_panel.savedAs(saved); //carry on editing the saved copy
+                led_panel.setJob(saved);
+                pendingChanged();
+                openFile(target, false);
+                status.setText("Saved " + what + " to " + target.getName() + ". Load it in the configurator with Import Job.");
+                JOptionPane.showMessageDialog(CheckerPanel.this, "Saved " + what + " to\n" + target.getPath()
+                    + "\n\nIn the configurator use Import Job and pick this file; it comes in as a new version.\nThe Correlate and LEDs tabs now work on the saved copy.",
+                    "Save edited copy", JOptionPane.INFORMATION_MESSAGE);
+            }
+        }.execute();
     }
 
     //-------------------------------------------------------------------------------------------------
@@ -896,6 +1132,10 @@ public class CheckerPanel extends JPanel {
         Rule was_selected = job != null && job.identity().equals(j.identity()) ? selectedRule() : null;
         job = j;
         report = r;
+        if (!sameVersion(j, correlate_panel.job())) {
+            if (!hasChanges()) edit(j); //the Correlate and LEDs tabs follow the checked version, unless changes are pending there
+            else status.setText("Correlate / LEDs tabs still on " + versionName(correlate_panel.job()) + ": " + pendingText() + " not saved.");
+        }
         job_label.setText(jobTitle(j));
         int errors = r.count(Severity.ERROR), warnings = r.count(Severity.WARNING);
         if (r.rulesRun() == 0) {
@@ -1084,6 +1324,7 @@ public class CheckerPanel extends JPanel {
         StringBuilder h = new StringBuilder("<html><body style='font-family:sans-serif; margin:4px'>");
         if (tabs.getSelectedIndex() == 0) findingDetails(h);
         else if (tabs.getSelectedIndex() == CORRELATE_TAB) correlate_panel.details(h);
+        else if (tabs.getSelectedIndex() == LED_TAB) led_panel.details(h);
         else diffDetails(h);
         h.append("</body></html>");
         details.setText(h.toString());
@@ -1359,9 +1600,7 @@ public class CheckerPanel extends JPanel {
             String gray = selected ? "" : " color='#707070'";
             if (o instanceof Source) {
                 File f = ((Source) o).file;
-                String what = f.equals(FX4000_DB) ? "FX4000 configurator" : f.equals(FX6000_DB) ? "FX6000 configurator"
-                    : f.equals(FX400_DB) ? "FX400 configurator" : f.equals(FX2000_DB) ? "FX2000 configurator" : f.getName();
-                setText("<html><b>" + esc(what) + "</b></html>");
+                setText("<html><b>" + esc(fileLabel(f)) + "</b></html>");
                 setToolTipText(f.getPath());
             } else if (o instanceof JobEntry) {
                 JobEntry j = (JobEntry) o;
