@@ -3,6 +3,7 @@ import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.KeyEvent;
+<<<<<<< effic
 import java.lang.foreign.Arena;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.Linker;
@@ -53,6 +54,11 @@ public class DataEntryBot extends Robot {
         "cmd.exe", "conhost.exe", "openconsole.exe", "windowsterminal.exe", "powershell.exe", "pwsh.exe",
         "java.exe", "javaw.exe", "explorer.exe"
     );
+
+public class DataEntryBot extends Robot {
+
+    private int delay = 200; //default 200. Delay time between key presses
+    private double DELAY_STRENGTH = 0; //Default 0. Multiply delay by this to determine final delay time
 
     public DataEntryBot(int delay) throws Exception {
         this.delay = delay;
@@ -215,7 +221,9 @@ public class DataEntryBot extends Robot {
         if(!beforeInput()) {
             return;
         }
-
+        this.delay(delay);
+    }
+    public void clearText() {
         this.keyPress(KeyEvent.VK_CONTROL);
         this.keyPress(KeyEvent.VK_A);
         this.keyRelease(KeyEvent.VK_CONTROL);

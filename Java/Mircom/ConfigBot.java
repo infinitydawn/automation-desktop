@@ -79,6 +79,10 @@ public abstract class ConfigBot extends Thread implements DataEntryBot.PauseHand
             if(WAIT_FOR_READY) {
                 bot.enableReadyCheck(READY_TIMEOUT);
             }
+    public ConfigBot() {
+        try {
+            readSettings();
+            bot = new DataEntryBot(DELAY);           
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -464,6 +468,7 @@ public abstract class ConfigBot extends Thread implements DataEntryBot.PauseHand
     protected void updateTags(Zone zone) {
         try {
             stepPause();
+            Thread.sleep(DELAY);
             bot.pressKey(KeyEvent.VK_ENTER, 1, DEVICE_UPDATE_DELAY_STRENGTH);
             bot.pasteText(zone.getTag1());
             bot.pressKey(KeyEvent.VK_ENTER, 1, DEVICE_UPDATE_DELAY_STRENGTH);
