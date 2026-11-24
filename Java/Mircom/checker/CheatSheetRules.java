@@ -444,8 +444,9 @@ public final class CheatSheetRules {
             return "Cheat sheet zone bypass: every relay, signal and strobe is on the Mixed / Zone Bypass switch";
         }
 
+        //FX400 has no Zone Bypass switch; its bypass groups are checked by Fx400Bypass
         public boolean supports(Job.Panel panel) {
-            return panel.isReadable();
+            return panel.isReadable() && panel != Job.Panel.FX400;
         }
 
         public void check(Job job, Report report) {
@@ -458,10 +459,7 @@ public final class CheatSheetRules {
             }
             String why = sheet("Correlations - correlate all relays to Zone Bypass; Zone Bypass - all relays, signals, strobes");
             if (groups.isEmpty()) {
-                if (outputs.isEmpty()) return;
-                //Many existing FX400 jobs predate the bypass group checklist, so there it is a warning
-                if (job.panel == Job.Panel.FX400) report.warning(Place.text("Bypass groups"), "No bypass groups").why(why);
-                else report.error(Place.text("Base Control"), "No Zone Bypass switch").why(why);
+                if (!outputs.isEmpty()) report.error(Place.text("Base Control"), "No Zone Bypass switch").why(why);
                 return;
             }
             Set<Circuit> bypassed = new LinkedHashSet<>();
@@ -470,12 +468,45 @@ public final class CheatSheetRules {
                 report.note(g.label() + ": " + Report.plural(g.outputs.size(), "output"));
             }
             for (Circuit o : outputs) if (!bypassed.contains(o)) report.warning(o, "Not on Zone Bypass").why(why);
-            if (job.panel == Job.Panel.FX400) fx400Groups(job, report, groups, outputs);
+        }
+    }
+
+    //---------------------------------------------------------------------------------------------------
+
+    //FX400 checklist, Bypass Group: one group with all relays and signals, one with only relays, one with only
+    //signals, one with only elevator recalls. (FX400 has bypass groups instead of the Zone Bypass switch.)
+    public static class Fx400Bypass implements Rule {
+
+        public String id() {
+            return "FX400-BYPASS";
         }
 
-        //FX400 checklist, Bypass Group: one group with all relays and signals, one with only relays, one with only
-        //signals, one with only elevator recalls
-        private static void fx400Groups(Job job, Report report, List<Job.ControlGroup> groups, List<Circuit> outputs) {
+        public String name() {
+            return "Bypass groups";
+        }
+
+        public String title() {
+            return "FX-400 checklist bypass groups: all relays and signals, only relays, only signals, only elevator recalls";
+        }
+
+        public boolean supports(Job.Panel panel) {
+            return panel == Job.Panel.FX400;
+        }
+
+        public void check(Job job, Report report) {
+            List<Job.ControlGroup> groups = job.bypassGroups();
+            List<Circuit> outputs = new ArrayList<>();
+            for (Circuit o : job.outputs.values()) {
+                if (o.isSpare() || o.kind == Kind.OUTPUT_ZONE) continue;
+                if (o.process_type == 13 || o.process_type == 14 || o.process_type == 15) outputs.add(o);
+            }
+            String why = "FX-400 checklist, Bypass Group: groups for all relays and signals, only relays, only signals, only elevator recalls";
+            if (groups.isEmpty()) {
+                //Many existing FX400 jobs predate the bypass group checklist, so it is a warning
+                if (!outputs.isEmpty()) report.warning(Place.text("Bypass groups"), "No bypass groups").why(why);
+                return;
+            }
+            for (Job.ControlGroup g : groups) report.note(g.label() + ": " + Report.plural(g.outputs.size(), "output"));
             List<Circuit> relays = new ArrayList<>(), signals = new ArrayList<>(), recalls = new ArrayList<>();
             for (Circuit o : outputs) {
                 if (o.process_type == 15) relays.add(o);
@@ -499,8 +530,15 @@ public final class CheatSheetRules {
                 if (signals_only) only_signals = true;
                 if (recalls_only) only_recalls = true;
             }
-            String why = "FX-400 checklist, Bypass Group: groups for all relays and signals, only relays, only signals, only elevator recalls";
-            if (!all) report.warning(Place.text("Bypass groups"), "No bypass group with all relays and signals").why(why);
+            if (!all) {
+                //The relays and signals that the fullest group leaves out
+                Job.ControlGroup fullest = null;
+                for (Job.ControlGroup g : groups) if (fullest == null || g.outputs.size() > fullest.outputs.size()) fullest = g;
+                List<Circuit> left_out = new ArrayList<>(outputs);
+                if (fullest != null) left_out.removeAll(fullest.outputs);
+                report.warning(Place.text("Bypass groups"), "No bypass group with all relays and signals").why(why)
+                    .items(fullest == null || fullest.outputs.isEmpty() ? "Relays and signals" : "Not in " + fullest.label(), left_out);
+            }
             if (!only_relays && !relays.isEmpty()) report.warning(Place.text("Bypass groups"), "No bypass group with only relays").why(why);
             if (!only_signals && !signals.isEmpty()) report.warning(Place.text("Bypass groups"), "No bypass group with only signals").why(why);
             if (!only_recalls && !recalls.isEmpty()) report.warning(Place.text("Bypass groups"), "No bypass group with only elevator recalls").why(why);

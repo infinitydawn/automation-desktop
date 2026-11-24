@@ -27,6 +27,7 @@ public class CorrelationChecker {
         new CheatSheetRules.DeviceZones(),
         new CheatSheetRules.Outputs(),
         new CheatSheetRules.Bypass(),
+        new CheatSheetRules.Fx400Bypass(),
         new FsaeRules.Zones(),
         new FsaeRules.Devices(),
         new FsaeRules.Logic(),

@@ -153,7 +153,8 @@ public class LedPanel extends JPanel {
     private JPanel fsaeSection() {
         plan_table.setRowHeight(22);
         plan_table.setFillsViewportHeight(true);
-        plan_table.getColumnModel().getColumn(2).setCellEditor(new DefaultCellEditor(new JComboBox<>(steadyStates(null))));
+        plan_table.getColumnModel().getColumn(2).setCellEditor(new DefaultCellEditor(LedColors.combo(steadyStates(null))));
+        LedColors.columns(plan_table, 2);
         plan_table.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
         JPanel plan_box = new JPanel(new BorderLayout(0, 4));
         plan_box.setBorder(BorderFactory.createTitledBorder("Color plan: the color each kind of FSAE LED should be steady at"));
@@ -176,7 +177,8 @@ public class LedPanel extends JPanel {
         fsae_table.setRowSorter(fsae_sorter);
         fsae_table.setRowHeight(20);
         fsae_table.setFillsViewportHeight(true);
-        fsae_table.getColumnModel().getColumn(FsaeModel.WANT).setCellEditor(new DefaultCellEditor(new JComboBox<>(steadyStates(null))));
+        fsae_table.getColumnModel().getColumn(FsaeModel.WANT).setCellEditor(new DefaultCellEditor(LedColors.combo(steadyStates(null))));
+        LedColors.columns(fsae_table, 8, FsaeModel.WANT);
         fsae_table.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
         fsae_only_wrong.addActionListener(e -> filterFsae());
         JPanel leds = new JPanel(new BorderLayout(0, 4));
@@ -213,6 +215,7 @@ public class LedPanel extends JPanel {
         hoa_table.setRowHeight(22);
         hoa_table.setFillsViewportHeight(true);
         hoa_table.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
+        LedColors.columns(hoa_table, 7);
         hoa_steady.addActionListener(e -> updatePending());
         JPanel p = new JPanel(new BorderLayout(0, 4));
         JLabel hint = new JLabel("<html>Red LED = the switch's RED zone, green = its GREEN zone, yellow = its proving group. Zones are suggested from the tags: "
